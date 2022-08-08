@@ -61,31 +61,17 @@ return require('packer').startup(function()
 	use 'hrsh7th/cmp-path'
 	use 'hrsh7th/cmp-cmdline'
 	use 'hrsh7th/nvim-cmp'
-	-- For vsnip users
-	use 'hrsh7th/cmp-vsnip'
-	use 'hrsh7th/vim-vsnip'
 
-	-- For luasnip users
-	use 'L3MON4D3/LuaSnip'
-	use 'saadparwaiz1/cmp_luasnip'
-
-	--For ultisnips users	
-	use 'hrsh7th/cmp-nvim-lua'
-	use 'onsails/lspkind-nvim'
-	use 'hrsh7th/cmp-nvim-lsp-signature-help'
 	use 'windwp/nvim-autopairs'
 
-	use 'rafamadriz/friendly-snippets'
+	--This tiny plugin adds vscode-like pictograms to neovim built-in lsp:
+	use 'onsails/lspkind-nvim'
+  use { 'hrsh7th/cmp-vsnip' }
+  use { 'hrsh7th/vim-vsnip' }
 
+	--Ale for standard javascript
+	use 'dense-analysis/ale'
 
-	-- Hydra 
-	use 'anuvyklack/hydra.nvim' 
-
-	--LSP Saga
-	use({
-    "glepnir/lspsaga.nvim",
-    branch = "main",
-	})
 	--Automaticly set up your configuration after clonning pachker.nvim 
 	--Put this at the end after the all plugins
 	if PACKER_BOOTSTRAP then

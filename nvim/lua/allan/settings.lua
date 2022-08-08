@@ -19,11 +19,13 @@ o.splitright = true
 o.termguicolors = true
 o.mouse = 'a'
 o.cursorline = true
+o.cursorcolumn = true
 o.tabstop = 2
 o.softtabstop = 2
 o.shiftwidth = 2
 o.guifont = "monospace:h17"
-o.completeopt = menu
+o.completeopt = "menu,menuone,noselect,noinsert"
+o.expandtab=true
 
 -- window-local options
 wo.number = false

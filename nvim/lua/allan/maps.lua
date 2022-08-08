@@ -70,9 +70,3 @@ map('t', '<C-l>', '<C-\\><C-N><C-w>l', options)
 map('t', '<C-j>', '<C-\\><C-N><C-w>j', options)
 
 
---LSP SAGA
-local action_saga = require('lspsaga.codeaction')
-
-map('n', '<leader>ca', '<cmd>Lspsaga code_action<CR>', options)
-map('v', '<leader>ca', '<cmd><C-U>Lspsaga range_code_action<CR>', options)
-
