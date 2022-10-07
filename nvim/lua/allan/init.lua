@@ -4,7 +4,7 @@
 require('allan.settings')		-- lua/settings.lua
 require('allan.maps')			-- lua/maps.lua
 require('allan.statusline')		-- lua/statusline.lua
-require('allan.plugins')		-- lua/plugins/init.lua 
+require('allan.plugins')		-- lua/plugins/init.lua
 --require('allan.nvim-web-devicons-config')  -- lua/nvim-web-devicons
 require('allan.nvim-tree-config') -- lua/nvim-tree-config'
 require('allan.telescope-config')
@@ -24,9 +24,11 @@ require('allan.vim-fugitive-config')
 require('allan.signify-config')
 
 
---LSP 
+--LSP
 require('allan.lsp')
 --require('allan.nvim-lsp-installer-config')
+
+require('allan.lspsaga-config')
 
 --require('allan.cmp')
 --require('allan.diagnostic_signs')

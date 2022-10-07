@@ -5,7 +5,7 @@ require('lualine').setup{
 	},
   extensions = {'nvim-tree'},
   component_separators = { left = '', right = '' },
-	section_separatos = { left = '⎥', right = '⎜'},
+	section_separatos = { left = '', right = '⎜'},
 	sections = {
 		lualine_a = {'mode'},
 		lualine_b = {
@@ -25,6 +25,14 @@ require('lualine').setup{
                     --   { added = add_count, modified = modified_count, removed = removed_count }
                     -- or nil on failure. count <= 0 won't be displayed.
 			},
+		},
+		lualine_c = {
+			{
+				'filename',
+				path = 0,
+			}
+		},
+		lualine_x = {
 			{
       'diagnostics',
 
@@ -32,7 +40,7 @@ require('lualine').setup{
       --   'nvim_lsp', 'nvim_diagnostic', 'coc', 'ale', 'vim_lsp'.
       -- or a function that returns a table as such:
       --   { error=error_cnt, warn=warn_cnt, info=info_cnt, hint=hint_cnt }
-      sources = { 'nvim_diagnostic', 'coc' },
+      sources = { 'nvim_lsp' },
 
       -- Displays diagnostics for the defined severity types
       sections = { 'error', 'warn', 'info', 'hint' },
@@ -44,38 +52,15 @@ require('lualine').setup{
         info  = 'DiagnosticInfo',  -- Changes diagnostics' info color.
         hint  = 'DiagnosticHint',  -- Changes diagnostics' hint color.
       },
-      symbols = {error = 'E', warn = 'W', info = 'I', hint = 'H'},
+      symbols = {error = '', warn = '', info = '', hint = ''},
       colored = true,           -- Displays diagnostics status in color if set to true.
       update_in_insert = false, -- Update diagnostics in insert mode.
       always_visible = false,   -- Show diagnostics even if there are none.
-    }
-		},
-		lualine_c = {
-			{
-				'filename',
-				path = 0,
-				symbols = {
-					modified = '[+]',
-					readonly = 'readonly',
-				},
-			}
-		},
-		lualine_x = {
-      {
-        'encoding',
-      },
-      {
-        'os.date()'
-      },
-      {
-        'fileformat',
-        symbols = {
-          mac = ''
-        }
-      },
-      'filetype'
     },
-		lualine_y = {'%=', '%t%m', '%3p'},
+    'encoding',
+    'filetype'
+    },
+		-- lualine_y = {'%=', '%t%m', '%3p'},
 		lualine_z = {'location'},
 	},
   winbar = {

@@ -11,13 +11,13 @@ return require('packer').startup(function()
 
 	--For highligth syntx
 	use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
-	
+
 	use 'rafcamlet/nvim-luapad'
 	use { 'windwp/nvim-ts-autotag' }
 	use { 'p00f/nvim-ts-rainbow' }
 	use { 'nvim-telescope/telescope.nvim', requires = { { 'nvim-lua/plenary.nvim' } } }
 	use { 'folke/which-key.nvim' }
- 
+
 
 	-- vim-devicons
 	--
@@ -32,14 +32,14 @@ return require('packer').startup(function()
     },
     tag = 'nightly' -- optional, updated every week. (see issue #1193)
   }
-	 
+
 	-- using packer.nvim
 	use {'akinsho/bufferline.nvim', tag = "v2.*", requires = 'kyazdani42/nvim-web-devicons'}
 
 	--theme
 	use { "ellisonleao/gruvbox.nvim" }
 	--use { 'sainnhe/gruvbox-material' }
-	
+
 
 	-- Comments
   use {
@@ -84,7 +84,16 @@ return require('packer').startup(function()
         'tpope/vim-dotenv'
     }
   }
-	--Automaticly set up your configuration after clonning pachker.nvim 
+
+  --LSPSaga
+  use {
+    'glepnir/lspsaga.nvim',
+    branch = 'main',
+    -- config = function()
+    --
+    -- end
+  }
+	--Automaticly set up your configuration after clonning pachker.nvim
 	--Put this at the end after the all plugins
 	if PACKER_BOOTSTRAP then
 		require('packer').sync()

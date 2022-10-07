@@ -26,7 +26,7 @@ map('n', '<C-j>', '<C-w>j', options)
 map('n', '<C-k>', '<C-w>k', options)
 
 --LSP
-map('n', 'K', ':lua vim.lsp.buf.hover()<cr>', options)
+-- map('n', 'K', ':lua vim.lsp.buf.hover()<cr>', options)
 
 --Definition
 map('n', '<leader>vd', ':lua vim.lsp.buf.definition()<cr>', options)

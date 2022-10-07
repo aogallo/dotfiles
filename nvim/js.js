@@ -1,5 +1,5 @@
-function hello () {
-  console.log('test')
+function hello (name) {
+  console.log('test', name)
 }
 
 hello()

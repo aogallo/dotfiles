@@ -5,7 +5,7 @@ require('bufferline').setup {
     right_mouse_command = "bdelete! %d", -- can be a string | function, see "Mouse actions"
     left_mouse_command = "buffer %d",    -- can be a string | function, see "Mouse actions"
     middle_mouse_command = nil,          -- can be a string | function, see "Mouse actions"
-    indicator_icon = '▎',
+    indicator = { style = "icon", icon = "▎" },
     modified_icon = '●',
     right_trunc_marker = '',
     name_formatter = function(buf)  -- buf contains a "name", "path" and "bufnr"

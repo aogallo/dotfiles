@@ -17,10 +17,15 @@ require'nvim-treesitter.configs'.setup {
 												'markdown',
 												'markdown_inline'
 										},
-	-- highlight = {
-	-- 	enable = true,
-	-- 	additional_vim_regex_highlighting = false,
-	-- },
+	highlight = {
+		enable = true,
+    disable = {}
+		-- additional_vim_regex_highlighting = false,
+	},
+  indent = {
+    enable = false,
+    disable = {}
+  },
 	autotag = {
 		enable = true
 	},
