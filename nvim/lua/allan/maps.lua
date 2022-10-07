@@ -17,7 +17,7 @@ map('n', '<leader>p', ':bprev<cr>', options)
 map('n', '<leader>ss', ':w <cr>', options)
 
 --Insert line
-map('n', '<leader><space>', 'I <cr><UP>', options)
+map('n', '<leader><space>u', 'I <cr><UP>', options)
 
 -- Move between screen
 map('n', '<C-l>', '<C-w>l', options)

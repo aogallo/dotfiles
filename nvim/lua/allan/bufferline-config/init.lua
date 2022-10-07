@@ -6,9 +6,7 @@ require('bufferline').setup {
     left_mouse_command = "buffer %d",    -- can be a string | function, see "Mouse actions"
     middle_mouse_command = nil,          -- can be a string | function, see "Mouse actions"
     indicator_icon = '▎',
-    buffer_close_icon = '❌',
     modified_icon = '●',
-    close_icon = '🚫',
     right_trunc_marker = '',
     name_formatter = function(buf)  -- buf contains a "name", "path" and "bufnr"
       -- remove extension from markdown files for example
@@ -72,4 +70,5 @@ vim.cmd[[
 	nnoremap <silent><leader>7 <Cmd>BufferLineGoToBuffer 7<CR>
 	nnoremap <silent><leader>8 <Cmd>BufferLineGoToBuffer 8<CR>
 	nnoremap <silent><leader>9 <Cmd>BufferLineGoToBuffer 9<CR>
+  nnoremap <silent><leader>bd :bdelete<CR>
 ]]

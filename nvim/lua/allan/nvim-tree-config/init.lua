@@ -21,6 +21,12 @@ require'nvim-tree'.setup{
       }
     },
   },
+  filters = {
+    dotfiles = false,
+    custom = {
+      '^.env$'
+    }
+  }
 --	log = {
 -- enable = true,
 --  truncate = true,

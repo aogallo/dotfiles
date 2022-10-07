@@ -42,8 +42,12 @@ return require('packer').startup(function()
 	
 
 	-- Comments
-	use { 'stsewd/tree-sitter-comment' }
-
+  use {
+      'numToStr/Comment.nvim',
+      config = function()
+          require('Comment').setup()
+      end
+  }
 	-- Lualine
 	use {
 		'nvim-lualine/lualine.nvim',
@@ -72,6 +76,14 @@ return require('packer').startup(function()
 	--Ale for standard javascript
 	use 'dense-analysis/ale'
 
+  --To work with any database
+  use {
+    'kristijanhusak/vim-dadbod-ui',
+    requires = {
+        'tpope/vim-dadbod',
+        'tpope/vim-dotenv'
+    }
+  }
 	--Automaticly set up your configuration after clonning pachker.nvim 
 	--Put this at the end after the all plugins
 	if PACKER_BOOTSTRAP then

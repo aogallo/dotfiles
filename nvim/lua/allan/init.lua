@@ -32,4 +32,9 @@ require('allan.lsp')
 --require('allan.diagnostic_signs')
 --require('allan.language_servers')
 
+-- Add confiuration Database plugin
+require('allan.vim-dadbod-ui-database-config')
 
+
+--Comment configuration repo 'numToStr/Comment.nvim',
+require('allan.comment-config')

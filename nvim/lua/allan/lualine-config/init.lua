@@ -3,11 +3,13 @@ require('lualine').setup{
 		icons_enabled = true,
 		theme = 'dracula',
 	},
+  extensions = {'nvim-tree'},
+  component_separators = { left = '', right = '' },
 	section_separatos = { left = '⎥', right = '⎜'},
 	sections = {
 		lualine_a = {'mode'},
 		lualine_b = {
-			'branch', 
+			'branch',
 			{
       'diff',
       colored = true, -- Displays a colored diff status if set to true
@@ -17,7 +19,7 @@ require('lualine').setup{
         modified = 'DiffChange', -- Changes the diff's modified color
         removed  = 'DiffDelete', -- Changes the diff's removed color you
       },
-      symbols = {added = '+', modified = '~', removed = '-'}, -- Changes the symbols used by the diff.
+      symbols = {added = ' ', modified = '', removed = ''}, -- Changes the symbols used by the diff.
       source = nil, -- A function that works as a data source for diff.
                     -- It must return a table as such:
                     --   { added = add_count, modified = modified_count, removed = removed_count }
@@ -47,20 +49,65 @@ require('lualine').setup{
       update_in_insert = false, -- Update diagnostics in insert mode.
       always_visible = false,   -- Show diagnostics even if there are none.
     }
-		},		
+		},
 		lualine_c = {
 			{
-				'filename', 
-				path = 1,
+				'filename',
+				path = 0,
 				symbols = {
 					modified = '[+]',
 					readonly = 'readonly',
 				},
-			} 
+			}
 		},
-		lualine_x = {'encoding', { 'fileformat', symbols = { unix = 'e712', dos = 'e70f', mac = 'e711' } }, 'filetype'},
+		lualine_x = {
+      {
+        'encoding',
+      },
+      {
+        'os.date()'
+      },
+      {
+        'fileformat',
+        symbols = {
+          mac = ''
+        }
+      },
+      'filetype'
+    },
 		lualine_y = {'%=', '%t%m', '%3p'},
 		lualine_z = {'location'},
 	},
+  winbar = {
+    lualine_a = {},
+    lualine_b = {},
+    lualine_c = {
+      {
+      'filename',
+      path = 1,
+      fmt = function(str) return str:gsub('/', '  ') end
+    }
+    },
+    lualine_x = {},
+    lualine_y = {},
+    lualine_z = {}
+  },
+--   tabline = {
+--   lualine_a = {},
+--   lualine_b = {'branch'},
+--   lualine_c = {'filename'},
+--   lualine_x = {},
+--   lualine_y = {},
+--   lualine_z = {}
+-- },
+  inactive_sections = {
+
+  lualine_a = {},
+  lualine_b = {},
+  lualine_c = {'filename'},
+  lualine_x = {'location'},
+  lualine_y = {},
+  lualine_z = {}
+  },
 	show_modified_status = true
 }

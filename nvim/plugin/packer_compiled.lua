@@ -69,6 +69,12 @@ end
 time([[try_loadstring definition]], false)
 time([[Defining packer_plugins]], true)
 _G.packer_plugins = {
+  ["Comment.nvim"] = {
+    config = { "\27LJ\2\n5\0\0\3\0\3\0\0066\0\0\0'\2\1\0B\0\2\0029\0\2\0B\0\1\1K\0\1\0\nsetup\fComment\frequire\0" },
+    loaded = true,
+    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/Comment.nvim",
+    url = "https://github.com/numToStr/Comment.nvim"
+  },
   ale = {
     loaded = true,
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/ale",
@@ -99,6 +105,11 @@ _G.packer_plugins = {
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/cmp-path",
     url = "https://github.com/hrsh7th/cmp-path"
   },
+  ["cmp-vsnip"] = {
+    loaded = true,
+    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/cmp-vsnip",
+    url = "https://github.com/hrsh7th/cmp-vsnip"
+  },
   ["gruvbox.nvim"] = {
     loaded = true,
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/gruvbox.nvim",
@@ -109,20 +120,10 @@ _G.packer_plugins = {
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/gv.vim",
     url = "https://github.com/junegunn/gv.vim"
   },
-  ["hydra.nvim"] = {
-    loaded = true,
-    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/hydra.nvim",
-    url = "https://github.com/anuvyklack/hydra.nvim"
-  },
   ["lspkind-nvim"] = {
     loaded = true,
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/lspkind-nvim",
     url = "https://github.com/onsails/lspkind-nvim"
-  },
-  ["lspsaga.nvim"] = {
-    loaded = true,
-    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/lspsaga.nvim",
-    url = "https://github.com/glepnir/lspsaga.nvim"
   },
   ["lualine.nvim"] = {
     loaded = true,
@@ -194,15 +195,25 @@ _G.packer_plugins = {
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/telescope.nvim",
     url = "https://github.com/nvim-telescope/telescope.nvim"
   },
-  ["tree-sitter-comment"] = {
+  ["vim-dadbod"] = {
     loaded = true,
-    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/tree-sitter-comment",
-    url = "https://github.com/stsewd/tree-sitter-comment"
+    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/vim-dadbod",
+    url = "https://github.com/tpope/vim-dadbod"
+  },
+  ["vim-dadbod-ui"] = {
+    loaded = true,
+    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/vim-dadbod-ui",
+    url = "https://github.com/kristijanhusak/vim-dadbod-ui"
   },
   ["vim-devicons"] = {
     loaded = true,
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/vim-devicons",
     url = "https://github.com/ryanoasis/vim-devicons"
+  },
+  ["vim-dotenv"] = {
+    loaded = true,
+    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/vim-dotenv",
+    url = "https://github.com/tpope/vim-dotenv"
   },
   ["vim-fugitive"] = {
     loaded = true,
@@ -219,6 +230,11 @@ _G.packer_plugins = {
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/vim-signify",
     url = "https://github.com/mhinz/vim-signify"
   },
+  ["vim-vsnip"] = {
+    loaded = true,
+    path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/vim-vsnip",
+    url = "https://github.com/hrsh7th/vim-vsnip"
+  },
   ["which-key.nvim"] = {
     loaded = true,
     path = "/Users/allangallo/.local/share/nvim/site/pack/packer/start/which-key.nvim",
@@ -227,6 +243,10 @@ _G.packer_plugins = {
 }
 
 time([[Defining packer_plugins]], false)
+-- Config for: Comment.nvim
+time([[Config for Comment.nvim]], true)
+try_loadstring("\27LJ\2\n5\0\0\3\0\3\0\0066\0\0\0'\2\1\0B\0\2\0029\0\2\0B\0\1\1K\0\1\0\nsetup\fComment\frequire\0", "config", "Comment.nvim")
+time([[Config for Comment.nvim]], false)
 if should_profile then save_profiles() end
 
 end)
