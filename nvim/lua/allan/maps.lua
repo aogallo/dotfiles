@@ -52,10 +52,13 @@ map('n', '<leader>fh', '<cmd>Telescope help_tags<cr>', options)
 
 -- Insert Mode
 map('i', 'jk', '<ESC>', options)
+map('i', 'JK', '<ESC>', options)
 
 
 -- Visual
 -- Move text up and down
+map('v', 'jk', '<ESC>', options)
+map('v', 'JK', '<ESC>', options)
 map('v', '<A-j>', ':m .+1<CR>==', options)
 map('v', '<A-k>', ':m .-2<CR>==', options)
 map('v', 'p', '"_dP', options)

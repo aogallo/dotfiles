@@ -29,8 +29,8 @@ cmp.setup({
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif vim.fn["vsnip#available"](1) == 1 then
-        feedkey("<Plug>(vsnip-expand-or-jump)", "")
+      -- elseif vim.fn["vsnip#available"](1) == 1 then
+      --   feedkey("<Plug>(vsnip-expand-or-jump)", "")
       elseif has_words_before() then
         cmp.complete()
       else

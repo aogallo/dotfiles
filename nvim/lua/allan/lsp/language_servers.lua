@@ -4,12 +4,23 @@ local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protoco
 --Format on save
 -- vim.lsp.buf.formatting_seq_sync()
 local on_attach = function(client, bufnr)
-if client.server_capabilities.document_formatting then
-  vim.api.nvim_commnad[[augroup Format]]
-  vim.api.nvim_commnad[[autocmd! * <buffer>]]
-  vim.api.nvim_commnad[[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
-  vim.api.nvim_commnad[[augroup END]]
-end
+  print(client)
+  -- client.completionProvider = {
+  --   triggerCharacters = { ".", ":", "<", "=", "/" }
+  -- }
+    if client.server_capabilities.documentFormattingProvider then
+    vim.api.nvim_command [[augroup Format]]
+    vim.api.nvim_command [[autocmd! * <buffer>]]
+    vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+    vim.api.nvim_command [[augroup END]]
+  end
+
+--   if client.server_capabilities.document_formatting then
+--     vim.api.nvim_command [[augroup Format]]
+--     vim.api.nvim_command [[autocmd! * <buffer>]]
+--     vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.format()]]
+--     vim.api.nvim_command [[augroup END]]
+--   end
 end
 
 -- Replace <YOUR_LSP_SERVER> with each lsp server you've enabled.

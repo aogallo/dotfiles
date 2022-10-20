@@ -1,8 +1,8 @@
 local wk = require('which-key')
 
 local mappings = {
-	fo = { 
-				"<cmd>lua vim.lsp.buf.formatting()<CR>",
+	fo = {
+				"<cmd>lua vim.lsp.buf.format({ async = true})<CR>",
 				"Format files"
 			},
 	l = {

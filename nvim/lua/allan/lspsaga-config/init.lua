@@ -18,4 +18,4 @@ map('n', "<leader>ca", "<cmd>Lspsaga code_action<CR>", { silent = true })
 map('v', "<leader>ca", "<cmd>Lspsaga code_action<CR>", { silent = true })
 
 -- Float terminal
-keymap("n", "<A-d>", "<cmd>Lspsaga open_floaterm<CR>", { silent = true })
+-- keymap("n", "<C-d>j", "<cmd>Lspsaga open_floaterm<CR>", { silent = true })
