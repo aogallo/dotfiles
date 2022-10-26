@@ -40,3 +40,6 @@ require('allan.vim-dadbod-ui-database-config')
 
 --Comment configuration repo 'numToStr/Comment.nvim',
 require('allan.comment-config')
+
+--Vista sidebar
+require('allan.vista')

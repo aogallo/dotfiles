@@ -3,6 +3,7 @@
 return require('packer').startup(function()
 	use 'wbthomason/packer.nvim' -- Package manager
 
+  use 'liuchengxu/vista.vim'
 	--LSP
 	use {
 		'neovim/nvim-lspconfig',
