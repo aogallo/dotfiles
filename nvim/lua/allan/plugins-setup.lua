@@ -53,7 +53,7 @@ return packer.startup(function(use)
   use 'hrsh7th/cmp-path'
 
   -- snippets
-  use 'L3MON4D3/LuaSnip'
+  use({"L3MON4D3/LuaSnip", tag = "v<CurrentMajor>.*"})
   use 'saadparwaiz1/cmp_luasnip'
   use 'rafamadriz/friendly-snippets'
 

@@ -11,7 +11,7 @@ end
 local lspkind_status, lspkind = pcall(require, "lspkind")
 if not lspkind_status then
   return
-end 
+end
 
 local cmp_autopairs_status, cmp_autopairs = pcall(require, "nvim-autopairs.completion.cmp")
 if not cmp_autopairs_status then
@@ -27,7 +27,9 @@ vim.opt.completeopt = "menu,menuone,noselect"
 cmp.setup({
   snippet = {
     expand = function(args)
-      luansip.lsp_expand(args.body)
+      -- print(vim.inspect(args))
+      luasnip.lsp_expand(args.body)
+      -- vim.fn["vsnip#anonymous"](args.body)
     end
   },
 	mapping = cmp.mapping.preset.insert({
@@ -39,8 +41,8 @@ cmp.setup({
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
-      elseif has_words_before() then
-        cmp.complete()
+      -- elseif has_words_before() then
+      --   cmp.complete()
       else
         fallback() -- The fallback function sends a already mapped key. In this case, it's probably `<Tab>`.
       end
