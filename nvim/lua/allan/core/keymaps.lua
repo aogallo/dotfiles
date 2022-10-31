@@ -7,6 +7,8 @@ keymap.set("i", "jk", "<ESC>")
 keymap.set("i", "jk", "<ESC>")
 keymap.set("n", "JK", "<ESC>")
 keymap.set("n", "jk", "<ESC>")
+keymap.set("v", "JK", "<ESC>")
+keymap.set("v", "jk", "<ESC>")
 
 -- Save file
 keymap.set("n", "<leader>ss", ":w<cr>", options)

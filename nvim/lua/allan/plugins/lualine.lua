@@ -9,7 +9,7 @@ local new_colors = {
   green = "#3EFFDC",
   violet = "#FF61EF",
   yellow = "#FFDA7B",
-  balck = "#00000"
+  black = "#000000"
 }
 
 lualine_nightfly.normal.a.bg = new_colors.blue
@@ -19,7 +19,7 @@ lualine_nightfly.command = {
   a = {
     gui = "bold",
     bg = new_colors.yellow,
-    fg = new_colors.balck,
+    fg = new_colors.black,
   }
 }
 
