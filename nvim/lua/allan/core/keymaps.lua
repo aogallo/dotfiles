@@ -38,3 +38,11 @@ keymap.set("n", "<C-l>", "<C-w>l", options)
 keymap.set("n", "<C-h>", "<C-w>h", options)
 keymap.set("n", "<C-j>", "<C-w>j", options)
 keymap.set("n", "<C-k>", "<C-w>k", options)
+
+-- Moves blocks of code in visual mode
+keymap.set("x", "u", ":move '<-2<CR>gv-gv", options)
+keymap.set("x", "d", ":move '<+1<CR>gv-gv", options)
+
+-- indentetion
+keymap.set("v", "<", "<gv", options)
+keymap.set("v", ">", ">gv", options)
