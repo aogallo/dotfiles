@@ -9,7 +9,7 @@ opt.tabstop = 2
 opt.shiftwidth = 2
 opt.expandtab = true
 opt.autoindent = true
-
+opt.mouse = a
 -- line wrapping
 opt.wrap = false
 
@@ -20,11 +20,12 @@ opt.smartcase = true
 
 -- cursor line
 opt.cursorline = true
+opt.cursorcolumn = true
 
 -- appearance
 opt.termguicolors = true
 opt.background = "dark"
--- opt.signcolumn = "yes"
+opt.signcolumn = "yes"
 
 -- backspace
 opt.backspace = "indent,eol,start"
