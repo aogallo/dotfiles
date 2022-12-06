@@ -43,6 +43,20 @@ keymap.set("n", "<C-k>", "<C-w>k", options)
 keymap.set("x", "U", ":move '<-2<CR>gv-gv", options)
 keymap.set("x", "D", ":move '<+1<CR>gv-gv", options)
 
--- indentetion
+-- Keep the selected lines in visual mode to add indentetion
 keymap.set("v", "<", "<gv", options)
 keymap.set("v", ">", ">gv", options)
+
+-- Delete single character without copying into register
+keymap.set("n", "x", '"_x', options)
+
+-- Go to end line in insert mode
+keymap.set("i", "<C-e>", "<C-o>$", options)
+
+
+---------------------
+-- Plugin Keybinds
+---------------------
+
+-- vim-maximizer
+keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>", options)

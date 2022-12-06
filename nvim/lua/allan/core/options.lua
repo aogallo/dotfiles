@@ -37,4 +37,7 @@ opt.clipboard: append("unnamedplus")
 opt.splitright = true
 opt.splitbelow = true
 
+-- add - as word
 opt.iskeyword:append("-")
+
+opt.lazyredraw = true
