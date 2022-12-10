@@ -37,10 +37,12 @@ vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(
 local on_attach = function(client, bufnr)
   local options = { noremap = true, silent = true, buffer = bufnr }
 
+
   -- set keybinds
   keymap.set("n", "gf", "<cmd>Lspsaga lsp_finder<CR>", options)
   keymap.set("n", "<leader>gd", "<cmd>lua vim.lsp.buf.declaration()<CR>", options)
-  keymap.set("n", "gd", "<cmd>Lspsaga peek_definition<CR>", options)
+  -- keymap.set("n", "gd", "<cmd>Lspsaga peek_definition<CR>", options)
+  keymap.set("n", "gd", "<cmd>lua vim.lsp.buf.definition()<CR>", options)
   keymap.set("n", "gi", "<cmd>lua vim.lsp.buf.implementation()<CR>", options)
   keymap.set("n", "<leader>ca", "<cmd>Lspsaga code_action<CR>", options)
   keymap.set("n", "<leader>rn", "<cmd>Lspsaga rename<CR>", options)
