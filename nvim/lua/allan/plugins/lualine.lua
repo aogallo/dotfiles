@@ -30,7 +30,8 @@ lualine.setup{
 	},
   extensions = {
     'nvim-tree',
-    'fugitive'
+    'fugitive',
+    'toggleterm'
   },
   component_separators = { left = '', right = '' },
 	section_separatos = { left = '', right = ''},
@@ -65,10 +66,15 @@ lualine.setup{
     lualine_b = {},
     lualine_c = {
       {
-      'filename',
-      path = 1,
-      fmt = function(str) return str:gsub('/', '  ') end
-    }
+        'filename',
+        path = 1,
+        fmt = function(str) return str:gsub('/', '  ') end,
+        symbols = {
+          modified = ' ●',      -- Text to show when the buffer is modified
+          alternate_file = '#', -- Text to show to identify the alternate file
+          directory =  '',     -- Text to show when the buffer is a directory
+        },
+      }
     },
     lualine_x = {},
     lualine_y = {},

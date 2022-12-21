@@ -5,10 +5,9 @@ end
 
 gitsigns.setup()
 
+local keymap = vim.keymap
 
-map('n', '<leader>gj', '<plug>(signify-next-hunk)', options)
-map('n', '<leader>gk', '<plug>(signify-prev-hunk)', options)
-map('n', '<leader>gJ', '9999<leader>gJ', options)
-map('n', '<leader>gK', '9999<leader>gk', options)
-
-
+keymap.set('n', '<leader>gj', '<plug>(signify-next-hunk)', options)
+keymap.set('n', '<leader>gk', '<plug>(signify-prev-hunk)', options)
+keymap.set('n', '<leader>gJ', '9999<leader>gJ', options)
+keymap.set('n', '<leader>gK', '9999<leader>gk', options)
