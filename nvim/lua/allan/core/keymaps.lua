@@ -57,6 +57,9 @@ keymap.set("n", "x", '"_x', options)
 -- Go to end line in insert mode
 keymap.set("i", "<C-e>", "<C-o>$", options)
 
+--Format file
+keymap.set("v", "<leader>fm", ":lua vim.lsp.buf.format()", options)
+
 
 ---------------------
 -- Plugin Keybinds

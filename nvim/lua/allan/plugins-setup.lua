@@ -29,15 +29,16 @@ return packer.startup(function(use)
 
   use 'kyazdani42/nvim-web-devicons'
 
+  -- Thems
   use 'bluz71/vim-nightfly-guicolors' -- theme
-
   use 'ellisonleao/gruvbox.nvim' -- theme groupbox
+  use "rebelot/kanagawa.nvim"
 
   -- use ('christoomey/vim-tmux-navigator') -- tmux & split navigation
 
   use ('szw/vim-maximizer') -- maximizes and resotres current window
 
-  use 'numToStr/Comment.nvim' -- comments
+  use 'tpope/vim-commentary' -- comments
 
   use 'kyazdani42/nvim-tree.lua' -- tree
 

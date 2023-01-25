@@ -1,4 +1,4 @@
-local setup, comment = pcall(require, "Comment")
+local setup, comment = pcall(require, "vim-commentary")
 
 if not setup then
 	return

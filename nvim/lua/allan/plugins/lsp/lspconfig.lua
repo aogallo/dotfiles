@@ -53,6 +53,8 @@ local on_attach = function(client, bufnr)
   keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>", options)
   keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<CR>", options)
 
+  print(client)
+
   if client.name == "tsserver" then
     keymap.set("n", "<leader>rf", ":TypescriptRenameFile<CR>", options)
   end
@@ -61,7 +63,8 @@ local on_attach = function(client, bufnr)
   if client.server_capabilities.documentFormattingProvider then
     vim.api.nvim_command [[augroup Format]]
     vim.api.nvim_command [[autocmd! * <buffer>]]
-    vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+    -- vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+    vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.format()]]
     vim.api.nvim_command [[augroup END]]
   end
 end
@@ -79,9 +82,20 @@ lspconfig["pyright"].setup{
   capabilities = capabilities,
 }
 
+local capabilitiesForCss = vim.lsp.protocol.make_client_capabilities()
+capabilitiesForCss.textDocument.completion.completionItem.snippetSupport = true
+
+lspconfig["jsonls"].setup {
+  on_attach = on_attach,
+  capabilities = capabilitiesForCss,
+}
+
 lspconfig["cssls"].setup {
   on_attach = on_attach,
   capabilities = capabilities,
+  filetypes = {
+    "css"
+  }
 }
 
 lspconfig["tsserver"].setup{
