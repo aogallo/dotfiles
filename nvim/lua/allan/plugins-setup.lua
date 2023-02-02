@@ -33,7 +33,7 @@ return packer.startup(function(use)
   use 'bluz71/vim-nightfly-guicolors' -- theme
   use 'ellisonleao/gruvbox.nvim' -- theme groupbox
   use "rebelot/kanagawa.nvim"
-
+  use 'EdenEast/nightfox.nvim'
   -- use ('christoomey/vim-tmux-navigator') -- tmux & split navigation
 
   use ('szw/vim-maximizer') -- maximizes and resotres current window

@@ -18,8 +18,11 @@ keymap.set("i", "<C-s>", "<ESC>:w<cr>", options)
 keymap.set("n", "<leader>nh", ":nohl<CR>", options)
 
 -- Increment & Decrement
-keymap.set("n", "<leader>+", "<C-a>", options)
-keymap.set("n", "<leader>-", "<C-x>", options)
+keymap.set("n", "+", "<C-a>", options)
+keymap.set("n", "-", "<C-x>", options)
+
+-- Select all
+keymap.set("n", "<C-a>", "gg<S-v>G", options)
 
 -- split window
 keymap.set("n", "<leader>sv", "<C-w>v", options) -- vertically

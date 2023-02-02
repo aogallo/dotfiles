@@ -25,6 +25,7 @@ opt.cursorcolumn = true
 -- appearance
 opt.termguicolors = true
 opt.background = "dark"
+-- opt.background = "light"
 opt.signcolumn = "yes"
 
 -- backspace
