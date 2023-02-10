@@ -4,7 +4,7 @@ if not status then
  return
 end
 
-saga.init_lsp_saga({
+saga.setup({
   code_action_icon = ' ',
   move_in_saga = {
     prev = "<C-k>",

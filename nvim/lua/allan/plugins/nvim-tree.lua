@@ -8,6 +8,7 @@ vim.g.loaded = 1
 vim.g.loaded_netrwPlugin = 1
 
 vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF]])
+
 local keymap = vim.api.nvim_set_keymap
 local options = { noremap = true, silent = true }
 
@@ -26,6 +27,20 @@ nvim_tree.setup {
     dotfiles = false,
     custom = {
       '^.env$'
+    }
+  },
+  log = {
+    enable = true,
+    truncate = true,
+    types = {
+      all = false,
+      config = false,
+      copy_paste = true,
+      dev = true,
+      diagnostics = false,
+      git = true,
+      profile = false,
+      watcher = false,
     }
   }
 }
