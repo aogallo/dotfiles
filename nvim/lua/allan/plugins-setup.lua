@@ -43,6 +43,11 @@ return packer.startup(function(use)
   use 'kyazdani42/nvim-tree.lua' -- tree
 
   use 'nvim-lualine/lualine.nvim' -- statusline
+  use {
+    'akinsho/bufferline.nvim', -- buffer line
+    tag = "v3.*",
+    requires = 'nvim-tree/nvim-web-devicons'
+  }
 
   -- Telescope
   use ({ "nvim-telescope/telescope-fzf-native.nvim", run = "make" })

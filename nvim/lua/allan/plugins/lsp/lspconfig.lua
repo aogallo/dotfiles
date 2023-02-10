@@ -37,7 +37,6 @@ vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(
 local on_attach = function(client, bufnr)
   local options = { noremap = true, silent = true, buffer = bufnr }
 
-
   -- set keybinds
   keymap.set("n", "gf", "<cmd>Lspsaga lsp_finder<CR>", options)
   keymap.set("n", "<leader>gd", "<cmd>lua vim.lsp.buf.declaration()<CR>", options)
@@ -53,7 +52,7 @@ local on_attach = function(client, bufnr)
   keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>", options)
   keymap.set("n", "<leader>o", "<cmd>LSoutlineToggle<CR>", options)
 
-  print(client)
+  print(vim.inspect(client))
 
   if client.name == "tsserver" then
     keymap.set("n", "<leader>rf", ":TypescriptRenameFile<CR>", options)
@@ -98,9 +97,15 @@ lspconfig["cssls"].setup {
   }
 }
 
+lspconfig["eslint"].setup  {
+  on_attach = on_attach,
+  capabilities = capabilities,
+}
+
 lspconfig["tsserver"].setup{
   on_attach = on_attach,
   capabilities = capabilities,
+  hostInfo = "neovim",
   filetypes = {
     'typescriptreact',
     'typescript',
