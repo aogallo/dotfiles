@@ -92,6 +92,9 @@ return packer.startup(function(use)
   use 'tpope/vim-rhubarb'
   use 'junegunn/gv.vim'
 
+  -- Spell word
+  use 'jose-elias-alvarez/null-ls.nvim'
+
   -- Terminal
   use {
     "akinsho/toggleterm.nvim",
