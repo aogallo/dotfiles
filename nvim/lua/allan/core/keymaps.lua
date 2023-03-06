@@ -59,6 +59,8 @@ keymap.set("n", "x", '"_x', options)
 
 -- Go to end line in insert mode
 keymap.set("i", "<C-e>", "<C-o>$", options)
+-- go to the end line and insert new line
+keymap.set("i", "<C-x>", "<esc>o", options)
 
 --Format file
 keymap.set("v", "<leader>fm", ":lua vim.lsp.buf.format()", options)
@@ -70,3 +72,22 @@ keymap.set("v", "<leader>fm", ":lua vim.lsp.buf.format()", options)
 
 -- vim-maximizer
 keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>", options)
+
+-- bufferline
+keymap.set("n", "<leader>1", "<Cmd>BufferLineGoToBuffer 1<CR>", options)
+keymap.set("n", "<leader>2", "<Cmd>BufferLineGoToBuffer 2<CR>", options)
+keymap.set("n", "<leader>3", "<Cmd>BufferLineGoToBuffer 3<CR>", options)
+keymap.set("n", "<leader>4", "<Cmd>BufferLineGoToBuffer 4<CR>", options)
+keymap.set("n", "<leader>5", "<Cmd>BufferLineGoToBuffer 5<CR>", options)
+keymap.set("n", "<leader>6", "<Cmd>BufferLineGoToBuffer 6<CR>", options)
+keymap.set("n", "<leader>7", "<Cmd>BufferLineGoToBuffer 7<CR>", options)
+keymap.set("n", "<leader>8", "<Cmd>BufferLineGoToBuffer 8<CR>", options)
+keymap.set("n", "<leader>9", "<Cmd>BufferLineGoToBuffer 9<CR>", options)
+keymap.set("n", "<leader>$", "<Cmd>BufferLineGoToBuffer -1<CR>", options)
+
+
+-- L3MON4D3/LuaSnip
+keymap.set("i", "<c-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", options)
+keymap.set("s", "<c-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", options)
+keymap.set("i", "<c-k>", "<cmd>lua require'luasnip'.jump(-1)<CR>", options)
+keymap.set("s", "<c-k>", "<cmd>lua require'luasnip'.jump(-1)<CR>", options)

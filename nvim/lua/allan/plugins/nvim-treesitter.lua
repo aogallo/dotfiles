@@ -5,9 +5,9 @@ end
 
 treesitter.setup {
   auto_install = true,
-  highlight = {
-    enable = true
-  },
+  -- highlight = {
+  --   enable = true
+  -- },
   autotag = {
     enable = true
   },
@@ -33,6 +33,7 @@ treesitter.setup {
     "vim",
     "tsx",
     "bash",
+    "sql",
     "gitignore",
     "typescript",
     "markdown",
