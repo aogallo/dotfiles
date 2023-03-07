@@ -3,11 +3,10 @@
 ## Tmux Configuration
 
 ### Tmux installation
-To install tmux go to Installation section in this [tmux repository](https://github.com/tmux/tmux#welcome-to-tmux)
-
+To install tmux go to Installation section in this <a target="_blank" href="https://github.com/tmux/tmux#welcome-to-tmux">tmux repository</a>
 
 ### Tmux plugins
-For manage plugins in Tmux clone the following [tmux-plugins repository](https://github.com/tmux-plugins/tpm)
+  For manage plugins in Tmux clone the following <a target="_blank" href="https://github.com/tmux-plugins/tpm">tmux-plugins repository</a>
 
 ```bash
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
