@@ -1,10 +1,8 @@
 # Files
 
-## tmux Configuration
+## Tmux Configuration
 
-For manage plugins in Tmux clone the following repository:
-
-https://github.com/tmux-plugins/tpm
+For manage plugins in Tmux clone the following (repository)[https://github.com/tmux-plugins/tpm]
 
 ```bash
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
