@@ -32,4 +32,5 @@ keymap.set("n","<leader>fs", "<cmd>Telescope live_grep<cr>", options)
 keymap.set("n","<leader>fc", "<cmd>Telescope grep_string<cr>", options)
 keymap.set("n","<leader>fb", "<cmd>Telescope buffers<cr>", options)
 keymap.set("n","<leader>fh", "<cmd>Telescope help_tags<cr>", options)
-keymap.set("n","<leader>fw", "<cmd>Telescope current_buffer_fuzzy_find<cr>", options)
+keymap.set("n","<leader>fw", ":lua require('telescope.builtin').current_buffer_fuzzy_find({layout_strategy='vertical',layout_config={width=0.5}})<cr>", options)
+

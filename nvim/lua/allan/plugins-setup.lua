@@ -32,7 +32,7 @@ return packer.startup(function(use)
   -- Thems
   use 'bluz71/vim-nightfly-guicolors' -- theme
   use 'ellisonleao/gruvbox.nvim' -- theme groupbox
-  use "rebelot/kanagawa.nvim"
+  -- use "rebelot/kanagawa.nvim"
   use 'EdenEast/nightfox.nvim'
   -- use ('christoomey/vim-tmux-navigator') -- tmux & split navigation
 
@@ -74,7 +74,7 @@ return packer.startup(function(use)
   use 'jose-elias-alvarez/typescript.nvim'
   use 'onsails/lspkind.nvim'
 
-  -- Highlighting Syntax
+  -- Highlighting Syntaxuse
   use {
     'nvim-treesitter/nvim-treesitter',
     run = function() require('nvim-treesitter.install').update({ with_sync = true }) end
@@ -103,6 +103,14 @@ return packer.startup(function(use)
       require("toggleterm").setup()
     end
   }
+
+  -- debugging
+  use 'mfussenegger/nvim-dap'
+
+  -- Flutter plugins
+  use 'dart-lang/dart-vim-plugin'
+  use 'natebosch/vim-lsc'
+  use 'natebosch/vim-lsc-dart'
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins

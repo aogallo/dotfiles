@@ -9,11 +9,12 @@ vim.g.loaded_netrwPlugin = 1
 
 vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF]])
 
+
 local keymap = vim.api.nvim_set_keymap
 local options = { noremap = true, silent = true }
 
 nvim_tree.setup {
-  	renderer = {
+  renderer = {
 		icons = {
 			glyphs = {
 				folder = {
@@ -44,5 +45,11 @@ nvim_tree.setup {
     }
   }
 }
+
+local function open_nvim_tree (data)
+  require("nvim-tree.api").tree.toggle({ focus = false, find_file = true,})
+end
+
+vim.api.nvim_create_autocmd({ "VimEnter" }, { callback = open_nvim_tree })
 
 keymap("n", "<leader>e", ":NvimTreeToggle<CR>", options)

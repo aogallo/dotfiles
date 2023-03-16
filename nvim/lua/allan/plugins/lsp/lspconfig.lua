@@ -37,6 +37,7 @@ vim.lsp.handlers['textDocument/publishDiagnostics'] = vim.lsp.with(
 local on_attach = function(client, bufnr)
   local options = { noremap = true, silent = true, buffer = bufnr }
 
+
   -- set keybinds
   keymap.set("n", "gf", "<cmd>Lspsaga lsp_finder<CR>", options)
   keymap.set("n", "<leader>gd", "<cmd>lua vim.lsp.buf.declaration()<CR>", options)
@@ -115,3 +116,5 @@ lspconfig["tsserver"].setup{
     'typescript.tsx'
   }
 }
+
+lspconfig["dartls"].setup{}

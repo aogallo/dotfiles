@@ -20,7 +20,7 @@ set -g @plugin 'tmux-plugins/tpm'
 
 ### Tmux Theme
 
-I use dracula them for tmux, add the following command in your `.tmux.conf` file:
+I use dracula theme for tmux, to install the theme adding the following command in your `.tmux.conf` file:
 
 ```bash
 set -g @plugin 'dracula/tmux'

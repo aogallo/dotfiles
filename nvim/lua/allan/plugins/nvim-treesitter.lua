@@ -26,6 +26,8 @@ treesitter.setup {
     "html",
     "python",
     "dockerfile",
+    "dart",
+    "dot",
     "json",
     "graphql",
     "yaml",
