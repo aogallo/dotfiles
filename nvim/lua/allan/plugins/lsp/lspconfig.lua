@@ -117,4 +117,7 @@ lspconfig["tsserver"].setup{
   }
 }
 
-lspconfig["dartls"].setup{}
+-- lspconfig["dartls"].setup{
+--   on_attach = on_attach,
+--   capabilities = capabilities,
+-- }

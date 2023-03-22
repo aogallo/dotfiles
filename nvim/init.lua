@@ -20,3 +20,5 @@ require("allan.plugins.toggleterm")
 -- require("allan.plugins.bufferline")
 require("allan.plugins.null-ls")
 require("allan.plugins.flutter_dart")
+
+require("allan.plugins.nvim-dap")
