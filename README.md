@@ -1,5 +1,23 @@
 # Files
 
+## Hombebrew
+Install Hombebrew execute this command
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+For more information about Hombebrew you can visit this [web-site](https://brew.sh/)
+
+## NVIM
+Install nvim by brew
+
+```bash
+brew install nvim
+```
+
+For more information about Neovim you can visit this [neovim](https://neovim.io/)
+
 ## Tmux Configuration
 
 ### Tmux installation
