@@ -9,6 +9,16 @@ Install Hombebrew execute this command
 
 For more information about Hombebrew you can visit this [web-site](https://brew.sh/)
 
+## iterm2
+
+[iterm2](https://iterm2.com/)
+
+NOTE: change the key maps to `Natural Text Editing`
+
+Go to Preferences -> Profile -> Keys -> Key Mappings
+
+Click in `Presets` and choose `Natural Text Editing`
+
 ## NVIM
 Install nvim by brew
 
