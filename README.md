@@ -9,15 +9,27 @@ Install Hombebrew execute this command
 
 For more information about Hombebrew you can visit this [web-site](https://brew.sh/)
 
+## Font
+
+I use the JetBrains Mono font
+
+You can download [here](https://www.jetbrains.com/lp/mono/) to install follow the instructions from the page.
+
 ## iterm2
 
 [iterm2](https://iterm2.com/)
 
-NOTE: change the key maps to `Natural Text Editing`
+**NOTE**: change the key maps to `Natural Text Editing`
 
 Go to Preferences -> Profile -> Keys -> Key Mappings
 
 Click in `Presets` and choose `Natural Text Editing`
+
+**Configure the font in iTerm2**
+
+Go to Preferences -> Profile -> Text -> Font
+
+Choose the `JetBrainsMono Nerd Font Mono` font and active the `Use ligatures` option.
 
 ## NVIM
 Install nvim by brew
