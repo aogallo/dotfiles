@@ -1,0 +1,44 @@
+{
+  "clg": {
+    "prefix": "clg",
+    "body": [
+      "console.log($1)"
+    ],
+    "description": "Console log"
+  },
+  "ret": {
+    "prefix": "ret",
+    "body": [
+      "export const $1 = $2(req: Request, res: Response) => {",
+      " try {",
+      "   $3",
+      "  } catch (error) {",
+      "    if (error instanceof Error) {",
+      "     console.log(`Error to retrieve a treatment plan ${error.message}`)",
+      "    }",
+      " res",
+      " .status(500)",
+      ".json({ success: false, error: 'Comuniquese con su administrador' })",
+      "}",
+      "}"
+    ]
+  },
+  "iret": {
+    "prefix": "iret",
+    "body": [
+      "import { Request, Response } from 'express'",
+      "export const $1 = $2(req: Request, res: Response) => {",
+      " try {",
+      "   $3",
+      "  } catch (error) {",
+      "    if (error instanceof Error) {",
+      "     console.log(`Error to retrieve a treatment plan ${error.message}`)",
+      "    }",
+      " res",
+      " .status(500)",
+      ".json({ success: false, error: 'Comuniquese con su administrador' })",
+      "}",
+      "}"
+    ]
+  }
+}
