@@ -65,3 +65,11 @@ I use dracula theme for tmux, to install the theme adding the following command 
 ```bash
 set -g @plugin 'dracula/tmux'
 ```
+
+## Create a symbolic link
+
+```bash
+ln -s ~/dotfiles/nvim ~/.config
+```
+
+* [ripgrep](https://github.com/BurntSushi/ripgrep)

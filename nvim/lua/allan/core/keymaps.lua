@@ -2,7 +2,7 @@ vim.g.mapleader = " "
 
 local keymap = vim.keymap
 -- local keymap = vim.api.nvim_set_keymap
-local options = { noremap = true, silent = true}
+local options = { noremap = true, silent = true }
 
 -- general keymaps
 keymap.set("i", "jk", "<ESC>", options)
@@ -11,7 +11,7 @@ keymap.set("v", "<leader>JK", "<ESC>", options)
 keymap.set("v", "<leader>jk", "<ESC>", options)
 
 -- Save file
-keymap.set("n", "<leader>ss", ":w<cr>", options)
+keymap.set("n", "<leader>w", ":w<cr>", options)
 keymap.set("i", "<C-s>", "<ESC>:w<cr>", options)
 
 -- Search
@@ -25,16 +25,16 @@ keymap.set("n", "-", "<C-x>", options)
 keymap.set("n", "<C-a>", "gg<S-v>G", options)
 
 -- split window
-keymap.set("n", "<leader>sv", "<C-w>v", options) -- vertically
-keymap.set("n", "<leader>sh", "<C-w>s", options) -- horizontally
-keymap.set("n", "<leader>se", "<C-w>=", options) -- make split windows equeal width
+keymap.set("n", "<leader>sv", "<C-w>v", options)     -- vertically
+keymap.set("n", "<leader>sh", "<C-w>s", options)     -- horizontally
+keymap.set("n", "<leader>se", "<C-w>=", options)     -- make split windows equeal width
 keymap.set("n", "<leader>sx", ":close<CR>", options) -- close current split window
 
 -- tab move
-keymap.set("n", "<leader>to", ":tabnew<CR>", options) -- open new tab
+keymap.set("n", "<leader>to", ":tabnew<CR>", options)   -- open new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>", options) -- close current tab
-keymap.set("n", "<leader>tn", ":tabn<CR>", options) -- go to next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>", options) -- go to previous tab
+keymap.set("n", "<leader>tn", ":tabn<CR>", options)     -- go to next tab
+keymap.set("n", "<leader>tp", ":tabp<CR>", options)     -- go to previous tab
 
 -- Move between screen
 keymap.set("n", "<C-l>", "<C-w>l", options)
@@ -71,7 +71,7 @@ keymap.set("v", "<leader>fm", ":lua vim.lsp.buf.format()", options)
 ---------------------
 
 -- vim-maximizer
-keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>", options)
+--keymap.set("n", "<leader>sm", ":MaximizerToggle<CR>", options)
 
 -- bufferline
 keymap.set("n", "<leader>1", "<Cmd>BufferLineGoToBuffer 1<CR>", options)

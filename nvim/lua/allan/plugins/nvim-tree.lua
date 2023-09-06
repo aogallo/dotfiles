@@ -4,11 +4,8 @@ if not status then
   return
 end
 
-vim.g.loaded = 1
+vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
-
-vim.cmd([[ highlight NvimTreeIndentMarker guifg=#3FC5FF]])
-
 
 local keymap = vim.api.nvim_set_keymap
 local options = { noremap = true, silent = true }
@@ -18,8 +15,10 @@ nvim_tree.setup {
 		icons = {
 			glyphs = {
 				folder = {
-					arrow_closed = "", -- arrow when folder is closed
-					arrow_open = "", -- arrow when folder is open
+					-- arrow_closed = "", -- arrow when folder is closed
+          arrow_closed = "",
+					-- arrow_open = "", -- arrow when folder is open
+          arrow_open = ""
 				},
 			},
 		},
@@ -46,10 +45,10 @@ nvim_tree.setup {
   }
 }
 
-local function open_nvim_tree (data)
-  require("nvim-tree.api").tree.toggle({ focus = false, find_file = true,})
-end
+-- local function open_nvim_tree (data)
+--   require("nvim-tree.api").tree.toggle({ focus = false, find_file = true,})
+-- end
 
-vim.api.nvim_create_autocmd({ "VimEnter" }, { callback = open_nvim_tree })
+-- vim.api.nvim_create_autocmd({ "VimEnter" }, { callback = open_nvim_tree })
 
 keymap("n", "<leader>e", ":NvimTreeToggle<CR>", options)
