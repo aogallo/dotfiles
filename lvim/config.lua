@@ -44,6 +44,17 @@ lvim.builtin.terminal.open_mapping = "<c-t>"
 
 -- TroubleToggle
 lvim.keys.normal_mode["<leader>dt"] = ":TroubleToggle<CR>"
+-- lvim.keys.normal_mode["<leader>mp"] = ":MarkdownPreview<CR>"
+-- lvim.keys.normal_mode["<leader>ms"] = ":MarkdownPreviewStop<CR>"
+-- lvim.keys.normal_mode["<leader>mt"] = ":MarkdownPreviewToggle<CR>"
+
+lvim.builtin.which_key.mappings["m"] = {
+  name = '+Markdown',
+  p = { ":MarkdownPreview<CR>" },
+  s = { ":MarkdownPreviewStop<CR>" },
+  t = { ":MarkdownPreviewToggle<CR>" }
+}
+
 
 -- -- Use which-key to add extra bindings with the leader-key prefix
 -- lvim.builtin.which_key.mappings["W"] = { "<cmd>noautocmd w<cr>", "Save without formatting" }
@@ -54,6 +65,8 @@ lvim.builtin.which_key.mappings["t"] = {
   v = { "<cmd>2ToggleTerm size=30 direction=vertical<cr>", "Split vertical" },
   h = { "<cmd>2ToggleTerm size=30 direction=horizontal<cr>", "Split horizontal" },
 }
+
+
 -- -- Change theme settings
 -- lvim.colorscheme = "lunar"
 
@@ -62,6 +75,10 @@ lvim.builtin.alpha.mode = "dashboard"
 lvim.builtin.terminal.active = true
 lvim.builtin.nvimtree.setup.view.side = "left"
 lvim.builtin.nvimtree.setup.renderer.icons.show.git = true
+-- lvim.builtin.nvimtree.setup.update_focused_file.enable = false
+lvim.builtin.nvimtree.setup.update_focused_file.update_root = false
+lvim.builtin.nvimtree.setup.actions.change_dir.enable = false
+lvim.builtin.nvimtree.setup.actions.change_dir.global = false
 
 -- Automatically install missing parsers when entering buffer
 lvim.builtin.treesitter.auto_install = true
@@ -81,8 +98,9 @@ lvim.builtin.treesitter.rainbow.enable = true
 -- ---configure a server manually. IMPORTANT: Requires `:LvimCacheReset` to take effect
 -- ---see the full default list `:lua =lvim.lsp.automatic_configuration.skipped_servers`
 -- vim.list_extend(lvim.lsp.automatic_configuration.skipped_servers, { "pyright" })
-local opts = {} -- check the lspconfig documentation for a list of all possible options
-require("lvim.lsp.manager").setup("eslint_d", opts)
+-- check the lspconfig documentation for a list of all possible options
+-- local opts = {}
+-- require("lvim.lsp.manager").setup("eslint_d", opts)
 
 -- ---remove a server from the skipped list, e.g. eslint, or emmet_ls. IMPORTANT: Requires `:LvimCacheReset` to take effect
 -- ---`:LvimInfo` lists which server(s) are skipped for the current filetype
@@ -104,7 +122,14 @@ local linters = require "lvim.lsp.null-ls.linters"
 
 -- linters and formatters <https://www.lunarvim.org/docs/languages#lintingformatting>
 linters.setup {
-  { name = "eslint_d", filetype = { "typescript", "typescriptreact", "javascriptreact", "javascript" } }
+  { name = "eslint", filetype = { "typescript", "typescriptreact", "javascriptreact", "javascript" } }
+}
+
+local code_actions = require "lvim.lsp.null-ls.code_actions"
+code_actions.setup {
+  {
+    name = "proselint",
+  },
 }
 
 local formatters = require("lvim.lsp.null-ls.formatters")
@@ -119,7 +144,11 @@ formatters.setup {
       "--single-quote",
       "--jsx-single-quote"
     },
-    filetypes = { "typescript", "typescriptreact", "css" },
+    filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "css", "scss", "yaml", "yml" },
+  },
+  {
+    command = "prettier",
+    filetypes = { "scss" },
   },
 }
 -- -- Additional Plugins <https://www.lunarvim.org/docs/plugins#user-plugins>
@@ -176,14 +205,6 @@ lvim.plugins = {
     end,
   },
   {
-    "stevearc/dressing.nvim",
-    config = function()
-      require("dressing").setup({
-        input = { enabled = false },
-      })
-    end,
-  },
-  {
     "kylechui/nvim-surround",
     version = "*", -- Use for stability; omit to use `main` branch for the latest features
     event = "VeryLazy",
@@ -214,8 +235,21 @@ lvim.plugins = {
   {
     "sindrets/diffview.nvim",
     event = "BufRead"
-  }
+  },
+  {
+    "iamcco/markdown-preview.nvim",
+    build = "cd app && npm install",
+    ft = "markdown",
+    config = function()
+      vim.g.mkdp_auto_start = 1
+    end,
+  },
+  --preview color
+  {
+    'brenoprata10/nvim-highlight-colors'
+  },
 }
+
 
 
 --vim-surround configuration
@@ -318,3 +352,13 @@ require("dap").configurations.typescript = {
 }
 
 --DAP GUI CONFIGURATION
+
+-- local M = {}
+
+-- M.test = function()
+--   print("hola")
+-- end
+
+-- M.test()
+
+-- return M
