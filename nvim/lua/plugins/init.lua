@@ -70,32 +70,45 @@ return {
     dependencies = {
       {
         'williamboman/mason.nvim',
-        config=true
+        config = true
       },
       {
         'williamboman/mason-lspconfig.nvim',
         config = function()
-          require ( "mason-lspconfig").setup({
-  ensure_installed = {
-    "tsserver",
-    "html",
-    "cssls",
-    "lua_ls",
-    "astro",
-    "bashls",
-    "dockerls",
-    "jsonls",
-    "marksman",
-    "tailwindcss",
-    "yamlls"
-  }
-})
-end
+          require("mason-lspconfig").setup({
+            ensure_installed = {
+              "tsserver",
+              "html",
+              "cssls",
+              "lua_ls",
+              "astro",
+              "bashls",
+              "dockerls",
+              "jsonls",
+              "marksman",
+              "tailwindcss",
+              "yamlls"
+            }
+          })
+        end
       }
     },
     config = function()
       -- require 'allan.plugins.lsp.lspconfig'
       require 'allan.plugins.lsp'
+    end
+  },
+  {
+    'hrsh7th/nvim-cmp',
+    dependencies = {
+      { 'hrsh7th/cmp-nvim-lsp' },
+      { 'hrsh7th/cmp-buffer' },
+      { 'hrsh7th/cmp-path' },
+      { 'hrsh7th/cmp-cmdline' },
+      {'L3MON4D3/LuaSnip'}
+    },
+    config = function ()
+      require 'allan.plugins.nvimcmp'
     end
   },
 }

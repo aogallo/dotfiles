@@ -25,6 +25,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(ev)
     -- Enable completion triggered by <c-x><c-o>
     vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
+    print(vim.inspect(ev))
 
     -- Buffer local mappings.
     -- See `:help vim.lsp.*` for documentation on any of the below functions
@@ -46,5 +47,14 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<space>f', function()
       vim.lsp.buf.format { async = true }
     end, opts)
+
+--     if client.server_capabilities.documentFormattingProvider then
+--       vim.api.nvim_command [[augroup Format]]
+--       vim.api.nvim_command [[autocmd! * <buffer>]]
+--       -- vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
+--       vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.format()]]
+--       vim.api.nvim_command [[augroup END]]
+--     end
+
   end,
 })
