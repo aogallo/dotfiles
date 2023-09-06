@@ -15,7 +15,7 @@ keymap.set("n", "<leader>w", ":w<cr>", options)
 keymap.set("i", "<C-s>", "<ESC>:w<cr>", options)
 
 -- Search
-keymap.set("n", "<leader>nh", ":nohl<CR>", options)
+keymap.set("n", "<leader>h", ":nohl<CR>", options)
 
 -- Increment & Decrement
 keymap.set("n", "+", "<C-a>", options)
