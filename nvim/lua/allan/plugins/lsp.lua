@@ -43,7 +43,8 @@ vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(ev)
     -- Enable completion triggered by <c-x><c-o>
     vim.bo[ev.buf].omnifunc = 'v:lua.vim.lsp.omnifunc'
-    -- print(vim.inspect(ev))
+
+    -- print(vim.inspect(ev.client_id))
 
     -- Buffer local mappings.
     -- See `:help vim.lsp.*` for documentation on any of the below functions

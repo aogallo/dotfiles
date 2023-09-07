@@ -2,7 +2,8 @@ vim.g.mapleader = " "
 
 local keymap = vim.keymap
 -- local keymap = vim.api.nvim_set_keymap
-local options = { noremap = true, silent = true }
+-- local options = { noremap = true, silent = true }
+local options = { noremap = true,  }
 
 -- general keymaps
 keymap.set("i", "jk", "<ESC>", options)
@@ -11,7 +12,7 @@ keymap.set("v", "<leader>JK", "<ESC>", options)
 keymap.set("v", "<leader>jk", "<ESC>", options)
 
 -- Save file
-keymap.set("n", "<leader>w", ":lua vim.lsp.buf.format {async=true}<cr> :w<cr>", options)
+keymap.set("n", "<leader>w", ":w<cr>", options)
 keymap.set("i", "<C-s>", "<ESC>:w<cr>", options)
 
 -- Search
