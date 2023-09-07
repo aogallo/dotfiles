@@ -11,7 +11,7 @@ keymap.set("v", "<leader>JK", "<ESC>", options)
 keymap.set("v", "<leader>jk", "<ESC>", options)
 
 -- Save file
-keymap.set("n", "<leader>w", ":w<cr>", options)
+keymap.set("n", "<leader>w", ":lua vim.lsp.buf.format {async=true}<cr> :w<cr>", options)
 keymap.set("i", "<C-s>", "<ESC>:w<cr>", options)
 
 -- Search
