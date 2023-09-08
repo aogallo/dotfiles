@@ -15,7 +15,7 @@ nvim_tree.setup {
     enable = true
   },
   renderer = {
-    root_folder_label = "",
+    root_folder_label = ":t",
     icons = {
       glyphs = {
         folder = {
@@ -46,6 +46,21 @@ nvim_tree.setup {
       git = true,
       profile = false,
       watcher = false,
+    }
+  },
+  actions = {
+    open_file = {
+      quit_on_open = false,
+      resize_window = false,
+      window_picker = {
+        enable = true,
+        picker = "default",
+        chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890",
+        exclude = {
+          filetype = { "notify", "lazy", "qf", "diff", "fugitive", "fugitiveblame" },
+          buftype = { "nofile", "terminal", "help" },
+        },
+      },
     }
   }
 }
