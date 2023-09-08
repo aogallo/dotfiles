@@ -137,7 +137,7 @@ return {
                 -- on 0.8, you should use vim.lsp.buf.format({ bufnr = bufnr }) instead
                 -- on later neovim version, you should use vim.lsp.buf.format({ async = false }) instead
                 -- vim.lsp.buf.formatting_sync()
-                vim.lsp.buf.format({async=true})
+                vim.lsp.buf.format({ async = true })
               end,
             })
           end
@@ -145,7 +145,7 @@ return {
       })
     end
   },
-    {
+  {
     -- Add indentation guides even on blank lines
     'lukas-reineke/indent-blankline.nvim',
     -- Enable `lukas-reineke/indent-blankline.nvim`
@@ -155,4 +155,18 @@ return {
       show_trailing_blankline_indent = false,
     },
   },
+  {
+    "jose-elias-alvarez/null-ls.nvim",
+    event = "BufReadPre",
+    commit = "60b4a7167c79c7d04d1ff48b55f2235bf58158a7",
+    config = function()
+      require "allan.plugins.null-ls"
+    end,
+    dependencies = {
+      {
+        "nvim-lua/plenary.nvim",
+        commit = "9a0d3bf7b832818c042aaf30f692b081ddd58bd9",
+      },
+    },
+  }
 }
