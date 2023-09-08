@@ -11,19 +11,24 @@ local keymap = vim.api.nvim_set_keymap
 local options = { noremap = true, silent = true }
 
 nvim_tree.setup {
+  update_focused_file = {
+    enable = true
+  },
   renderer = {
-		icons = {
-			glyphs = {
-				folder = {
-					-- arrow_closed = "", -- arrow when folder is closed
+    root_folder_label = "",
+    icons = {
+      glyphs = {
+        folder = {
+          -- arrow_closed = "", -- arrow when folder is closed
           arrow_closed = "",
-					-- arrow_open = "", -- arrow when folder is open
+          -- arrow_open = "", -- arrow when folder is open
           arrow_open = ""
-				},
-			},
-		},
-	},
+        },
+      },
+    },
+  },
   filters = {
+    git_ignored = false,
     dotfiles = false,
     custom = {
       '^.env$'

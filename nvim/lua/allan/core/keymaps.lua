@@ -3,7 +3,7 @@ vim.g.mapleader = " "
 local keymap = vim.keymap
 -- local keymap = vim.api.nvim_set_keymap
 -- local options = { noremap = true, silent = true }
-local options = { noremap = true,  }
+local options = { noremap = true, }
 
 -- general keymaps
 keymap.set("i", "jk", "<ESC>", options)
@@ -65,6 +65,9 @@ keymap.set("i", "<C-x>", "<esc>o", options)
 
 --Format file
 keymap.set("v", "<leader>fm", ":lua vim.lsp.buf.format()", options)
+
+--Close current buffer
+keymap.set("n", "<leader>x", ":bdelete<cr>", options)
 
 
 ---------------------
