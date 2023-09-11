@@ -32,7 +32,7 @@ opt.signcolumn = "yes"
 opt.backspace = "indent,eol,start"
 
 -- clipboard
-opt.clipboard: append("unnamedplus")
+opt.clipboard:append("unnamedplus")
 
 -- split windows
 opt.splitright = true
@@ -42,3 +42,6 @@ opt.splitbelow = true
 opt.iskeyword:append("-")
 
 opt.lazyredraw = true
+
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
