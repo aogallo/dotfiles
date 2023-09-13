@@ -89,6 +89,9 @@ keymap.set("n", "<leader>8", "<Cmd>BufferLineGoToBuffer 8<CR>", options)
 keymap.set("n", "<leader>9", "<Cmd>BufferLineGoToBuffer 9<CR>", options)
 keymap.set("n", "<leader>$", "<Cmd>BufferLineGoToBuffer -1<CR>", options)
 
+keymap.set("n", "<S-h>", "<Cmd>BufferLineCyclePrev<CR>", options)
+keymap.set("n", "<S-l>", "<Cmd>BufferLineCycleNext<CR>", options)
+
 
 -- L3MON4D3/LuaSnip
 keymap.set("i", "<c-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", options)
