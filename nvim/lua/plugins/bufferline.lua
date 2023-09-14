@@ -5,6 +5,12 @@ return {
   config = true,
   opts = {
     options = {
+      name_formatter = function(buf)     -- buf contains a "name", "path" and "bufnr"
+        -- remove extension from markdown files for example
+        if buf.name:match('%.md') then
+          return vim.fn.fnamemodify(buf.name, ':t:r')
+        end
+      end,
       allways_show_bufferline = true,
       close_command = "bdelete %",
       color_icons = true,
