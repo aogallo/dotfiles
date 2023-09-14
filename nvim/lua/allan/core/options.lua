@@ -43,5 +43,9 @@ opt.iskeyword:append("-")
 
 opt.lazyredraw = true
 
+-- For NVIM-TREE
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
+
+-- Configuration for lualine
+vim.opt.listchars:append "eol:↴"

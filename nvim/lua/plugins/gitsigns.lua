@@ -3,7 +3,7 @@ return {
   opts = {
     numhl = true,
     current_line_blame = true,
-    word_diff = true
+    word_diff = true,
   },
   keys = {
     {
