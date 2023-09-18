@@ -2,9 +2,6 @@ return {
   'tpope/vim-fugitive',
   keys = {
     {
-      "<leader>gg", ":G<CR>", desc = "Open Git Tools"
-    },
-    {
       "<leader>gp", ":G pull<CR>", desc = "Git PUll"
 
     },

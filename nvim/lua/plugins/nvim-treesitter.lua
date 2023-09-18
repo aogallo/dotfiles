@@ -14,6 +14,7 @@ return {
       "luadoc",
       "astro",
       "lua",
+      "c_sharp",
       "javascript",
       "css",
       "html",

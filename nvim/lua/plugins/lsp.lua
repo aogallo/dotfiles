@@ -12,6 +12,7 @@ return {
           ensure_installed = {
             "tsserver",
             "html",
+            "csharp_ls",
             "cssls",
             "lua_ls",
             "astro",
