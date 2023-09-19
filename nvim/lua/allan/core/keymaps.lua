@@ -44,8 +44,15 @@ keymap.set("n", "<C-j>", "<C-w>j", options)
 keymap.set("n", "<C-k>", "<C-w>k", options)
 
 -- Terminal mode
-keymap.set("t", "jk", "<C-\\><C-n>", options)
-keymap.set("t", "JK", "<C-\\><C-n>", options)
+-- keymap.set("t", "jk", "<C-\\><C-n>", options)
+-- keymap.set("t", "JK", "<C-\\><C-n>", options)
+-- Terminal Mode
+keymap.set('t', '<ESC>', '<C-\\><C-n>', options)
+keymap.set('t', 'jk', '<C-\\><C-n>', options)
+keymap.set('t', '<C-h>', '<C-\\><C-N><C-w>h', options)
+keymap.set('t', '<C-k>', '<C-\\><C-N><C-w>k', options)
+keymap.set('t', '<C-l>', '<C-\\><C-N><C-w>l', options)
+keymap.set('t', '<C-j>', '<C-\\><C-N><C-w>j', options)
 
 -- Moves blocks of code in visual mode
 keymap.set("x", "U", ":move '<-2<CR>gv-gv", options)

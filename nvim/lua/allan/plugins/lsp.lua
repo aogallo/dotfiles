@@ -106,6 +106,7 @@ vim.api.nvim_create_autocmd('LspAttach', {
     -- vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.formatting_seq_sync()]]
     vim.api.nvim_command [[autocmd BufWritePre <buffer> lua vim.lsp.buf.format({
       formatting_options = {
+        timeout = 2000,
         insertFinalNewline = true
       }
     })]]
