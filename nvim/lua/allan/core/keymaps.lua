@@ -5,6 +5,17 @@ local keymap = vim.keymap
 -- local options = { noremap = true, silent = true }
 local options = { noremap = true, }
 
+--delete all buffers exepct the current buffer
+keymap.set("n", "<leader>db", function()
+  local bufs = vim.api.nvim_list_bufs()
+  local current_buf = vim.api.nvim_get_current_buf()
+  for _, i in ipairs(bufs) do
+    if i ~= current_buf then
+      vim.api.nvim_buf_delete(i, {})
+    end
+  end
+end, { noremap = true, desc = "Close the buffers is opened without the current buffer" })
+
 -- general keymaps
 keymap.set("i", "jk", "<ESC>", options)
 keymap.set("i", "JK", "<ESC>", options)
@@ -47,12 +58,12 @@ keymap.set("n", "<C-k>", "<C-w>k", options)
 -- keymap.set("t", "jk", "<C-\\><C-n>", options)
 -- keymap.set("t", "JK", "<C-\\><C-n>", options)
 -- Terminal Mode
-keymap.set('t', '<ESC>', '<C-\\><C-n>', options)
-keymap.set('t', 'jk', '<C-\\><C-n>', options)
-keymap.set('t', '<C-h>', '<C-\\><C-N><C-w>h', options)
-keymap.set('t', '<C-k>', '<C-\\><C-N><C-w>k', options)
-keymap.set('t', '<C-l>', '<C-\\><C-N><C-w>l', options)
-keymap.set('t', '<C-j>', '<C-\\><C-N><C-w>j', options)
+-- keymap.set('t', '<ESC>', '<C-\\><C-n>', options)
+-- keymap.set('t', 'jk', '<C-\\><C-n>', options)
+-- keymap.set('t', '<C-h>', '<C-\\><C-N><C-w>h', options)
+-- keymap.set('t', '<C-k>', '<C-\\><C-N><C-w>k', options)
+-- keymap.set('t', '<C-l>', '<C-\\><C-N><C-w>l', options)
+-- keymap.set('t', '<C-j>', '<C-\\><C-N><C-w>j', options)
 
 -- Moves blocks of code in visual mode
 keymap.set("x", "U", ":move '<-2<CR>gv-gv", options)
