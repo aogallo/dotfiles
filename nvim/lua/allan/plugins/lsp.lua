@@ -6,7 +6,14 @@ require("neodev").setup({
 local lspconfig = require("lspconfig")
 lspconfig.pyright.setup({})
 lspconfig.tsserver.setup({
-	filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" },
+	filetypes = {
+    "javascript",
+    "javascriptreact",
+    "javascript.jsx",
+    "typescript",
+    "typescriptreact",
+    "typescript.tsx"
+  },
 })
 lspconfig.csharp_ls.setup({})
 lspconfig.astro.setup({})

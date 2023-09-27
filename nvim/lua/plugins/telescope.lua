@@ -4,6 +4,7 @@ return {
   dependencies = {
     'nvim-lua/plenary.nvim',
     'BurntSushi/ripgrep',
+    'kdheepak/lazygit.nvim'
   },
   config = function()
     require "allan.plugins.telescope"
