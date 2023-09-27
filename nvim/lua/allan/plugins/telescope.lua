@@ -1,34 +1,34 @@
 local telescope_status, telescope = pcall(require, "telescope")
 if not telescope_status then
-	return
+  return
 end
 
 local actions_status, actions = pcall(require, "telescope.actions")
 if not actions_status then
-	return
+  return
 end
 
-telescope.load_extension('lazygit')
+telescope.load_extension("lazygit")
 
 telescope.setup({
-	file_ignore_patterns = {
-		"./node_modules/*",
-		"node_modules",
-		"^node_modules/*",
-		"node_modules/*",
-	},
-	defaults = {
-		mappings = {
-			i = {
-				["<C-k>"] = actions.move_selection_previous,
-				["<C-j>"] = actions.move_selection_next,
-				["<C-q>"] = actions.close,
-			},
-			n = {
-				["q"] = actions.close,
-			},
-		},
-	},
+  defaults = {
+    file_ignore_patterns = {
+      "./node_modules/*",
+      "node_modules",
+      "^node_modules/*",
+      "node_modules/*",
+    },
+    mappings = {
+      i = {
+        ["<C-k>"] = actions.move_selection_previous,
+        ["<C-j>"] = actions.move_selection_next,
+        ["<C-q>"] = actions.close,
+      },
+      n = {
+        ["q"] = actions.close,
+      },
+    },
+  },
 })
 
 -- To get fzf loaded and working with telescope, you need to call
@@ -43,8 +43,8 @@ keymap.set("n", "<leader>fc", "<cmd>Telescope grep_string<cr>", options)
 keymap.set("n", "<leader>fb", "<cmd>Telescope buffers<cr>", options)
 keymap.set("n", "<leader>fh", "<cmd>Telescope help_tags<cr>", options)
 keymap.set(
-	"n",
-	"<leader>fw",
-	":lua require('telescope.builtin').current_buffer_fuzzy_find({layout_strategy='vertical',layout_config={width=0.5}})<cr>",
-	options
+  "n",
+  "<leader>fw",
+  ":lua require('telescope.builtin').current_buffer_fuzzy_find({layout_strategy='vertical',layout_config={width=0.5}})<cr>",
+  options
 )
