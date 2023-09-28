@@ -4,6 +4,10 @@ local opt = vim.opt
 opt.relativenumber = true
 opt.number = true
 
+opt.breakindent = true
+opt.updatetime = 250
+opt.timeoutlen = 300
+opt.completeopt='menuone,noselect'
 -- tabs & indentation
 opt.tabstop = 2
 opt.shiftwidth = 2
@@ -17,14 +21,13 @@ opt.wrap = false
 opt.ignorecase = true
 opt.smartcase = true
 
-
 -- cursor line
 opt.cursorline = true
 opt.cursorcolumn = true
 
 -- appearance
 opt.termguicolors = true
-opt.background = "dark"
+-- opt.background = "dark"
 -- opt.background = "light"
 opt.signcolumn = "yes"
 
@@ -48,4 +51,4 @@ vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
 
 -- Configuration for lualine
-vim.opt.listchars:append "eol:↴"
+vim.opt.listchars:append("eol:↴")

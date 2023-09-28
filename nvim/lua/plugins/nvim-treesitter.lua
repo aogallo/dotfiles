@@ -1,6 +1,6 @@
 return {
   'nvim-treesitter/nvim-treesitter',
-  event = 'VeryLazy',
+  -- event = 'VeryLazy',
   build = ":TSUpdate",
   main = "nvim-treesitter.configs",
   dependencies = {
@@ -27,14 +27,13 @@ return {
       "yaml",
       "toml",
       "vim",
-      "tsx",
+      "vimdoc",
       "bash",
       "sql",
       "gitignore",
       "typescript",
       "markdown",
       "markdown_inline"
-
     },
     highlight = {
       enable = true,

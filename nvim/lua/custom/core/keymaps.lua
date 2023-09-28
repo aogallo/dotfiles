@@ -3,18 +3,21 @@ vim.g.mapleader = " "
 local keymap = vim.keymap
 -- local keymap = vim.api.nvim_set_keymap
 -- local options = { noremap = true, silent = true }
-local options = { noremap = true, }
+local options = { noremap = true }
 
 --delete all buffers exepct the current buffer
 keymap.set("n", "<leader>db", function()
-  local bufs = vim.api.nvim_list_bufs()
-  local current_buf = vim.api.nvim_get_current_buf()
-  for _, i in ipairs(bufs) do
-    if i ~= current_buf then
-      vim.api.nvim_buf_delete(i, {})
-    end
-  end
+	local bufs = vim.api.nvim_list_bufs()
+	local current_buf = vim.api.nvim_get_current_buf()
+	for _, i in ipairs(bufs) do
+		if i ~= current_buf then
+			vim.api.nvim_buf_delete(i, {})
+		end
+	end
 end, { noremap = true, desc = "Close the buffers is opened without the current buffer" })
+
+keymap.set("n", "k", "v:count==0 ? 'gk':'k'", { expr = true, silent = true })
+keymap.set("n", "j", "v:count==0 ? 'gj':'j'", { expr = true, silent = true })
 
 -- general keymaps
 keymap.set("i", "jk", "<ESC>", options)
@@ -37,16 +40,16 @@ keymap.set("n", "-", "<C-x>", options)
 keymap.set("n", "<C-a>", "gg<S-v>G", options)
 
 -- split window
-keymap.set("n", "<leader>sv", "<C-w>v", options)     -- vertically
-keymap.set("n", "<leader>sh", "<C-w>s", options)     -- horizontally
-keymap.set("n", "<leader>se", "<C-w>=", options)     -- make split windows equeal width
+keymap.set("n", "<leader>sv", "<C-w>v", options) -- vertically
+keymap.set("n", "<leader>sh", "<C-w>s", options) -- horizontally
+keymap.set("n", "<leader>se", "<C-w>=", options) -- make split windows equeal width
 keymap.set("n", "<leader>sx", ":close<CR>", options) -- close current split window
 
 -- tab move
-keymap.set("n", "<leader>to", ":tabnew<CR>", options)   -- open new tab
+keymap.set("n", "<leader>to", ":tabnew<CR>", options) -- open new tab
 keymap.set("n", "<leader>tx", ":tabclose<CR>", options) -- close current tab
-keymap.set("n", "<leader>tn", ":tabn<CR>", options)     -- go to next tab
-keymap.set("n", "<leader>tp", ":tabp<CR>", options)     -- go to previous tab
+keymap.set("n", "<leader>tn", ":tabn<CR>", options) -- go to next tab
+keymap.set("n", "<leader>tp", ":tabp<CR>", options) -- go to previous tab
 
 -- Move between screen
 keymap.set("n", "<C-l>", "<C-w>l", options)
@@ -87,7 +90,6 @@ keymap.set("v", "<leader>fm", ":lua vim.lsp.buf.format()", options)
 --Close current buffer
 keymap.set("n", "<leader>x", ":bdelete<cr>", options)
 
-
 ---------------------
 -- Plugin Keybinds
 ---------------------
@@ -109,7 +111,6 @@ keymap.set("n", "<leader>$", "<Cmd>BufferLineGoToBuffer -1<CR>", options)
 
 keymap.set("n", "<S-h>", "<Cmd>BufferLineCyclePrev<CR>", options)
 keymap.set("n", "<S-l>", "<Cmd>BufferLineCycleNext<CR>", options)
-
 
 -- L3MON4D3/LuaSnip
 keymap.set("i", "<c-j>", "<cmd>lua require'luasnip'.jump(1)<CR>", options)
