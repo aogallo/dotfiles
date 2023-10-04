@@ -72,7 +72,7 @@ require('lazy').setup({
   'tpope/vim-rhubarb',
 
   -- Detect tabstop and shiftwidth automatically
-  'tpope/vim-sleuth',
+  -- 'tpope/vim-sleuth',
 
   -- NOTE: This is where your plugins related to LSP can be installed.
   --  The configuration is done below. Search for lspconfig to find it below.
@@ -129,15 +129,23 @@ require('lazy').setup({
         -- don't override the built-in and fugitive keymaps
         local gs = package.loaded.gitsigns
         vim.keymap.set({ 'n', 'v' }, ']c', function()
-          if vim.wo.diff then return ']c' end
-          vim.schedule(function() gs.next_hunk() end)
+          if vim.wo.diff then
+            return ']c'
+          end
+          vim.schedule(function()
+            gs.next_hunk()
+          end)
           return '<Ignore>'
-        end, { expr = true, buffer = bufnr, desc = "Jump to next hunk" })
+        end, { expr = true, buffer = bufnr, desc = 'Jump to next hunk' })
         vim.keymap.set({ 'n', 'v' }, '[c', function()
-          if vim.wo.diff then return '[c' end
-          vim.schedule(function() gs.prev_hunk() end)
+          if vim.wo.diff then
+            return '[c'
+          end
+          vim.schedule(function()
+            gs.prev_hunk()
+          end)
           return '<Ignore>'
-        end, { expr = true, buffer = bufnr, desc = "Jump to previous hunk" })
+        end, { expr = true, buffer = bufnr, desc = 'Jump to previous hunk' })
       end,
     },
   },
@@ -157,10 +165,17 @@ require('lazy').setup({
     -- See `:help lualine.txt`
     opts = {
       options = {
+        globalstatus = true,
         icons_enabled = false,
         theme = 'onedark',
         component_separators = '|',
         section_separators = '',
+        extensions = {
+          'fugitive',
+          'toogleterm',
+          'neotree',
+          'nvim-tree',
+        },
       },
     },
   },
@@ -170,6 +185,7 @@ require('lazy').setup({
     'lukas-reineke/indent-blankline.nvim',
     -- Enable `lukas-reineke/indent-blankline.nvim`
     -- See `:help indent_blankline.txt`
+    main = 'ibl',
     opts = {
       char = '┊',
       show_trailing_blankline_indent = false,
@@ -205,6 +221,7 @@ require('lazy').setup({
     'nvim-treesitter/nvim-treesitter',
     dependencies = {
       'nvim-treesitter/nvim-treesitter-textobjects',
+      'windwp/nvim-ts-autotag',
     },
     build = ':TSUpdate',
   },
@@ -233,6 +250,7 @@ vim.o.hlsearch = false
 
 -- Make line numbers default
 vim.wo.number = true
+vim.wo.relativenumber = true
 
 -- Enable mouse mode
 vim.o.mouse = 'a'
@@ -290,6 +308,12 @@ vim.api.nvim_create_autocmd('TextYankPost', {
 -- See `:help telescope` and `:help telescope.setup()`
 require('telescope').setup {
   defaults = {
+    file_ignore_patterns = {
+      './node_modules/*',
+      'node_modules',
+      '^node_modules/*',
+      'node_modules/*',
+    },
     mappings = {
       i = {
         ['<C-u>'] = false,
@@ -332,6 +356,13 @@ require('nvim-treesitter.configs').setup {
 
   highlight = { enable = true },
   indent = { enable = true },
+  autotag = {
+    enable = true,
+    enable_rename = true,
+    enable_close = true,
+    enable_close_on_slash = true,
+    -- filetypes = { "html" , "xml" },
+  },
   incremental_selection = {
     enable = true,
     keymaps = {
@@ -422,7 +453,7 @@ local on_attach = function(_, bufnr)
 
   -- See `:help K` for why this keymap
   nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
-  nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+  nmap('<C-;>', vim.lsp.buf.signature_help, 'Signature Documentation')
 
   -- Lesser used LSP functionality
   nmap('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
@@ -454,6 +485,57 @@ local servers = {
   -- gopls = {},
   -- pyright = {},
   -- rust_analyzer = {},
+  tailwindcss = {
+    {
+      'aspnetcorerazor',
+      'astro',
+      'astro-markdown',
+      'blade',
+      'clojure',
+      'django-html',
+      'htmldjango',
+      'edge',
+      'eelixir',
+      'elixir',
+      'ejs',
+      'erb',
+      'eruby',
+      'gohtml',
+      'haml',
+      'handlebars',
+      'hbs',
+      'html',
+      'html-eex',
+      'heex',
+      'jade',
+      'leaf',
+      'liquid',
+      'markdown',
+      'mdx',
+      'mustache',
+      'njk',
+      'nunjucks',
+      'php',
+      'razor',
+      'slim',
+      'twig',
+      'css',
+      'less',
+      'postcss',
+      'sass',
+      'scss',
+      'stylus',
+      'sugarss',
+      'javascript',
+      'javascriptreact',
+      'reason',
+      'rescript',
+      'typescript',
+      'typescriptreact',
+      'vue',
+      'svelte',
+    },
+  },
   tsserver = {},
   html = { filetypes = { 'html', 'twig', 'hbs' } },
 
@@ -487,7 +569,7 @@ mason_lspconfig.setup_handlers {
       settings = servers[server_name],
       filetypes = (servers[server_name] or {}).filetypes,
     }
-  end
+  end,
 }
 
 -- [[ Configure nvim-cmp ]]
@@ -535,17 +617,30 @@ cmp.setup {
   sources = {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
+    { name = 'buffer' },
+    { name = 'path' },
   },
 }
+
+--tabs configuration
+vim.o.tabstop = 2
+vim.o.shiftwidth = 2
+vim.o.expandtab = true
+vim.o.autoindent = true
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
 vim.keymap.set('i', 'jk', '<ESC>', {})
-vim.keymap.set('n', '<leader>w', ':w<cr>', { desc = "Saving current buffer" })
-vim.keymap.set('n', '<leader>e', ':Neotree<cr>', { desc = "Open file directory" })
+vim.keymap.set('n', '<leader>w', ':w<cr>', { desc = 'Saving current buffer' })
+vim.keymap.set('n', '<leader>e', ':Neotree<cr>', { desc = 'Open file directory' })
 
 -- Move between screen
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Move to right" })
-vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Move to left" })
-vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Move to down" })
-vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Move to up" })
+vim.keymap.set('n', '<C-l>', '<C-w>l', { desc = 'Move to right' })
+vim.keymap.set('n', '<C-h>', '<C-w>h', { desc = 'Move to left' })
+vim.keymap.set('n', '<C-j>', '<C-w>j', { desc = 'Move to down' })
+vim.keymap.set('n', '<C-k>', '<C-w>k', { desc = 'Move to up' })
+
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = { 'qf' },
+  command = [[nnoremap <buffer> <CR> <CR>:cclose<CR>]],
+})
