@@ -1,1 +1,2 @@
 *.DS_Store
+/.cofing/nvim/lazy-lock.json
