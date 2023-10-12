@@ -69,7 +69,17 @@ set -g @plugin 'dracula/tmux'
 ## Create a symbolic link
 
 ```bash
-ln -s ~/dotfiles/nvim ~/.config
+ln -s ~/dotfiles/.config/nvim ~/.config
+```
+
+## Install Stylua formatter
+
+This is the repository with all information about StyLua: [Stylua](https://github.com/JohnnyMorganz/StyLua)
+
+To install Stylua with Homebew
+
+```bash
+brew install stylua
 ```
 
 * [ripgrep](https://github.com/BurntSushi/ripgrep)
