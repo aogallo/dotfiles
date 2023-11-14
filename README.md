@@ -13,9 +13,9 @@ For more information about Hombebrew you can visit this [web-site](https://brew.
 
 I use the JetBrains Mono font
 
-You can download [here](https://www.jetbrains.com/lp/mono/) to install follow the instructions from the page.
+You can download [here](https://www.jetbrains.com/lp/mono/) to install and following the instructions.
 
-## iterm2
+## iTerm2
 
 [iterm2](https://iterm2.com/)
 
@@ -40,13 +40,13 @@ brew install nvim
 
 For more information about Neovim you can visit this [neovim](https://neovim.io/)
 
-## Tmux Configuration
+## Tmux 
 
 ### Tmux installation
 To install tmux go to Installation section in this <a target="_blank" href="https://github.com/tmux/tmux#welcome-to-tmux">tmux repository</a>
 
 ### Tmux plugins
-  For manage plugins in Tmux clone the following <a target="_blank" href="https://github.com/tmux-plugins/tpm">tmux-plugins repository</a>
+For manage plugins in Tmux clone the following <a target="_blank" href="https://github.com/tmux-plugins/tpm">tmux-plugins repository</a>
 
 ```bash
 git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
@@ -76,7 +76,7 @@ ln -s ~/dotfiles/.config/nvim ~/.config
 
 This is the repository with all information about StyLua: [Stylua](https://github.com/JohnnyMorganz/StyLua)
 
-To install Stylua with Homebew
+To install Stylua with Homebew, run the following:
 
 ```bash
 brew install stylua

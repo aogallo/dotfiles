@@ -116,9 +116,18 @@ require('lazy').setup({
   {
     -- Theme inspired by Atom
     'navarasu/onedark.nvim',
+    enabled = false,
     priority = 1000,
     config = function()
       vim.cmd.colorscheme 'onedark'
+    end,
+  },
+  {
+    'ellisonleao/gruvbox.nvim',
+    priority = 1000,
+    config = function()
+      vim.o.background = 'dark'
+      vim.cmd.colorscheme 'gruvbox'
     end,
   },
 
@@ -164,6 +173,9 @@ require('lazy').setup({
     branch = '0.1.x',
     dependencies = {
       'nvim-lua/plenary.nvim',
+      {
+        'nvim-telescope/telescope-file-browser.nvim',
+      },
       -- Fuzzy Finder Algorithm which requires local dependencies to be built.
       -- Only load if `make` is available. Make sure you have the system
       -- requirements installed.
@@ -267,9 +279,28 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   pattern = '*',
 })
 
+local fb_actions = require 'telescope._extensions.file_browser.actions'
+
 -- [[ Configure Telescope ]]
 -- See `:help telescope` and `:help telescope.setup()`
 require('telescope').setup {
+  extensions = {
+    file_browser = {
+      -- theme = 'ivy',
+      -- disables netrw and use telescope-file-browser in its place
+      hijack_netrw = true,
+      mappings = {
+        ['i'] = {
+          -- your custom insert mode mappings
+          ['<C-d>'] = fb_actions.remove,
+        },
+        ['n'] = {
+          -- your custom normal mode mappings
+          ['d'] = fb_actions.remove,
+        },
+      },
+    },
+  },
   defaults = {
     file_ignore_patterns = {
       './node_modules/*',
@@ -288,6 +319,7 @@ require('telescope').setup {
 
 -- Enable telescope fzf native, if installed
 pcall(require('telescope').load_extension, 'fzf')
+pcall(require('telescope').load_extension, 'file_browser')
 
 -- See `:help telescope.builtin`
 vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })
@@ -547,6 +579,19 @@ require('luasnip.loaders.from_vscode').lazy_load { paths = { './snippets-as-vsco
 luasnip.config.setup {}
 
 cmp.setup {
+  completion = {
+    get_trigger_characters = function(trigger_characters)
+      local new_trigger_characters = {}
+      for _, char in ipairs(trigger_characters) do
+        if char ~= '/' then
+          print(char)
+          table.insert(new_trigger_characters, char)
+        end
+      end
+
+      return new_trigger_characters
+    end,
+  },
   snippet = {
     expand = function(args)
       luasnip.lsp_expand(args.body)
@@ -599,7 +644,6 @@ vim.o.autoindent = true
 -- vim: ts=2 sts=2 sw=2 et
 vim.keymap.set('i', 'jk', '<ESC>', {})
 vim.keymap.set('n', '<leader>w', ':w<cr>', { desc = 'Saving current buffer' })
-vim.keymap.set('n', '<leader>e', ':Neotree<cr>', { desc = 'Open file directory' })
 
 -- Move between screen
 vim.keymap.set('n', '<C-l>', '<C-w>l', { desc = 'Move to right' })
@@ -613,3 +657,6 @@ vim.api.nvim_create_autocmd('FileType', {
 })
 
 vim.keymap.set('n', '<leader>cb', ':%bd|edit#|bd#<CR>', { desc = 'Delete all buffers except current one' })
+-- vim.keymap.set('n', '<leader>e', ':Neotree<cr>', { desc = 'Open file directory' })
+vim.keymap.set('n', '<leader>e', ':Telescope file_browser path=%:p:h select_buffer=true<CR>',
+  { desc = 'Open file directory' })
