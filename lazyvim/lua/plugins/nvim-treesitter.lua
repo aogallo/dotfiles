@@ -7,6 +7,7 @@ return {
         "astro",
         "css",
         "typescript",
+        "graphql",
         "tsx",
       })
     end,
