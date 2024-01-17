@@ -9,6 +9,7 @@ return {
         "typescript",
         "graphql",
         "tsx",
+        "norg",
       })
     end,
   },
