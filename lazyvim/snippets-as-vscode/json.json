@@ -108,5 +108,17 @@
       " ]",
       "},"
     ]
+  },
+  "Create jq handler": {
+    "prefix": "cjqh",
+    "body": [
+      "{",
+      "  \"id\": \"$1\",",
+      "  \"handlerName\": \"jq\",",
+      "  \"variables\": {",
+      "      \"filter\": \".\",",
+      "    }",
+      "}"
+    ]
   }
 }
