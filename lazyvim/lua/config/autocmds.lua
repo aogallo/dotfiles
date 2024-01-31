@@ -15,3 +15,18 @@ vim.api.nvim_create_autocmd("FileType", {
     vim.wo.conceallevel = 0
   end,
 })
+
+-- remove
+vim.api.nvim_create_autocmd({
+  "BufWritePre",
+}, {
+  pattern = { "*" },
+  command = [[%s/\s\+$//e]],
+  -- command = "echo 'Out'",
+  -- callback = function(ev)
+  --   -- print(string.format('event fired: s', vim.inspect(ev)))
+  --   -- print(vim.inspect(ev))
+
+  --   vim.command([[%s/\s\+$//e]])
+  -- end
+})
