@@ -16,6 +16,16 @@ return {
         "<cmd>Octo<cr>",
         desc = "Octo",
       },
+      {
+        "<leader>Opd",
+        "<cmd>Octo pr draft<cr>",
+        desc = "Send PR to Draft",
+      },
+      {
+        "<leader>Oprs",
+        "<cmd>Octo review start<cr>",
+        desc = "Start reviewing PR",
+      },
     },
   },
 }
