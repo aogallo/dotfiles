@@ -12,19 +12,29 @@ return {
     end,
     keys = {
       {
-        "<leader>O",
+        "<leader>o",
         "<cmd>Octo<cr>",
         desc = "Octo",
       },
       {
-        "<leader>Opd",
+        "<leader>opd",
         "<cmd>Octo pr draft<cr>",
         desc = "Send PR to Draft",
       },
       {
-        "<leader>Oprs",
+        "<leader>oprs",
         "<cmd>Octo review start<cr>",
         desc = "Start reviewing PR",
+      },
+      {
+        "<leader>opl",
+        "<cmd>Octo pr list<cr>",
+        desc = "PR list",
+      },
+      {
+        "<leader>opb",
+        "<cmd>Octo pr browser<cr>",
+        desc = "Open PR on the browser",
       },
     },
   },
