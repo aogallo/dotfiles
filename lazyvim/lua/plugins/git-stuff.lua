@@ -36,6 +36,11 @@ return {
         "<cmd>Octo pr browser<cr>",
         desc = "Open PR on the browser",
       },
+      {
+        "<leader>opc",
+        "<cmd>Octo pr create<cr>",
+        desc = "Create a PR ",
+      },
     },
   },
 }
