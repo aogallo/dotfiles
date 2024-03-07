@@ -1,6 +1,15 @@
+# Keyboard
+
+## Iris Keyboard
+
+### Remapping each key
+
+I use `Via Configurator`, you can follow this [Via Usage Guide](https://docs.keeb.io/via)
+
 # Files
 
 ## Hombebrew
+
 Install Hombebrew execute this command
 
 ```bash
@@ -32,6 +41,7 @@ Go to Preferences -> Profile -> Text -> Font
 Choose the `JetBrainsMono Nerd Font Mono` font and active the `Use ligatures` option.
 
 ## NVIM
+
 Install nvim by brew
 
 ```bash
@@ -40,12 +50,14 @@ brew install nvim
 
 For more information about Neovim you can visit this [neovim](https://neovim.io/)
 
-## Tmux 
+## Tmux
 
 ### Tmux installation
+
 To install tmux go to Installation section in this <a target="_blank" href="https://github.com/tmux/tmux#welcome-to-tmux">tmux repository</a>
 
 ### Tmux plugins
+
 For manage plugins in Tmux clone the following <a target="_blank" href="https://github.com/tmux-plugins/tpm">tmux-plugins repository</a>
 
 ```bash
@@ -82,4 +94,4 @@ To install Stylua with Homebew, run the following:
 brew install stylua
 ```
 
-* [ripgrep](https://github.com/BurntSushi/ripgrep)
+- [ripgrep](https://github.com/BurntSushi/ripgrep)
