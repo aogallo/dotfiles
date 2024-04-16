@@ -11,6 +11,7 @@ return {
         "graphql",
         "tsx",
         "norg",
+        "rust",
       })
 
       vim.list_extend(opts.incremental_selection, {
