@@ -12,6 +12,8 @@ return {
         "tsx",
         "norg",
         "rust",
+        "markdown_inline",
+        "markdown",
       })
 
       vim.list_extend(opts.incremental_selection, {

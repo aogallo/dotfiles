@@ -17,29 +17,36 @@ return {
         desc = "Octo",
       },
       {
-        "<leader>opd",
+        "<leader>gpd",
         "<cmd>Octo pr draft<cr>",
         desc = "Send PR to Draft",
       },
       {
-        "<leader>oprs",
+        "<leader>gprs",
         "<cmd>Octo review start<cr>",
         desc = "Start reviewing PR",
       },
       {
-        "<leader>opl",
+        "<leader>gpl",
         "<cmd>Octo pr list<cr>",
         desc = "PR list",
       },
       {
-        "<leader>opb",
+        "<leader>gpb",
         "<cmd>Octo pr browser<cr>",
         desc = "Open PR on the browser",
       },
       {
-        "<leader>opc",
+        "<leader>gpc",
         "<cmd>Octo pr create<cr>",
         desc = "Create a PR ",
+      },
+      {
+        "<leader>gvb",
+        function()
+          require("octo.commands").add_user("reviewer")
+        end,
+        desc = "Add the bezlio team as reviewer",
       },
     },
   },
