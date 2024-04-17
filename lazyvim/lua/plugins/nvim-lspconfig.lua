@@ -1,3 +1,4 @@
+---@diagnostic disable: missing-fields
 return {
   "neovim/nvim-lspconfig",
   ---@class PluginLspOpts
