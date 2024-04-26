@@ -335,6 +335,11 @@ require('lazy').setup({
 
       -- Useful for getting pretty icons, but requires a Nerd Font.
       { 'nvim-tree/nvim-web-devicons', enabled = vim.g.have_nerd_font },
+
+      {
+        'nvim-telescope/telescope-file-browser.nvim',
+        dependencies = { 'nvim-telescope/telescope.nvim', 'nvim-lua/plenary.nvim' },
+      },
     },
     config = function()
       -- Telescope is a fuzzy finder that comes with a lot of different things that
@@ -387,9 +392,12 @@ require('lazy').setup({
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'file_browser')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+
+      vim.keymap.set('n', '<leader>fb', ':Telescope file_browser<CR>', { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
@@ -798,6 +806,7 @@ require('lazy').setup({
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
     'folke/tokyonight.nvim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
+    enabled = false,
     init = function()
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
@@ -806,6 +815,25 @@ require('lazy').setup({
 
       -- You can configure highlights by doing something like:
       vim.cmd.hi 'Comment gui=none'
+    end,
+  },
+
+  {
+    -- https://github.com/rebelot/kanagawa.nvim
+    'rebelot/kanagawa.nvim', -- You can replace this with your favorite colorscheme
+    lazy = false, -- We want the colorscheme to load immediately when starting Neovim
+    priority = 1000, -- Load the colorscheme before other non-lazy-loaded plugins
+    opts = {
+      -- Replace this with your scheme-specific settings or remove to use the defaults
+      -- transparent = true,
+      background = {
+        -- light = "lotus",
+        dark = 'wave', -- "wave, dragon"
+      },
+    },
+    config = function(_, opts)
+      require('kanagawa').setup(opts) -- Replace this with your favorite colorscheme
+      vim.cmd 'colorscheme kanagawa' -- Replace this with your favorite colorscheme
     end,
   },
 
