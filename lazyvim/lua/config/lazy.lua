@@ -25,6 +25,8 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.test.core" },
     --trouble-v3
     { import = "lazyvim.plugins.extras.editor.trouble-v3" },
+
+    { import = "lazyvim.plugins.extras.lang.markdown" },
     -- import/override with your plugins
     { import = "plugins" },
   },
