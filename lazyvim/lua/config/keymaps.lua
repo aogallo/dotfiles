@@ -17,3 +17,9 @@ vim.keymap.set("n", "x", '"_x')
 
 -- Go to end line in insert mode
 vim.keymap.set("i", "<C-e>", "<C-o>$")
+
+-- use `+` and `-` to increment and decrement 8
+vim.keymap.set("n", "+", "<C-a>")
+vim.keymap.set("n", "-", "<C-x>")
+vim.keymap.set("v", "+", "g<C-a>gv")
+vim.keymap.set("v", "-", "g<C-x>gv")
