@@ -2,8 +2,8 @@
 -- tabs, which include filetype icons and close buttons.
 return {
   'akinsho/bufferline.nvim',
-  enabled = false,
   event = 'VeryLazy',
+  version = 'v1.*',
   keys = {
     { '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', desc = 'Toggle Pin' },
     { '<leader>bP', '<Cmd>BufferLineGroupClose ungrouped<CR>', desc = 'Delete Non-Pinned Buffers' },

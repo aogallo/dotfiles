@@ -951,7 +951,7 @@ require('lazy').setup({
       require('mini.bufremove').setup()
 
       -- Tabline
-      require('mini.tabline').setup()
+      -- require('mini.tabline').setup()
     end,
   },
   { -- Highlight, edit, and navigate code
