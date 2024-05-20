@@ -2,6 +2,7 @@
 -- tabs, which include filetype icons and close buttons.
 return {
   'akinsho/bufferline.nvim',
+  enabled = false,
   event = 'VeryLazy',
   keys = {
     { '<leader>bp', '<Cmd>BufferLineTogglePin<CR>', desc = 'Toggle Pin' },
