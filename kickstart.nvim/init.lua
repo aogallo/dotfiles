@@ -1033,3 +1033,10 @@ require('lazy').setup({
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+vim.cmd [[
+  augroup MiniStarterKeymaps
+    au!
+    au User MiniStarterOpened nmap <buffer> <Left> <Cmd>lua MiniStarter.update_current_item('next')<CR>
+    au User MiniStarterOpened nmap <buffer> <Right> <Cmd>lua MiniStarter.update_current_item('prev')<CR>
+  augroup END
+]]
