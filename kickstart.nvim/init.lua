@@ -946,6 +946,12 @@ require('lazy').setup({
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
+      --
+      -- Buffer removing
+      require('mini.bufremove').setup()
+
+      -- Tabline
+      require('mini.tabline').setup()
     end,
   },
   { -- Highlight, edit, and navigate code
