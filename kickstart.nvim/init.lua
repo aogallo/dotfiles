@@ -167,8 +167,8 @@ vim.keymap.set('v', '-', 'g<C-x>gv')
 vim.opt.hlsearch = true
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 vim.keymap.set('i', 'jk', '<Esc>')
-vim.keymap.set('n', 'L', ':bnext')
-vim.keymap.set('n', 'H', ':bprev')
+vim.keymap.set('n', 'L', ':bnext<CR>')
+vim.keymap.set('n', 'H', ':bprev<CR>')
 
 -- Diagnostic keymaps
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Go to previous [D]iagnostic message' })
