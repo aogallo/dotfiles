@@ -27,6 +27,9 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.editor.trouble-v3" },
 
     { import = "lazyvim.plugins.extras.lang.markdown" },
+
+    { import = "lazyvim.plugins.extras.coding.mini-surround" },
+
     -- import/override with your plugins
     { import = "plugins" },
   },
