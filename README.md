@@ -95,3 +95,12 @@ brew install stylua
 ```
 
 - [ripgrep](https://github.com/BurntSushi/ripgrep)
+
+## Csharp language
+
+Installing the lsp and formatter 
+
+```bash
+dotnet tool install --global csharp-ls &&
+dotnet tool install csharpier -g
+```
