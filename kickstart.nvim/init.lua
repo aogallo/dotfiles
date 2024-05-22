@@ -102,7 +102,7 @@ vim.g.have_nerd_font = true
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = "a"
@@ -305,6 +305,7 @@ require("lazy").setup({
         ["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
         ["<leader>t"] = { name = "[T]oggle", _ = "which_key_ignore" },
         ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore", p = "[P]ull Request", h = "[H]unk" },
+        [";s"] = { name = "[S]urround", _ = "which_key_ignore" },
       })
       -- visual mode
       require("which-key").register({
