@@ -971,9 +971,6 @@ require("lazy").setup({
 
       -- Tabline
       require("mini.tabline").setup()
-
-      -- Buffer removing
-      require("mini.bufremove").setup()
     end,
   },
   { -- Highlight, edit, and navigate code
