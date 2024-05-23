@@ -42,11 +42,11 @@ return {
       adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost", "chrome", "node" },
     })
 
-    local node_languages = { "javascript", "typescript", "javascriptreact", "typescriptreact" }
+    local js_based_languages = { "javascript", "typescript", "javascriptreact", "typescriptreact" }
 
     -- configure the languages to the nvim-dap
     --
-    for _, language in pairs(node_languages) do
+    for _, language in pairs(js_based_languages) do
       dap.configurations[language] = {
         {
           type = "pwa-node",
@@ -70,8 +70,26 @@ return {
           webRoot = "${workspaceFolder}",
           userDataDir = "${workspaceFolder}/.vscode/vscode-chrome-debug-userdatadir",
         },
+        {
+          name = "Next.js: debug full stack",
+          type = "node-terminal",
+          request = "launch",
+          command = "npm run dev",
+          serverReadyAction = {
+            pattern = "- Local:.+(https?://.+)",
+            uriFormat = "%s",
+            action = "debugWithChrome",
+          },
+        },
       }
     end
+
+    require("dap.ext.vscode").load_launchjs(nil, {
+      ["pwa-node"] = js_based_languages,
+      ["node"] = js_based_languages,
+      ["chrome"] = js_based_languages,
+      ["pwa-chrome"] = js_based_languages,
+    })
 
     -- install brew install rustup-init
 
