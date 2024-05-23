@@ -33,51 +33,35 @@ return {
     -- Add your own debuggers here
     "leoluz/nvim-dap-go",
 
-    --dependency to use json5
-    {
-      "Joakker/lua-json5",
-      build = "./install.sh",
-    },
+    -- Add your own debuggers here
+    "leoluz/nvim-dap-go",
   },
   config = function()
     local dap = require("dap")
     local dapui = require("dapui")
 
-    local node_debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug"
-
-    -- install brew install rustup-init
-
-    -- /Users/allangallo/.local/share/nvim-kickstart/lazy/nvim-dap-vscode-js
-    -- debugger_path = "/Users/allangallo/.local/share/nvim-kickstart/lazy/nvim-dap-vscode-js",
     require("dap-vscode-js").setup({
-      debugger_path = node_debugger_path,
-      adapters = {
-        "chrome",
-        "pwa-node",
-        "pwa-chrome",
-        "pwa-msedge",
-        "node-terminal",
-        "pwa-extensionHost",
-        "node",
-        "chrome",
-      },
+      debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
+      adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost", "chrome", "node" },
     })
 
-    local js_based_languages = { "typescript", "javascript", "typescriptreact" }
+    local node_languages = { "javascript", "typescript", "javascriptreact", "typescriptreact" }
 
-    for _, language in ipairs(js_based_languages) do
+    -- configure the languages to the nvim-dap
+    --
+    for _, language in pairs(node_languages) do
       dap.configurations[language] = {
         {
           type = "pwa-node",
           request = "launch",
-          name = "Launch file",
+          name = "Launch file Node",
           program = "${file}",
           cwd = "${workspaceFolder}",
         },
         {
           type = "pwa-node",
           request = "attach",
-          name = "Attach",
+          name = "Attach Node",
           processId = require("dap.utils").pick_process,
           cwd = "${workspaceFolder}",
         },
@@ -92,27 +76,34 @@ return {
       }
     end
 
-    require("dap.ext.vscode").load_launchjs(nil, {
-      ["pwa-node"] = js_based_languages,
-      ["node"] = js_based_languages,
-      ["chrome"] = js_based_languages,
-      ["pwa-chrome"] = js_based_languages,
-    })
+    -- install brew install rustup-init
 
     require("mason-nvim-dap").setup({
       -- Makes a best effort to setup the various debuggers with
       -- reasonable debug configurations
+      automatic_installation = false,
       automatic_setup = true,
 
       -- You can provide additional configuration to the handlers,
       -- see mason-nvim-dap README for more information
-      handlers = {},
+      handlers = {
+
+        javascript = function(config)
+          config.adapters = {
+
+            type = "executable",
+            command = vim.fn.exepath("vscode-js-debug"),
+          }
+          require("mason-nvim-dap").default_setup(config)
+        end,
+      },
 
       -- You'll need to check that you have the required things installed
       -- online, please don't ask me how to install them :)
       ensure_installed = {
         -- Update this to ensure that you have the debuggers for the langs you want
         -- 'delve',
+        "chrome",
       },
     })
 
