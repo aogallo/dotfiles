@@ -166,6 +166,15 @@ vim.keymap.set("n", "-", "<C-x>")
 vim.keymap.set("v", "+", "g<C-a>gv")
 vim.keymap.set("v", "-", "g<C-x>gv")
 vim.keymap.set("n", ";bd", ":bdelete<CR>", { desc = "Delete Current Buffer" })
+vim.keymap.set("n", ";bo", function()
+  local bufs = vim.api.nvim_list_bufs()
+  local current_buf = vim.api.nvim_get_current_buf()
+  for _, buf in pairs(bufs) do
+    if buf ~= current_buf then
+      vim.api.nvim_buf_delete(buf, {})
+    end
+  end
+end)
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
