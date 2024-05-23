@@ -970,7 +970,7 @@ require("lazy").setup({
       require("mini.bufremove").setup()
 
       -- Tabline
-      -- require('mini.tabline').setup()
+      require("mini.tabline").setup()
     end,
   },
   { -- Highlight, edit, and navigate code
@@ -1084,6 +1084,15 @@ require("lazy").setup({
 vim.api.nvim_create_autocmd("BufWritePre", {
   pattern = "*",
   callback = function(args)
-    require("conform").format({ async = true, lsp_fallback = true, bufnr = args.buf, timeout_ms = 2500 })
+    -- print("data", vim.inspect(args))
+    -- vim.lsp.buf.code_action({
+    --   apply = true,
+    --   context = {
+    --     only = { "source.organizeImports.ts" },
+    --     diagnostics = {},
+    --   },
+    -- })
+
+    require("conform").format({ async = true, lsp_fallback = true, bufnr = args.buf, timeout_ms = 5000 })
   end,
 })
