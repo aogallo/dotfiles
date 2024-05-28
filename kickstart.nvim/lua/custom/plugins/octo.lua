@@ -1,52 +1,52 @@
 return {
   {
-    'pwntester/octo.nvim',
+    "pwntester/octo.nvim",
     dependencies = {
-      'nvim-lua/plenary.nvim',
-      'nvim-telescope/telescope.nvim',
-      'nvim-tree/nvim-web-devicons',
+      "nvim-lua/plenary.nvim",
+      "nvim-telescope/telescope.nvim",
+      "nvim-tree/nvim-web-devicons",
     },
     config = function()
-      require('octo').setup { enable_builtin = true }
-      vim.cmd [[hi OctoEditable guibg=noe]]
+      require("octo").setup({ enable_builtin = true })
+      vim.cmd([[hi OctoEditable guibg=noe]])
     end,
     keys = {
       {
-        '<leader>o',
-        '<cmd>Octo<cr>',
-        desc = 'Octo',
+        "<leader>o",
+        "<cmd>Octo<cr>",
+        desc = "Octo",
       },
       {
-        '<leader>gpd',
-        '<cmd>Octo pr draft<cr>',
-        desc = 'Send PR to Draft',
+        "<leader>pd",
+        "<cmd>Octo pr draft<cr>",
+        desc = "Send PR to Draft",
       },
       {
-        '<leader>gprs',
-        '<cmd>Octo review start<cr>',
-        desc = 'Start reviewing PR',
+        "<leader>prs",
+        "<cmd>Octo review start<cr>",
+        desc = "Start reviewing PR",
       },
       {
-        '<leader>gpl',
-        '<cmd>Octo pr list<cr>',
-        desc = 'PR list',
+        "<leader>pl",
+        "<cmd>Octo pr list<cr>",
+        desc = "PR list",
       },
       {
-        '<leader>gpb',
-        '<cmd>Octo pr browser<cr>',
-        desc = 'Open PR on the browser',
+        "<leader>pb",
+        "<cmd>Octo pr browser<cr>",
+        desc = "Open PR on the browser",
       },
       {
-        '<leader>gpc',
-        '<cmd>Octo pr create<cr>',
-        desc = 'Create a PR ',
+        "<leader>pc",
+        "<cmd>Octo pr create<cr>",
+        desc = "Create a PR ",
       },
       {
-        '<leader>gvb',
+        "<leader>vb",
         function()
-          require('octo.commands').add_user 'reviewer'
+          require("octo.commands").add_user("reviewer")
         end,
-        desc = 'Add the bezlio team as reviewer',
+        desc = "Add the bezlio team as reviewer",
       },
     },
   },

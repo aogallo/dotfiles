@@ -317,7 +317,8 @@ require("lazy").setup({
         ["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
         ["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
         ["<leader>t"] = { name = "[T]oggle", _ = "which_key_ignore" },
-        ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore", p = "[P]ull Request", h = "[H]unk" },
+        ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore", h = "[H]unk" },
+        ["<leader>p"] = { name = "[P]ull Request", _ = "which_key_ignore", h = "[H]unk" },
         [";s"] = { name = "[S]urround", _ = "which_key_ignore" },
       })
       -- visual mode
