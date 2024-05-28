@@ -320,6 +320,7 @@ require("lazy").setup({
         ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore", h = "[H]unk" },
         ["<leader>p"] = { name = "[P]ull Request", _ = "which_key_ignore", h = "[H]unk" },
         [";s"] = { name = "[S]urround", _ = "which_key_ignore" },
+        ["<leader>x"] = { name = "[T]rouble", _ = "which_key_ignore" },
       })
       -- visual mode
       require("which-key").register({
