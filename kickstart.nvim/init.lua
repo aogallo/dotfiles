@@ -319,7 +319,7 @@ require("lazy").setup({
         ["<leader>t"] = { name = "[T]oggle", _ = "which_key_ignore" },
         ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore", h = "[H]unk" },
         ["<leader>p"] = { name = "[P]ull Request", _ = "which_key_ignore", h = "[H]unk" },
-        [";s"] = { name = "[S]urround", _ = "which_key_ignore" },
+        [";s"] = { name = "[S]urround", _ = "which_key_ignore", b = "[B]uffer" },
         ["<leader>x"] = { name = "[T]rouble", _ = "which_key_ignore" },
         ["<leader>h"] = { name = "[H]unk", _ = "which_key_ignore" },
       })
@@ -363,6 +363,7 @@ require("lazy").setup({
 
       {
         "nvim-telescope/telescope-file-browser.nvim",
+        enabled = false,
         dependencies = { "nvim-telescope/telescope.nvim", "nvim-lua/plenary.nvim" },
       },
       "folke/trouble.nvim",
