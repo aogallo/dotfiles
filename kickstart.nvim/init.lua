@@ -174,7 +174,7 @@ vim.keymap.set("n", ";bo", function()
       vim.api.nvim_buf_delete(buf, {})
     end
   end
-end)
+end, { desc = "Close all other buffers except the current one" })
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
