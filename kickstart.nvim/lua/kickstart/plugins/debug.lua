@@ -81,6 +81,13 @@ return {
             action = "debugWithChrome",
           },
         },
+        {
+          type = "node-terminal",
+          name = "Run Script: start",
+          request = "launch",
+          command = "npm run start",
+          cwd = "${workspaceFolder}",
+        },
       }
     end
 

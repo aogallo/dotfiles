@@ -174,7 +174,7 @@ vim.keymap.set("n", ";bo", function()
       vim.api.nvim_buf_delete(buf, {})
     end
   end
-end, { desc = "Close all other buffers except the current one" })
+end, { desc = "Close all other buffers except the current" })
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
@@ -796,6 +796,7 @@ require("lazy").setup({
         typescript = { "prettier" },
         typescriptreact = { "prettier" },
         csharp = { "csharpier" },
+        go = { "goimports", "gofmt" },
       },
     },
   },
