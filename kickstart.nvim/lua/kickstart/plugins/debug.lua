@@ -39,7 +39,11 @@ return {
 
     require("dap-vscode-js").setup({
       debugger_path = vim.fn.stdpath("data") .. "/lazy/vscode-js-debug",
+      -- debugger_cmd = { "js-debug-adapter" },
       adapters = { "pwa-node", "pwa-chrome", "pwa-msedge", "node-terminal", "pwa-extensionHost", "chrome", "node" },
+      log_file_path = vim.fn.stdpath("data") .. "/dap_vscode_js.log",
+      -- log_file_level = vim.log.levels.ERROR,
+      log_console_level = vim.log.levels.ERROR,
     })
 
     local js_based_languages = { "javascript", "typescript", "javascriptreact", "typescriptreact" }
