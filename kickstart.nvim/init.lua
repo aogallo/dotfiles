@@ -720,6 +720,7 @@ require("lazy").setup({
           },
         },
         tailwindcss = {},
+        astro = {},
       }
 
       -- Ensure the servers and tools above are installed
@@ -797,6 +798,7 @@ require("lazy").setup({
         typescriptreact = { "prettier" },
         csharp = { "csharpier" },
         go = { "goimports", "gofmt" },
+        astro = { "prettier" },
       },
     },
   },
