@@ -721,6 +721,7 @@ require("lazy").setup({
         },
         tailwindcss = {},
         astro = {},
+        cssls = {},
       }
 
       -- Ensure the servers and tools above are installed
