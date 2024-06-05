@@ -799,6 +799,8 @@ require("lazy").setup({
         csharp = { "csharpier" },
         go = { "goimports", "gofmt" },
         astro = { "prettier" },
+        markdown = { "prettier" },
+        css = { "prettier" },
       },
     },
   },
