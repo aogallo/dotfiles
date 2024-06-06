@@ -175,6 +175,10 @@ vim.keymap.set("n", ";bo", function()
     end
   end
 end, { desc = "Close all other buffers except the current" })
+vim.keymap.set("n", "<C-,>", "<c-w>5<", { desc = "" })
+vim.keymap.set("n", "<C-.>", "<c-w>5>", { desc = "" })
+vim.keymap.set("n", "<S-t>", "<c-w>+", { desc = "" })
+vim.keymap.set("n", "<S-d>", "<c-w>-", { desc = "" })
 
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
