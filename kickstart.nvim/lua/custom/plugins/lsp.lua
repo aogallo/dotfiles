@@ -222,6 +222,11 @@ return { -- LSP Configuration & Plugins
             completeFunctionCalls = true,
           },
         },
+        filetypes = {
+          "javascript",
+          "typescript",
+          "vue",
+        },
       },
       --
 
