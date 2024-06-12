@@ -48,6 +48,11 @@ return {
         end,
         desc = "Add the bezlio team as reviewer",
       },
+      {
+        "<leader>pu",
+        "<cmd>Octo pr url<cr>",
+        desc = "Copy the PR url",
+      },
     },
   },
 }
