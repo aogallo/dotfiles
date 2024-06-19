@@ -1,0 +1,26 @@
+{
+  "name": "nvim-snippets",
+  "author": "aogallo",
+  "engines": {
+    "vscode": "^1.11.0"
+  },
+  "contributes": {
+    "snippets": [
+      {
+        "language": [
+          "typescript",
+          "typescriptreact",
+          "javascript",
+          "javascriptreact"
+        ],
+        "path": "./javascript/typescript.json"
+      },
+      {
+        "language": [
+          "json"
+        ],
+        "path": "./json.json"
+      }
+    ]
+  }
+}
