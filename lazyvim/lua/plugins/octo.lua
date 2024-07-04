@@ -6,7 +6,7 @@ return {
     -- set draft pr
     { "<leader>gD", "<cmd>Octo pr draft<cr>", desc = "Send PR to Draft (Octo)" },
     -- open pull request in browser
-    { "<leader>ga", "<cmd>Octo pr browser<cr>", desc = "Open Pull Request in browser (Octo)" },
+    { "<leader>ga", "<cmd>Octo pr browser<cr>", desc = "Open PR in browser (Octo)" },
     -- copy pr url to clipboard
     { "<leader>gu", "<cmd>Octo pr url<cr>", desc = "Copy PR URL to clipboard (Octo)" },
   },
