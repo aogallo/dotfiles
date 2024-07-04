@@ -8,6 +8,6 @@ return {
     -- open pull request in browser
     { "<leader>ga", "<cmd>Octo pr browser<cr>", desc = "Open PR in browser (Octo)" },
     -- copy pr url to clipboard
-    { "<leader>gu", "<cmd>Octo pr url<cr>", desc = "Copy PR URL to clipboard (Octo)" },
+    { "<leader>gu", "<cmd>Octo pr url<cr>", desc = "Copy PR URL (Octo)" },
   },
 }
