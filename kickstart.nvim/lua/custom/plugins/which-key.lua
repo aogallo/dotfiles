@@ -20,22 +20,22 @@ return { -- Useful plugin to show you pending keybinds.
     require("which-key").setup()
 
     -- Document existing key chains
-    require("which-key").register({
-      ["<leader>c"] = { name = "[C]ode", _ = "which_key_ignore" },
-      ["<leader>d"] = { name = "[D]ocument", _ = "which_key_ignore" },
-      ["<leader>r"] = { name = "[R]ename", _ = "which_key_ignore" },
-      ["<leader>s"] = { name = "[S]earch", _ = "which_key_ignore" },
-      ["<leader>w"] = { name = "[W]orkspace", _ = "which_key_ignore" },
-      ["<leader>t"] = { name = "[T]oggle", _ = "which_key_ignore" },
-      ["<leader>g"] = { name = "[G]it", _ = "which_key_ignore" },
-      ["<leader>p"] = { name = "[P]ull Request", _ = "which_key_ignore" },
+    require("which-key").add({
+      { "<leader>c", group = "[C]ode" },
+      { "<leader>d", group = "[D]ocument" },
+      { "<leader>r", group = "[R]ename" },
+      { "<leader>s", group = "[S]earch" },
+      { "<leader>w", group = "[W]orkspace" },
+      { "<leader>t", group = "[T]oggle" },
+      { "<leader>g", group = "[G]it" },
+      { "<leader>p", group = "[P]ull Request" },
       -- [";s"] = { name = "[S]urround", _ = "which_key_ignore", b = "[B]uffer" },
-      ["<leader>x"] = { name = "[T]rouble", _ = "which_key_ignore" },
-      ["<leader>h"] = { name = "[H]unk", _ = "which_key_ignore" },
+      { "<leader>x", group = "[T]rouble" },
+      { "<leader>h", group = "[H]unk" },
     })
     -- visual mode
-    require("which-key").register({
-      ["<leader>h"] = { "Git [H]unk" },
+    require("which-key").add({
+      { "<leader>h", group = "Git [H]unk" },
     }, { mode = "v" })
   end,
 }
