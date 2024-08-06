@@ -6,10 +6,12 @@ return {
       "nvim-telescope/telescope.nvim",
       "nvim-tree/nvim-web-devicons",
     },
-    config = function()
-      require("octo").setup({ enable_builtin = true })
-      vim.cmd([[hi OctoEditable guibg=noe]])
-    end,
+    opts = {
+      enable_builtin = true,
+      default_to_projects_v2 = true,
+      default_merge_method = "squash",
+      picker = "telescope",
+    },
     keys = {
       -- create a pull request
       { "<leader>go", "<cmd>Octo pr create<CR>", desc = "Create Pull Request (Octo)" },
@@ -36,12 +38,6 @@ return {
           for _, value in ipairs(bezlio_team) do
             octo["commands"]["reviewer"]["add"](value)
           end
-
-          -- octo["commands"]["reviewer"]["add"]("rgarcia3pillar")
-          -- octo["commands"]["reviewer"]["add"]("victorqnk")
-          -- octo["commands"]["reviewer"]["add"]("3rickgamez")
-          -- octo["commands"]["reviewer"]["add"]("sk8Guerra")
-          -- octo["commands"]["reviewer"]["add"]("eduardomorua")
 
           print("The Team Bezlio are added as reviwers")
         end,
