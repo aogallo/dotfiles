@@ -226,6 +226,8 @@ return { -- LSP Configuration & Plugins
           "javascript",
           "typescript",
           "vue",
+          "typescriptreact",
+          "javascriptreact",
         },
       },
       --
