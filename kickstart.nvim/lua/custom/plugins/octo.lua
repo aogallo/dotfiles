@@ -19,6 +19,8 @@ return {
       { "<leader>ga", "<cmd>Octo pr browser<cr>", desc = "Open PR in browser (Octo)" },
       -- copy pr url to clipboard
       { "<leader>gu", "<cmd>Octo pr url<cr>", desc = "Copy PR URL (Octo)" },
+      -- copy pr url to clipboard
+      { "<leader>gp", "<cmd>Octo pr list<cr>", desc = "List the PRs(Octo)" },
       --  add bezlio reviwers
       {
         "<leader>vb",
