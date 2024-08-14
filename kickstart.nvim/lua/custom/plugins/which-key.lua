@@ -20,7 +20,7 @@ return { -- Useful plugin to show you pending keybinds.
     require("which-key").setup()
 
     -- Document existing key chains
-    require("which-key").add({
+    require("which-key").register({
       { "<leader>c", group = "[C]ode" },
       { "<leader>d", group = "[D]ocument" },
       { "<leader>r", group = "[R]ename" },
@@ -34,7 +34,7 @@ return { -- Useful plugin to show you pending keybinds.
       { "<leader>h", group = "[H]unk" },
     })
     -- visual mode
-    require("which-key").add({
+    require("which-key").register({
       { "<leader>h", group = "Git [H]unk" },
     }, { mode = "v" })
   end,
