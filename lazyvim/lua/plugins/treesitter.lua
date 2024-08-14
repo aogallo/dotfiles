@@ -18,6 +18,7 @@ return {
       "yaml",
       "http",
       "graphql",
+      "prisma",
     },
   },
 }
