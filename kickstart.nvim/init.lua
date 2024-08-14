@@ -96,6 +96,10 @@ table.insert(vim._so_trails, "/?.dylib")
 -- Set to true if you have a Nerd Font installed and selected in the terminal
 vim.g.have_nerd_font = true
 
+-- 3: always and ONLY the last window
+vim.opt.laststatus = 3
+vim.go.laststatus = 3
+
 -- [[ Setting options ]]
 -- See `:help vim.opt`
 -- NOTE: You can change these options as you wish!
@@ -466,7 +470,7 @@ require("lazy").setup({
             luasnip.lsp_expand(args.body)
           end,
         },
-        completion = { completeopt = "menu,menuone,noinsert" },
+        completion = { completeopt = "menu,menuone,noinsert,noselect" },
 
         -- For an understanding of why these mappings were
         -- chosen, you will need to read `:help ins-completion`
@@ -489,9 +493,9 @@ require("lazy").setup({
 
           -- If you prefer more traditional completion keymaps,
           -- you can uncomment the following lines
-          ["<CR>"] = cmp.mapping.confirm({ select = true }),
-          ["<Tab>"] = cmp.mapping.select_next_item(),
-          ["<S-Tab>"] = cmp.mapping.select_prev_item(),
+          -- ["<CR>"] = cmp.mapping.confirm({ select = false }),
+          -- ["<Tab>"] = cmp.mapping.select_next_item(),
+          -- ["<S-Tab>"] = cmp.mapping.select_prev_item(),
 
           -- Manually trigger a completion from nvim-cmp.
           --  Generally you don't need this, because nvim-cmp will display
@@ -542,11 +546,18 @@ require("lazy").setup({
       -- Load the colorscheme here.
       -- Like many other themes, this one has different styles, and you could load
       -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme("tokyonight-night")
+      vim.cmd.colorscheme("tokyonight-moon")
 
       -- You can configure highlights by doing something like:
       vim.cmd.hi("Comment gui=none")
     end,
+    opts = {
+      transparent = true,
+      styles = {
+        sidebars = "transparent",
+        floats = "transparent",
+      },
+    },
   },
 
   {
@@ -603,7 +614,7 @@ require("lazy").setup({
       --  and try some other statusline plugin
       local statusline = require("mini.statusline")
       -- set use_icons to true if you have a Nerd Font
-      statusline.setup({ use_icons = vim.g.have_nerd_font })
+      statusline.setup({ use_icons = vim.g.have_nerd_font, set_vim_settings = false })
 
       -- You can configure sections in the statusline by overriding their
       -- default behavior. For example, here we set the section for
@@ -662,6 +673,7 @@ require("lazy").setup({
         "vimdoc",
         "vim",
         "yaml",
+        "prisma",
       },
       -- Autoinstall languages that are not installed
       auto_install = true,
@@ -753,3 +765,20 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     require("conform").format({ async = true, lsp_fallback = true, bufnr = args.buf, timeout_ms = 5000 })
   end,
 })
+
+vim.api.nvim_set_keymap(
+  "n",
+  "<leader>bo",
+  ":%bd|e#|bd#<CR>",
+  { desc = "Delete others buffers", noremap = true, silent = true }
+)
+
+vim.keymap.set("n", "<leader>bd", function()
+  local bufremove = require("mini.bufremove")
+  bufremove.delete(0, false)
+end, { desc = "Delete buffer" })
+
+vim.keymap.set("n", "<leader>bD", function()
+  local bufremove = require("mini.bufremove")
+  bufremove.delete(0, true)
+end, { desc = "Delete buffer (force)" })
