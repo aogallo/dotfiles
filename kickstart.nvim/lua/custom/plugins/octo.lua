@@ -23,7 +23,7 @@ return {
       { "<leader>gp", "<cmd>Octo pr list<cr>", desc = "List the PRs(Octo)" },
       --  add bezlio reviwers
       {
-        "<leader>vb",
+        "<leader>gv",
         function()
           local octo = require("octo.commands")
           local bezlio_team = {
