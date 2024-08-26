@@ -41,7 +41,7 @@ return { -- Collection of various small independent plugins/modules
     require("mini.tabline").setup()
 
     -- Notify
-    -- require("mini.notify").setup()
+    require("mini.notify").setup()
     --
     -- local notify = require("mini.notify")
     --
