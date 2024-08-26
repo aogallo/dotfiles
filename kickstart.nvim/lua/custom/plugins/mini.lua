@@ -41,14 +41,14 @@ return { -- Collection of various small independent plugins/modules
     require("mini.tabline").setup()
 
     -- Notify
-    require("mini.notify").setup()
-
-    local notify = require("mini.notify")
-
-    vim.notify = notify.make_notify({
-      ERROR = { duration = 5000 },
-      WARN = { duration = 3000 },
-      INFO = { duration = 3000 },
-    })
+    -- require("mini.notify").setup()
+    --
+    -- local notify = require("mini.notify")
+    --
+    -- vim.notify = notify.make_notify({
+    --   ERROR = { duration = 5000 },
+    --   WARN = { duration = 3000 },
+    --   INFO = { duration = 3000 },
+    -- })
   end,
 }
