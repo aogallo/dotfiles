@@ -17,10 +17,10 @@ return { -- Useful plugin to show you pending keybinds.
   "folke/which-key.nvim",
   event = "VimEnter", -- Sets the loading event to 'VimEnter'
   config = function() -- This is the function that runs, AFTER loading
-    require("which-key").setup()
+    local wk = require("which-key")
 
     -- Document existing key chains
-    require("which-key").register({
+    wk.add({
       { "<leader>c", group = "[C]ode" },
       { "<leader>d", group = "[D]ocument" },
       { "<leader>r", group = "[R]ename" },
@@ -32,10 +32,7 @@ return { -- Useful plugin to show you pending keybinds.
       -- [";s"] = { name = "[S]urround", _ = "which_key_ignore", b = "[B]uffer" },
       { "<leader>x", group = "[T]rouble" },
       { "<leader>h", group = "[H]unk" },
+      { "<leader>h", group = "Git [H]unk", mode = "v" },
     })
-    -- visual mode
-    require("which-key").register({
-      { "<leader>h", group = "Git [H]unk" },
-    }, { mode = "v" })
   end,
 }
