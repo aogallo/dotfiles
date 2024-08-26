@@ -625,3 +625,21 @@ vim.keymap.set("n", "<leader>bD", function()
   local bufremove = require("mini.bufremove")
   bufremove.delete(0, true)
 end, { desc = "Delete buffer (force)" })
+
+vim.keymap.set("n", ";j", function()
+  -- local buffer = vim.api.nvim_get_current_buf()
+  vim.cmd([[%s/\\n/\r/g]])
+  vim.cmd([[%s/\\"/"/g]])
+
+  -- vim.api.
+  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+  local buffer_content = table.concat(lines, "\n")
+
+  local found = string.find(buffer_content, "\\", 1, true)
+
+  if found ~= nil then
+    vim.cmd([[%s/\\\\/\\/g]])
+  end
+end, {
+  desc = "Format jq filter",
+})
