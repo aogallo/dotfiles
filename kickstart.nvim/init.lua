@@ -596,6 +596,7 @@ vim.keymap.set("n", ";j", function()
 
   if found ~= nil then
     vim.cmd([[%s/\\\\/\\/g]])
+    vim.cmd([[nohlsearch]])
   end
 end, {
   desc = "Format jq filter",
