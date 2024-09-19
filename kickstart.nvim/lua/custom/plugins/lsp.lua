@@ -249,6 +249,7 @@ return { -- LSP Configuration & Plugins
       tailwindcss = {},
       astro = {},
       cssls = {},
+      jdtls = {},
     }
 
     -- Ensure the servers and tools above are installed

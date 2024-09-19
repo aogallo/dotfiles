@@ -601,3 +601,6 @@ vim.keymap.set("n", ";j", function()
 end, {
   desc = "Format jq filter",
 })
+
+-- obsidian configuration
+vim.opt.cole = 2
