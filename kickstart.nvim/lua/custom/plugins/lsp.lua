@@ -103,7 +103,7 @@ return { -- LSP Configuration & Plugins
           vim.lsp.buf.code_action({
             apply = true,
             context = {
-              only = { "source.organizeImports.ts" },
+              only = { "source.organizeImports" },
               diagnostics = {},
             },
           })
