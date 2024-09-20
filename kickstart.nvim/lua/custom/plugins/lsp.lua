@@ -252,6 +252,9 @@ return { -- LSP Configuration & Plugins
       jdtls = {},
     }
 
+    -- Diagonstics Config
+    vim.diagnostic.config({ update_in_insert = true, float = { border = "rounded" } })
+
     -- Ensure the servers and tools above are installed
     --  To check the current status of installed tools and/or manually install
     --  other tools, you can run
