@@ -32,6 +32,7 @@ return { -- Useful plugin to show you pending keybinds.
       -- [";s"] = { name = "[S]urround", _ = "which_key_ignore", b = "[B]uffer" },
       { "<leader>x", group = "[T]rouble" },
       { "<leader>h", group = "[H]unk" },
+      { "<leader>l", group = "[L]sp" },
       { "<leader>h", group = "Git [H]unk", mode = "v" },
     })
   end,
