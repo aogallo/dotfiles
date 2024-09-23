@@ -28,3 +28,11 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     require("conform").format({ async = true, lsp_fallback = true, bufnr = args.buf, timeout_ms = 5000 })
   end,
 })
+
+-- Remove the spaces at the end of the line
+vim.api.nvim_create_autocmd({
+  "BufWritePre",
+}, {
+  pattern = { "*" },
+  command = [[%s/\s\+$//e]],
+})
