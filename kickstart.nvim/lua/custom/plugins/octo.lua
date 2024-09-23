@@ -29,10 +29,8 @@ return {
           local bezlio_team = {
             "pgarcia3pillar",
             "rgarcia3pillar",
-            "victorqnk",
             "3rickgamez",
             "sk8Guerra",
-            "eduardomorua",
           }
 
           for _, value in ipairs(bezlio_team) do
