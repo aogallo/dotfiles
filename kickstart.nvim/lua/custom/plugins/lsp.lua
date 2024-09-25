@@ -272,6 +272,8 @@ return { -- LSP Configuration & Plugins
       "lua_ls",
       "tsserver",
       "tailwindcss",
+      "markdownlint-cli2",
+      "markdown-toc",
     })
 
     require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
