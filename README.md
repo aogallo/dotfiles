@@ -98,7 +98,7 @@ brew install stylua
 
 ## Csharp language
 
-Installing the lsp and formatter 
+Installing the lsp and formatter
 
 ```bash
 dotnet tool install --global csharp-ls &&

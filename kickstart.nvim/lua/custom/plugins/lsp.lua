@@ -250,6 +250,7 @@ return { -- LSP Configuration & Plugins
       astro = {},
       cssls = {},
       jdtls = {},
+      marksman = {},
     }
 
     -- Diagonstics Config
