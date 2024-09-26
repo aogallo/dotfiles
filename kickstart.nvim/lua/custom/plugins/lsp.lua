@@ -270,7 +270,7 @@ return { -- LSP Configuration & Plugins
     vim.list_extend(ensure_installed, {
       "stylua", -- Used to format Lua code
       "lua_ls",
-      "tsserver",
+      "ts_ls",
       "tailwindcss",
       "markdownlint-cli2",
       "markdown-toc",
