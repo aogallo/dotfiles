@@ -215,7 +215,7 @@ return { -- LSP Configuration & Plugins
       --    https://github.com/pmizio/typescript-tools.nvim
       --
       -- But for many setups, the LSP (`tsserver`) will work just fine
-      ts_ls = {
+      tsserver = {
         ---@diagnostic disable-next-line: missing-fields
         settings = {
           completions = {
@@ -270,10 +270,11 @@ return { -- LSP Configuration & Plugins
     vim.list_extend(ensure_installed, {
       "stylua", -- Used to format Lua code
       "lua_ls",
-      "ts_ls",
+      "tsserver",
       "tailwindcss",
       "markdownlint-cli2",
       "markdown-toc",
+      "delve", --debugger for go with nvim-dap-go
     })
 
     require("mason-tool-installer").setup({ ensure_installed = ensure_installed })

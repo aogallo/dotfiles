@@ -387,7 +387,7 @@ require("lazy").setup({
         "javascript",
         "java",
         "jq",
-        "json",
+        "json5",
         "lua",
         "luadoc",
         "markdown",
