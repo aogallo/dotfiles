@@ -279,6 +279,7 @@ return { -- LSP Configuration & Plugins
       "markdownlint-cli2",
       "markdown-toc",
       "delve", --debugger for go with nvim-dap-go
+      "marksman",
     })
 
     require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
