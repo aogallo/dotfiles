@@ -255,7 +255,15 @@ return { -- LSP Configuration & Plugins
       cssls = {},
       jdtls = {},
       marksman = {},
-      html = {},
+      html = {
+        configurationSection = { "html", "css", "javascript" },
+        embeddedLanguages = {
+          css = true,
+          javascript = true,
+        },
+        provideFormatter = true,
+      },
+      htmx = {},
     }
 
     -- Diagonstics Config
