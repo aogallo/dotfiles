@@ -255,6 +255,7 @@ return { -- LSP Configuration & Plugins
       cssls = {},
       jdtls = {},
       marksman = {},
+      html = {},
     }
 
     -- Diagonstics Config

@@ -39,7 +39,7 @@ return { -- Autoformat
       typescriptreact = { "prettier" },
       json = { "prettier" },
       csharp = { "csharpier" },
-      -- go = { "goimports", "gofmt" },
+      go = { "goimports", "gofmt" },
       astro = { "prettier" },
       markdown = { "prettier", "markdownlint-cli2", "markdown-toc" },
       css = { "prettier" },
