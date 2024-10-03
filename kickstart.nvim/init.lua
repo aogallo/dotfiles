@@ -395,6 +395,7 @@ require("lazy").setup({
         "luadoc",
         "markdown",
         "markdown_inline",
+        "latex",
         "python",
         "sql",
         "typescript",
