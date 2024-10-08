@@ -1,14 +1,16 @@
-# Keyboard
+# Developer Environment Configurations
 
-## Iris Keyboard
+## Keyboard
 
-### Remapping each key
+### Iris Keyboard
+
+#### Remapping each key
 
 I use `Via Configurator`, you can follow this [Via Usage Guide](https://docs.keeb.io/via)
 
-# Files
+## Files
 
-## Hombebrew
+### Hombebrew
 
 Install Hombebrew execute this command
 
@@ -94,7 +96,7 @@ To install Stylua with Homebew, run the following:
 brew install stylua
 ```
 
-- [ripgrep](https://github.com/BurntSushi/ripgrep)
+[ripgrep](https://github.com/BurntSushi/ripgrep)
 
 ## Csharp language
 
