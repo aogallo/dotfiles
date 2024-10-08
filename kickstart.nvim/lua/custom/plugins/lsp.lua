@@ -219,7 +219,7 @@ return { -- LSP Configuration & Plugins
       --    https://github.com/pmizio/typescript-tools.nvim
       --
       -- But for many setups, the LSP (`tsserver`) will work just fine
-      tsserver = {
+      vtsls = {
         ---@diagnostic disable-next-line: missing-fields
         settings = {
           completions = {
@@ -283,7 +283,6 @@ return { -- LSP Configuration & Plugins
     vim.list_extend(ensure_installed, {
       "stylua", -- Used to format Lua code
       "lua_ls",
-      "tsserver",
       "tailwindcss",
       "markdownlint-cli2",
       "markdown-toc",
