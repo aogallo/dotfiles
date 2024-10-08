@@ -8,8 +8,6 @@
 
 I use `Via Configurator`, you can follow this [Via Usage Guide](https://docs.keeb.io/via)
 
-## Files
-
 ### Hombebrew
 
 Install Hombebrew execute this command
@@ -24,7 +22,7 @@ For more information about Hombebrew you can visit this [web-site](https://brew.
 
 I use the JetBrains Mono font
 
-You can download [here](https://www.jetbrains.com/lp/mono/) to install and following the instructions.
+You can download [here](https://www.jetbrains.com/lp/mono/) the font. To install use the following instructions.
 
 ## iTerm2
 
