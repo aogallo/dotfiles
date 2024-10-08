@@ -28,7 +28,7 @@ You can download [here](https://www.jetbrains.com/lp/mono/) to install and follo
 
 ## iTerm2
 
-[iterm2](https://iterm2.com/)
+Click [here](https://iterm2.com/) to read the documenation about `iterm2`
 
 **NOTE**: change the key maps to `Natural Text Editing`
 
