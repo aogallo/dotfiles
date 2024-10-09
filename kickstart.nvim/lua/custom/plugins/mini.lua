@@ -35,7 +35,9 @@ return { -- Collection of various small independent plugins/modules
     --  Check out: https://github.com/echasnovski/mini.nvim
     --
     -- Buffer removing
-    require("mini.bufremove").setup()
+    require("mini.bufremove").setup({
+      force = true,
+    })
 
     -- Tabline
     require("mini.tabline").setup()
