@@ -13,7 +13,7 @@ return { -- Autoformat
     },
   },
   opts = {
-    notify_on_error = false,
+    notify_on_error = true,
     format_on_save = function(bufnr)
       -- Disable "format_on_save lsp_fallback" for languages that don't
       -- have a well standardized coding style. You can add additional
@@ -39,6 +39,11 @@ return { -- Autoformat
       typescriptreact = { "prettier" },
       json = { "prettier" },
       csharp = { "csharpier" },
+      -- gofmt_command
+      -- For vim, set "gofmt_command" to "goimports":
+      -- https://golang.org/change/39c724dd7f252
+      -- https://golang.org/wiki/IDEsAndTextEditorPlugins
+      -- etc
       go = { "goimports", "gofmt" },
       astro = { "prettier" },
       markdown = { "prettier", "markdownlint-cli2", "markdown-toc" },

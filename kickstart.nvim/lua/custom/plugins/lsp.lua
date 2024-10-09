@@ -253,7 +253,7 @@ return { -- LSP Configuration & Plugins
       tailwindcss = {},
       astro = {},
       cssls = {},
-      jdtls = {},
+      -- jdtls = {},
       marksman = {},
       html = {
         configurationSection = { "html", "css", "javascript" },
@@ -263,7 +263,7 @@ return { -- LSP Configuration & Plugins
         },
         provideFormatter = true,
       },
-      htmx = {},
+      -- htmx = {},
     }
 
     -- Diagonstics Config

@@ -399,3 +399,10 @@ require("lazy").setup({
 
 -- obsidian configuration
 vim.opt.cole = 2
+
+-- gofmt_command
+-- For vim, set "gofmt_command" to "goimports":
+-- https://golang.org/change/39c724dd7f252
+-- https://golang.org/wiki/IDEsAndTextEditorPlugins
+-- etc
+vim.g.gofmt_command = "goimports"
