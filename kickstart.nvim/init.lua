@@ -406,3 +406,9 @@ vim.opt.cole = 2
 -- https://golang.org/wiki/IDEsAndTextEditorPlugins
 -- etc
 vim.g.gofmt_command = "goimports"
+
+vim.filetype.add({
+  extension = {
+    ["http"] = "http",
+  },
+})
