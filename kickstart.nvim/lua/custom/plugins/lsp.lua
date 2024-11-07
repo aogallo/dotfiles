@@ -183,7 +183,7 @@ return { -- LSP Configuration & Plugins
         staticcheck = true,
         gofumpt = true,
       },
-      -- pyright = {},
+      pyright = {},
       csharp_ls = {},
       rust_analyzer = {},
       jsonls = {
@@ -264,6 +264,11 @@ return { -- LSP Configuration & Plugins
         provideFormatter = true,
       },
       -- htmx = {},
+      sqlls = {
+        filetypes = {
+          "sql",
+        },
+      },
     }
 
     -- Diagonstics Config
