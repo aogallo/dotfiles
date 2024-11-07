@@ -49,6 +49,17 @@ return { -- Autoformat
       markdown = { "prettier", "markdownlint-cli2", "markdown-toc" },
       css = { "prettier" },
       ["markdown.mdx"] = { "prettier", "markdownlint-cli2", "markdown-toc" },
+      python = { "black" },
+    },
+    formatters = {
+      injected = {
+        options = {
+          ignore_errors = false,
+          lang_to_formatters = {
+            sql = { "sleek" },
+          },
+        },
+      },
     },
   },
 }
