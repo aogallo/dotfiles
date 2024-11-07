@@ -99,6 +99,11 @@ end, {
   desc = "Format jq filter",
 })
 
+-- tab keymmaps
 vim.keymap.set("n", "<Tab>", "gt", { desc = "Next Tab" })
 vim.keymap.set("n", "<S-Tab>", "gT", { desc = "Previous Tab" })
 vim.keymap.set("n", "<S-t>", ":tabnew", { desc = "Tab New" })
+
+-- Move Visual block
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "" })
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "" })
