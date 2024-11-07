@@ -98,3 +98,7 @@ vim.keymap.set("n", ";j", function()
 end, {
   desc = "Format jq filter",
 })
+
+vim.keymap.set("n", "<Tab>", "gt", { desc = "Next Tab" })
+vim.keymap.set("n", "<S-Tab>", "gT", { desc = "Previous Tab" })
+vim.keymap.set("n", "<S-t>", ":tabnew", { desc = "Tab New" })
