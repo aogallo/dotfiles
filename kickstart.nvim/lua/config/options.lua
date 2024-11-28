@@ -78,5 +78,8 @@ vim.opt.scrolloff = 10
 -- Set highlight on search, but clear on pressing <Esc> in normal mode
 vim.opt.hlsearch = true
 
+-- enable spell checking
+vim.opt.spell = true
+
 -- Set the spell lang
-vim.opt.spelllang = "en"
+vim.opt.spelllang = "en_us"
