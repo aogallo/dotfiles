@@ -28,6 +28,14 @@ return {
       heading = {
         position = "inline",
       },
+      bullet = {
+        enabled = true,
+        icons = { "●", "○", "◆", "◇" },
+        ordered_icons = {},
+        left_pad = 0,
+        right_pad = 1,
+        highlight = "RenderMarkdownBullet",
+      },
     },
     -- dependencies = { "nvim-treesitter/nvim-treesitter", "echasnovski/mini.nvim" }, -- if you use the mini.nvim suite
     -- dependencies = { 'nvim-treesitter/nvim-treesitter', 'echasnovski/mini.icons' }, -- if you use standalone mini plugins

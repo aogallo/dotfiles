@@ -16,6 +16,18 @@ return {
 
     -- see below for full list of optional dependencies 👇
   },
+  keys = {
+    {
+      "<leader>so",
+      "<cmd>ObsidianQuickSwitch<cr>",
+      desc = "[S]earch [O]bsidian",
+    },
+    {
+      "<leader>no",
+      "<cmd>ObsidianNew<cr>",
+      desc = "[N]ew [O]bsidian Note",
+    },
+  },
   opts = {
     workspaces = {
       {
