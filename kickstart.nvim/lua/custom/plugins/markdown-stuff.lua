@@ -23,7 +23,25 @@ return {
   },
   {
     "MeanderingProgrammer/render-markdown.nvim",
+    -- keys = {
+    -- {
+    --   "<leader>me",
+    --   ":RenderMarkdown enable<CR>",
+    --   desc = "[E]nable render view",
+    -- },
+    -- {
+    --   "<leader>md",
+    --   ":RenderMarkdown disable<CR>",
+    --   desc = "[D]isable render view",
+    -- },
+    -- {
+    --   "<leader>mt",
+    --   ":RenderMarkdown toggle<CR>",
+    --   desc = "[T]oggle render view",
+    -- },
+    -- },
     opts = {
+      enabled = true,
       preset = "obsidian", -- lazy | obsidian
       heading = {
         position = "inline",
