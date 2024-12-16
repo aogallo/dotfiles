@@ -16,6 +16,14 @@ return {
       end,
       desc = "Delete all buffers except the current one",
     },
+    {
+      "<C-t>",
+      function()
+        Snacks.terminal.toggle()
+      end,
+      desc = "[T]oggle terminal",
+      mode = { "n", "t" },
+    },
   },
   opts = {
     terminal = {
