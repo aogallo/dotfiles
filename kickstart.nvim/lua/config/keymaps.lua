@@ -8,15 +8,6 @@ vim.keymap.set("v", "+", "g<C-a>gv")
 vim.keymap.set("v", "-", "g<C-x>gv")
 vim.keymap.set("v", ">", ">gv")
 vim.keymap.set("v", "<", "<gv")
--- vim.keymap.set("n", ";bo", function()
---   local bufs = vim.api.nvim_list_bufs()
---   local current_buf = vim.api.nvim_get_current_buf()
---   for _, buf in pairs(bufs) do
---     if buf ~= current_buf then
---       vim.api.nvim_buf_delete(buf, {})
---     end
---   end
--- end, { desc = "Close all other buffers except the current" })
 
 -- These keymaps controls the size of the splits (heigth/width)
 vim.keymap.set("n", "<C-,>", "<c-w>5<", { desc = "" })
