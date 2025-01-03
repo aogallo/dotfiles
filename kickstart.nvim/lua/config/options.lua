@@ -83,3 +83,7 @@ vim.opt.spell = true
 
 -- Set the spell lang
 vim.opt.spelllang = "en_us"
+
+-- Edgy configurations https://github.com/folke/edgy.nvim
+vim.opt.laststatus = 3
+vim.opt.splitkeep = "screen"
