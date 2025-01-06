@@ -38,8 +38,8 @@ return {
     },
     completion = {
       ghost_text = { enabled = true },
+      documentation = { window = { border = "single" } },
       menu = {
-        documentation = { window = { border = "single" } },
         border = "single",
         draw = {
           columns = {
