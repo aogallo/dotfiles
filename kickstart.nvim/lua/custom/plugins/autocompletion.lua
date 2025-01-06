@@ -17,7 +17,15 @@ return {
     -- 'super-tab' for mappings similar to vscode (tab to accept, arrow keys to navigate)
     -- 'enter' for mappings similar to 'super-tab' but with 'enter' to accept
     -- See the full "keymap" documentation for information on defining your own keymap.
-    keymap = { preset = "default" },
+    keymap = {
+      preset = "default",
+      ["<C-l>"] = { "snippet_forward", "fallback" },
+      ["<C-h>"] = { "snippet_backward", "fallback" },
+      cmdline = {
+        ["<S-Tab>"] = { "select_prev", "fallback" },
+        ["<Tab>"] = { "select_next", "fallback" },
+      },
+    },
 
     appearance = {
       -- Sets the fallback highlight groups to nvim-cmp's highlight groups
@@ -29,8 +37,15 @@ return {
       nerd_font_variant = "mono",
     },
     completion = {
+      ghost_text = { enabled = true },
       menu = {
+        documentaion = { window = { border = "single" } },
+        border = "single",
         draw = {
+          columns = {
+            { "label", "label_description", gap = 1 },
+            { "kind_icon", "kind", gap = 1 },
+          },
           components = {
             kind_icon = {
               ellipsis = false,
