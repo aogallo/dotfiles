@@ -268,11 +268,12 @@ return { -- LSP Configuration & Plugins
         provideFormatter = true,
       },
       -- htmx = {},
-      sqlls = {
-        filetypes = {
-          "sql",
-        },
+      sqls = {
+        on_attach = function(client, bufnr)
+          require("sqls").on_attach(client, bufnr)
+        end,
       },
+      svelte = {},
     }
 
     -- Diagonstics Config

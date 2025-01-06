@@ -242,6 +242,7 @@ require("lazy").setup({
         "vim",
         "yaml",
         "prisma",
+        "svelte",
       },
       -- Autoinstall languages that are not installed
       auto_install = true,

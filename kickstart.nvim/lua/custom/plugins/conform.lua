@@ -50,6 +50,12 @@ return { -- Autoformat
       css = { "prettier" },
       ["markdown.mdx"] = { "prettier", "markdownlint-cli2", "markdown-toc" },
       python = { "black" },
+      html = {
+        "prettier",
+      },
+      svelte = {
+        "prettier",
+      },
     },
     formatters = {
       injected = {
