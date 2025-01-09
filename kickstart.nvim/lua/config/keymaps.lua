@@ -16,10 +16,10 @@ vim.keymap.set("n", "<C-.>", "<c-w>5>")
 vim.keymap.set("n", "<S-t>", "<c-w>+")
 vim.keymap.set("n", "<S-d>", "<c-w>-")
 
-vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
-vim.keymap.set("i", "jk", "<Esc>")
-vim.keymap.set("n", "L", ":bnext<CR>")
-vim.keymap.set("n", "H", ":bprev<CR>")
+vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>", { silent = true })
+vim.keymap.set("i", "jk", "<Esc>", { silent = true })
+vim.keymap.set("n", "L", ":bnext<CR>", { silent = true })
+vim.keymap.set("n", "H", ":bprev<CR>", { silent = true })
 
 -- Diagnostic keymaps
 vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
@@ -33,7 +33,7 @@ vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagn
 --
 -- NOTE: This won't work in all terminal emulators/tmux/etc. Try your own mapping
 -- or just use <C-\><C-n> to exit terminal mode
-vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+vim.keymap.set("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode", silent = true })
 
 -- TIP: Disable arrow keys in normal mode
 -- vim.keymap.set('n', '<left>', '<cmd>echo "Use h to move!!"<CR>')
@@ -51,24 +51,7 @@ vim.keymap.set("n", "<C-j>", "<C-w><C-j>", { desc = "Move focus to the lower win
 vim.keymap.set("n", "<C-k>", "<C-w><C-k>", { desc = "Move focus to the upper window" })
 
 -- create new buffer
-vim.keymap.set("n", ";bn", "<cmd>enew<CR>", { desc = "Create a new buffer" })
-
-vim.api.nvim_set_keymap(
-  "n",
-  "<leader>bo",
-  ":%bd|e#|bd#<CR>",
-  { desc = "Delete others buffers", noremap = true, silent = true }
-)
-
-vim.keymap.set("n", "<leader>bd", function()
-  local bufremove = require("mini.bufremove")
-  bufremove.delete(0, false)
-end, { desc = "Delete buffer" })
-
-vim.keymap.set("n", "<leader>bD", function()
-  local bufremove = require("mini.bufremove")
-  bufremove.delete(0, true)
-end, { desc = "Delete buffer (force)" })
+vim.keymap.set("n", ";bn", "<cmd>enew<CR>", { desc = "Create a new buffer", silent = true })
 
 vim.keymap.set("n", ";j", function()
   -- local buffer = vim.api.nvim_get_current_buf()
@@ -93,8 +76,8 @@ end, {
 -- tab keymmaps
 vim.keymap.set("n", "<Tab>", "gt", { desc = "Next Tab" })
 vim.keymap.set("n", "<S-Tab>", "gT", { desc = "Previous Tab" })
-vim.keymap.set("n", "<S-t>", ":tabnew", { desc = "Tab New" })
+vim.keymap.set("n", "<S-t>", ":tabnew<CR>", { desc = "Tab New", silent = true })
 
 -- Move Visual block
-vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "" })
-vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "" })
+vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv", { desc = "", silent = true })
+vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv", { desc = "", silent = true })
