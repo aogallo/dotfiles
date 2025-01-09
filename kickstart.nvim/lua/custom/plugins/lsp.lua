@@ -14,8 +14,10 @@ return { -- LSP Configuration & Plugins
     -- used for completion, annotations and signatures of Neovim apis
     { "folke/neodev.nvim", opts = {} },
     "b0o/schemastore.nvim",
+    "saghen/blink.cmp",
   },
   config = function()
+    local lspconfig = require("lspconfig")
     -- Brief aside: **What is LSP?**
     --
     -- LSP is an initialism you've probably heard, but might not understand what it is.
@@ -109,16 +111,6 @@ return { -- LSP Configuration & Plugins
           })
         end, "Organize Imports")
 
-        map("<leader>cR", function()
-          vim.lsp.buf.code_action({
-            apply = true,
-            context = {
-              only = { "source.removeUnused.ts" },
-              diagnostics = {},
-            },
-          })
-        end, "Remove Unused Imports")
-
         map("<leader>e", function()
           vim.diagnostic.open_float()
         end, "Diagonstics")
@@ -169,7 +161,7 @@ return { -- LSP Configuration & Plugins
     --  When you add nvim-cmp, luasnip, etc. Neovim now has *more* capabilities.
     --  So, we create new capabilities with nvim cmp, and then broadcast that to the servers.
     local capabilities = vim.lsp.protocol.make_client_capabilities()
-    capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
+    capabilities = vim.tbl_deep_extend("force", capabilities, require("blink.cmp").get_lsp_capabilities())
 
     -- Enable the following language servers
     --  Feel free to add/remove any LSPs that you want here. They will automatically be installed.
