@@ -22,7 +22,6 @@ return {
       ["<C-l>"] = { "snippet_forward", "fallback" },
       ["<C-h>"] = { "snippet_backward", "fallback" },
       cmdline = {
-
         ["<S-Tab>"] = { "select_prev", "fallback" },
         ["<Tab>"] = { "select_next", "fallback" },
       },
@@ -38,10 +37,11 @@ return {
       nerd_font_variant = "mono",
     },
     completion = {
-      ghost_text = { enabled = true },
+      ghost_text = { enabled = false },
       documentation = { window = { border = "single" } },
       menu = {
         auto_show = function(ctx)
+          print(vim.inspect(ctx.mode))
           return ctx.mode ~= "cmdline" or not vim.tbl_contains({ "/", "?" }, vim.fn.getcmdtype())
         end,
         border = "single",
@@ -51,11 +51,25 @@ return {
             { "kind_icon", "kind", gap = 1 },
           },
           components = {
+            kind = {
+              ellipsis = false,
+              width = { fill = true },
+              text = function(ctx)
+                if ctx.source_id ~= "cmdline" then
+                  return ctx.kind
+                end
+              end,
+              highlight = function(ctx)
+                return require("blink.cmp.completion.windows.render.tailwind").get_hl(ctx) or "BlinkCmpKind" .. ctx.kind
+              end,
+            },
             kind_icon = {
               ellipsis = false,
               text = function(ctx)
-                local kind_icon, _, _ = require("mini.icons").get("lsp", ctx.kind)
-                return kind_icon
+                if ctx.source_id ~= "cmdline" then
+                  local kind_icon, _, _ = require("mini.icons").get("lsp", ctx.kind)
+                  return kind_icon
+                end
               end,
               -- Optionally, you may also use the highlights from mini.icons
               highlight = function(ctx)
@@ -64,9 +78,32 @@ return {
               end,
             },
           },
+          treesitter = { "lsp" },
         },
+        cmdline_position = function()
+          -- print(vim.inspect(vim.g.ui_cmdline_pos))
+          if vim.g.ui_cmdline_pos ~= nil then
+            local pos = vim.g.ui_cmdline_pos
+            return { pos[1] - 1, pos[2] }
+          end
+          local height = (vim.o.cmdheight == 0) and 1 or vim.o.cmdheight
+          return { vim.o.lines - height, 0 }
+        end,
       },
     },
     signature = { enabled = true, window = { border = "single" } },
+    sources = {
+      cmdline = function()
+        local type = vim.fn.getcmdtype()
+
+        if type == "/" or type == "?" then
+          return { "buffer" }
+        end
+        if type == ":" or type == "@" then
+          return { "cmdline" }
+        end
+        return {}
+      end,
+    },
   },
 }
