@@ -12,7 +12,13 @@ return {
   },
   cmd = "Neotree",
   keys = {
-    { "<leader>e", ":Neotree toggle<CR>", { desc = "NeoTree toggle" } },
+    {
+      ";e",
+      function()
+        require("neo-tree.command").execute({ toggle = true })
+      end,
+      { desc = "NeoTree toggle" },
+    },
   },
   opts = {
     filesystem = {
