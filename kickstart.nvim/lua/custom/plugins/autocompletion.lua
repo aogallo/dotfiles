@@ -41,7 +41,7 @@ return {
       documentation = { window = { border = "single" } },
       menu = {
         auto_show = function(ctx)
-          print(vim.inspect(ctx.mode))
+          -- print(vim.inspect(ctx.mode))
           return ctx.mode ~= "cmdline" or not vim.tbl_contains({ "/", "?" }, vim.fn.getcmdtype())
         end,
         border = "single",
