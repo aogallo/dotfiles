@@ -22,6 +22,7 @@ return {
       ["<C-l>"] = { "snippet_forward", "fallback" },
       ["<C-h>"] = { "snippet_backward", "fallback" },
       cmdline = {
+
         ["<S-Tab>"] = { "select_prev", "fallback" },
         ["<Tab>"] = { "select_next", "fallback" },
       },
@@ -40,6 +41,9 @@ return {
       ghost_text = { enabled = true },
       documentation = { window = { border = "single" } },
       menu = {
+        auto_show = function(ctx)
+          return ctx.mode ~= "cmdline" or not vim.tbl_contains({ "/", "?" })
+        end,
         border = "single",
         draw = {
           columns = {

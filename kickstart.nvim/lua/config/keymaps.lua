@@ -1,3 +1,4 @@
+---@diagnostic disable: missing-fields
 -- [[ Basic Keymaps ]]
 --  See `:help vim.keymap.set()`
 --
@@ -10,10 +11,10 @@ vim.keymap.set("v", ">", ">gv")
 vim.keymap.set("v", "<", "<gv")
 
 -- These keymaps controls the size of the splits (heigth/width)
-vim.keymap.set("n", "<C-,>", "<c-w>5<", { desc = "" })
-vim.keymap.set("n", "<C-.>", "<c-w>5>", { desc = "" })
-vim.keymap.set("n", "<S-t>", "<c-w>+", { desc = "" })
-vim.keymap.set("n", "<S-d>", "<c-w>-", { desc = "" })
+vim.keymap.set("n", "<C-,>", "<c-w>5<")
+vim.keymap.set("n", "<C-.>", "<c-w>5>")
+vim.keymap.set("n", "<S-t>", "<c-w>+")
+vim.keymap.set("n", "<S-d>", "<c-w>-")
 
 vim.keymap.set("n", "<Esc>", "<cmd>nohlsearch<CR>")
 vim.keymap.set("i", "jk", "<Esc>")
@@ -23,7 +24,7 @@ vim.keymap.set("n", "H", ":bprev<CR>")
 -- Diagnostic keymaps
 vim.keymap.set("n", "[d", vim.diagnostic.goto_prev, { desc = "Go to previous [D]iagnostic message" })
 vim.keymap.set("n", "]d", vim.diagnostic.goto_next, { desc = "Go to next [D]iagnostic message" })
-vim.keymap.set("n", "<leader>e", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
+vim.keymap.set("n", "<leader>cd", vim.diagnostic.open_float, { desc = "Show diagnostic [E]rror messages" })
 vim.keymap.set("n", "<leader>q", vim.diagnostic.setloclist, { desc = "Open diagnostic [Q]uickfix list" })
 
 -- Exit terminal mode in the builtin terminal with a shortcut that is a bit easier
