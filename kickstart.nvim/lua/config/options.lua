@@ -50,7 +50,7 @@ vim.opt.smartcase = true
 vim.opt.signcolumn = "yes"
 
 -- Decrease update time
--- vim.opt.updatetime = 250
+vim.opt.updatetime = 250
 
 -- Decrease mapped sequence wait time
 -- Displays which-key popup sooner
@@ -83,5 +83,3 @@ vim.opt.spell = true
 
 -- Set the spell lang
 vim.opt.spelllang = "en_us"
-
-vim.opt.updatetime = 100
