@@ -21,28 +21,6 @@ return {
       { "<leader>ga", "<cmd>Octo pr browser<cr>", desc = "Open PR in browser (Octo)" },
       -- copy pr url to clipboard
       { "<leader>gu", "<cmd>Octo pr url<cr>", desc = "Copy PR URL (Octo)" },
-      --  add bezlio reviwers
-      {
-        "<leader>vb",
-        function()
-          local octo = require("octo.commands")
-          local bezlio_team = {
-            "pgarcia3pillar",
-            "rgarcia3pillar",
-            "victorqnk",
-            "3rickgamez",
-            "sk8Guerra",
-            "eduardomorua",
-          }
-
-          for _, value in ipairs(bezlio_team) do
-            octo["commands"]["reviewer"]["add"](value)
-          end
-
-          print("The Team Bezlio are added as reviwers")
-        end,
-        desc = "Add Bezlio Reviwers",
-      },
     },
   },
 }
