@@ -36,6 +36,10 @@ return {
       },
     },
 
+    completion = {},
+    attachments = {
+      img_folder = "assets/imgs",
+    },
     -- see below for full list of options 👇
   },
 }
