@@ -42,6 +42,9 @@ Choose the `JetBrainsMono Nerd Font Mono` font and active the `Use ligatures` op
 
 ## NVIM
 
+![neovim_logo](https://github.com/user-attachments/assets/61f55e5d-e434-4f5e-b986-b0ed7fe11a3c)
+
+
 Install nvim by brew
 
 ```bash
