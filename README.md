@@ -104,3 +104,19 @@ Installing the lsp and formatter
 dotnet tool install --global csharp-ls &&
 dotnet tool install csharpier -g
 ```
+
+## Images in Neovim
+
+I use `snacks/image` so the following are the requirements:
+
+- Install ImageMagick
+
+### Mac OS X
+
+```bash
+brew install imagemagick
+```
+
+```bash
+brew install ghostscript
+```
