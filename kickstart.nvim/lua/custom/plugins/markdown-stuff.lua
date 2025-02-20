@@ -49,10 +49,17 @@ return {
       bullet = {
         enabled = true,
         icons = { "●", "○", "◆", "◇" },
+
         ordered_icons = {},
         left_pad = 0,
         right_pad = 1,
         highlight = "RenderMarkdownBullet",
+      },
+      html = {
+        enabled = true,
+        comment = {
+          conceal = false,
+        },
       },
     },
     -- dependencies = { "nvim-treesitter/nvim-treesitter", "echasnovski/mini.nvim" }, -- if you use the mini.nvim suite
