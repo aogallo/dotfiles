@@ -24,6 +24,14 @@ return {
       desc = "[T]oggle terminal",
       mode = { "n", "t" },
     },
+    {
+      ";;",
+      function()
+        Snacks.image.hover()
+      end,
+      desc = "Show Image",
+      mode = { "n" },
+    },
   },
   opts = {
     terminal = {
