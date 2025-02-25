@@ -40,6 +40,10 @@ Go to Preferences -> Profile -> Text -> Font
 
 Choose the `JetBrainsMono Nerd Font Mono` font and active the `Use ligatures` option.
 
+## Ghosty
+
+Other terminal option would be Ghosty, if you wnat to see images in neovim Ghosty is a good option. You can download it [here](https://ghostty.org/docs/install/binary#macos)
+
 ## NVIM
 
 ![neovim_logo](https://github.com/user-attachments/assets/61f55e5d-e434-4f5e-b986-b0ed7fe11a3c)
