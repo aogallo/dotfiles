@@ -22,7 +22,6 @@ return {
       function(opts)
         opts = opts or {}
         opts.cwd = opts.cwd or vim.uv.cwd()
-        print(vim.inspect(opts))
 
         local finder = finders.new_async_job({
           command_generator = function(prompt)
