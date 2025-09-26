@@ -6,7 +6,8 @@
 
 #### Remapping each key
 
-I use `Via Configurator`, you can follow this [Via Usage Guide](https://docs.keeb.io/via)
+I use `Via Configurator App`, you can follow this [Via Usage Guide](https://www.usevia.app/)
+Also review the Via documentation [Via web site](https://docs.keeb.io/via)
 
 ### Hombebrew
 
