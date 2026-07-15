@@ -166,7 +166,7 @@ add {
             }
         end,
         on_setup = function()
-            vim.keymap.set({ 'n', 'x' }, '<leader>fb', function()
+            vim.keymap.set({ 'n', 'x' }, '<leader>f/', function()
                 local opts = {
                     winopts = {
                         height = 0.6,
@@ -190,7 +190,7 @@ add {
                 end
             end, { desc = 'search current buffer' })
 
-            vim.keymap.set('n', '<leader>fB', '<cmd>FzfLua buffers<cr>', { desc = 'buffers' })
+            vim.keymap.set('n', '<leader>fb', '<cmd>FzfLua buffers<cr>', { desc = 'buffers' })
             vim.keymap.set('n', '<leader>fc', '<cmd>FzfLua highlights<cr>', { desc = 'highlights' })
             vim.keymap.set(
                 'n',
