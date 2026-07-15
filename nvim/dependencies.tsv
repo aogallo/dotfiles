@@ -1,0 +1,20 @@
+# Neovim dependency inventory.
+# Format: name|executable|required|source|install_hint|used_by
+# required: yes/no. source: mason/homebrew/npm/pnpm/go/curl/external/plugin.
+Go language server|gopls|no|go|go install golang.org/x/tools/gopls@latest|nvim/lsp/gopls.lua
+TypeScript native preview|tsgo|yes|pnpm|pnpm install -g @typescript/native-preview|nvim/lsp/tsgo.lua
+dprint|dprint|no|homebrew|brew install dprint|nvim/lsp/dprint.lua,nvim/plugin/conform.lua
+ty Python language server|ty|no|curl|Use the installer documented at https://astral.sh/ty|nvim/lsp/ty.lua
+Lua language server|lua-language-server|yes|homebrew|brew install lua-language-server|nvim/lsp/lua_ls.lua
+JSON language server|vscode-json-language-server|yes|mason/npm|Mason json-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/jsonls.lua
+ESLint language server|vscode-eslint-language-server|yes|mason/npm|Mason eslint-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/eslint.lua
+CSS language server|vscode-css-language-server|yes|mason/npm|Mason css-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/cssls.lua
+HTML language server|vscode-html-language-server|yes|mason/npm|Mason html-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/html.lua
+Bash language server|bash-language-server|no|npm|pnpm add -g bash-language-server|nvim/lsp/bashls.lua
+YAML language server|yaml-language-server|yes|mason/npm|Mason yaml-language-server or pnpm add -g yaml-language-server|nvim/lsp/yamlls.lua
+Marksman Markdown language server|marksman|no|mason/homebrew|brew install marksman or Mason marksman|nvim/lsp/marksman.lua
+Stylelint language server|stylelint-lsp|no|npm|npm install -g stylelint-lsp|nvim/lsp/stylelint_lsp.lua
+Prettier|prettier|yes|mason/npm|Mason prettier or pnpm add -g prettier|nvim/plugin/conform.lua
+StyLua|stylua|yes|homebrew|brew install stylua|nvim/plugin/conform.lua,nvim/stylua.toml
+shfmt|shfmt|no|homebrew|brew install shfmt|nvim/plugin/conform.lua
+ShellCheck|shellcheck|no|homebrew|brew install shellcheck|nvim/lsp/bashls.lua
