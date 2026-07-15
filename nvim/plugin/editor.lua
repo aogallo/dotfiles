@@ -6,7 +6,7 @@ add {
         src = 'folke/snacks.nvim',
         opts = { explorer = { enabled = true }, lazygit = { enabled = true } },
         on_setup = function()
-            vim.keymap.set('n', '<leader>e', Snacks.explorer.open, { desc = 'Explorer', silent = true })
+            vim.keymap.set('n', '<leader>fe', Snacks.explorer.open, { desc = 'Explorer', silent = true })
             vim.keymap.set('n', '<leader>bo', Snacks.bufdelete.other, { desc = 'Delete other buffers', silent = true })
             vim.keymap.set('n', '<leader>gg', Snacks.lazygit.open, { desc = 'Lazygit', silent = true })
         end,
@@ -59,9 +59,12 @@ add {
             wk.add {
                 { '<leader>b', group = 'buffers' },
                 { '<leader>c', group = 'code' },
-                { '<leader>f', group = 'file' },
+                { '<leader>f', group = 'files' },
                 { '<leader>g', group = 'git' },
-                { '<leader>p', group = 'pack manager' },
+                { '<leader>p', group = 'packages' },
+                { '<leader>s', group = 'search' },
+                { '<leader>u', group = 'ui' },
+                { '<leader>w', group = 'windows' },
             }
         end,
     },
