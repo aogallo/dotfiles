@@ -25,7 +25,33 @@ add {
             },
         },
     },
-    { src = 'folke/tokyonight.nvim', opts = { style = 'moon' } },
+    {
+        src = 'folke/tokyonight.nvim',
+        opts = {
+            style = 'moon',
+            on_highlights = function(hl, c)
+                -- Keep low-priority text readable without flattening Tokyonight moon.
+                local readable_comment = '#9aa7cf'
+                local hidden_path = '#a9b8e8'
+                local explorer_row = '#2d3f76'
+
+                hl.Comment = { fg = readable_comment, italic = true }
+                hl['@comment'] = { fg = readable_comment, italic = true }
+                hl.SnacksPickerComment = { fg = readable_comment, italic = true }
+
+                hl.SnacksPickerPathHidden = { fg = hidden_path }
+                hl.SnacksPickerPathIgnored = { fg = c.fg_gutter }
+                hl.SnacksPickerFile = { fg = c.fg }
+                hl.SnacksPickerDirectory = { fg = c.blue, bold = true }
+                hl.SnacksPickerDir = { fg = c.fg_gutter }
+
+                hl.SnacksPickerListCursorLine = { bg = explorer_row }
+                hl.SnacksPickerSelected = { fg = c.orange, bold = true }
+                hl.SnacksPickerGitStatusUntracked = { fg = c.green }
+                hl.SnacksPickerGitStatusIgnored = { fg = c.dark5 }
+            end,
+        },
+    },
     {
         src = 'folke/which-key.nvim',
         on_setup = function()
