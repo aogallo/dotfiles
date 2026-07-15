@@ -9,7 +9,7 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. For dotfiles changes, validation tasks are REQUIRED when the constitution applies, including clean install, repeated install, conflict handling, partial failure, syntax/static checks, and smoke tests relevant to the changed modules.
+**Tests**: The examples below include test tasks. For dotfiles changes, validation tasks are REQUIRED when the constitution applies, including clean install, repeated install, conflict handling, partial failure, syntax/static checks, smoke tests relevant to the changed modules, and feature-branch/PR workflow verification.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -161,6 +161,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Run quickstart.md validation
 - [ ] TXXX Verify idempotent install/update/remove behavior for affected modules
 - [ ] TXXX Document customization, validation, rollback, and troubleshooting updates
+- [ ] TXXX Verify commits are on a feature branch and the PR links the approved issue
 
 ---
 
@@ -251,6 +252,6 @@ With multiple developers:
 - [Story] label maps task to specific user story for traceability
 - Each user story should be independently completable and testable
 - Verify tests fail before implementing
-- Commit after each task or logical group
+- Commit after each task or logical group on a feature branch, never directly on `main`
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

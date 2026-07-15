@@ -1,22 +1,10 @@
 <!--
 Sync Impact Report
-Version change: template -> 1.0.0
+Version change: 1.0.0 -> 1.1.0
 Modified principles:
-- Template placeholders -> I. Portable by Default
-- Template placeholders -> II. Idempotent Installation
-- Template placeholders -> III. Non-Destructive Operations
-- Template placeholders -> IV. Modular Tool Boundaries
-- Template placeholders -> V. Repository as Shared Source of Truth
-- Template placeholders -> VI. Reproducible Dependencies
-- Template placeholders -> VII. Security and Secret Hygiene
-- Template placeholders -> VIII. Verification Before Completion
-- Template placeholders -> IX. Clear Installer Experience
-- Template placeholders -> X. Recovery and Rollback
-- Template placeholders -> XI. Simplicity and Maintainability
-- Template placeholders -> XII. Documentation and Governance
+- XII. Documentation and Governance: expanded governance enforcement expectations
 Added sections:
-- Quality Gates
-- Repository Scope
+- XIII. Feature Branch and PR Discipline
 Removed sections:
 - None
 Templates requiring updates:
@@ -26,7 +14,7 @@ Templates requiring updates:
 - ✅ updated: .specify/templates/checklist-template.md
 - ⚠ pending: .specify/templates/commands/*.md does not exist in this checkout
 - ✅ reviewed: .opencode/commands/*.md
-- ✅ reviewed: README.md
+- ✅ updated: README.md
 Follow-up TODOs:
 - None
 -->
@@ -138,6 +126,17 @@ semantic version change.
 Rationale: governance only works when contributors know the rules and reviewers can check
 them consistently.
 
+### XIII. Feature Branch and PR Discipline
+Implementation commits MUST NOT be made directly on `main`. Every repository change MUST be
+developed on a feature branch, committed there with conventional commit messages, and
+submitted through a pull request before merge. Pull requests MUST link an approved issue
+when the repository workflow requires issue approval. Direct commits to `main` are permitted
+only for emergency recovery explicitly documented after the fact.
+
+Rationale: `main` is the integration branch. Keeping work on feature branches preserves
+reviewability, rollback boundaries, CI visibility, and a clean history of why changes were
+accepted.
+
 ## Quality Gates
 
 Every change that affects installation, configuration, dependencies, or repository-managed
@@ -166,6 +165,8 @@ tool behavior MUST pass these gates before completion:
 - Simplicity gate: new abstractions or dependencies have a documented concrete requirement.
 - Documentation gate: usage, customization, validation, rollback, and troubleshooting docs
   are updated when behavior changes.
+- Branch/PR gate: implementation work happens on a feature branch, commits do not target
+  `main` directly, and the pull request links the required approved issue before review.
 
 ## Repository Scope
 
@@ -195,6 +196,7 @@ installation, configuration, dependencies, secrets, portability, validation, or 
 Implementation plans MUST evaluate every applicable quality gate before design and again
 after design. Task lists MUST include concrete validation, documentation, and rollback
 tasks whenever the change creates those obligations. Code review MUST block changes that
-violate MUST-level principles or leave required validation failing.
+violate MUST-level principles, commit implementation work directly to `main`, or leave
+required validation failing.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-14
+**Version**: 1.1.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-15

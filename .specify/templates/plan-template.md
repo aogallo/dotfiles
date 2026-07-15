@@ -61,6 +61,8 @@ Document how the plan satisfies each applicable dotfiles constitution gate:
 - **Maintainability**: smallest practical scripts and justified dependencies/complexity.
 - **Documentation**: install, update, customize, validate, rollback, and troubleshooting
   updates required by this change.
+- **Branch/PR discipline**: implementation commits are planned for a feature branch, not
+  direct `main` commits, and the pull request will link the required approved issue.
 
 Plans with unresolved MUST-level violations cannot proceed unless the violation is
 explicitly documented as a constitutional exception with rationale and risk.
