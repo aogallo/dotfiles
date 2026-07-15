@@ -77,8 +77,8 @@ add {
             }
         end,
         on_setup = function()
-            vim.keymap.set({ 'n', 'v' }, '<leader>gc', '<cmd>GitLink<cr>', { desc = 'Yank git link' })
-            vim.keymap.set({ 'n', 'v' }, '<leader>go', '<cmd>GitLink! blame<cr>', { desc = 'Open git link' })
+            vim.keymap.set({ 'n', 'v' }, '<leader>gy', '<cmd>GitLink<cr>', { desc = 'Yank git link' })
+            vim.keymap.set({ 'n', 'v' }, '<leader>gO', '<cmd>GitLink! blame<cr>', { desc = 'Open git blame link' })
         end,
     },
 }
