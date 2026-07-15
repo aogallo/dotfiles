@@ -46,8 +46,8 @@ add_on_file_type('markdown', {
         -- Vimscript-driven plugin: no Lua setup() to call.
         setup = false,
         on_setup = function()
-            vim.keymap.set('n', '<leader>cp', '<cmd>MarkdownPreviewToggle<cr>', {
-                desc = 'Markdown Preview',
+            vim.keymap.set('n', '<leader>up', '<cmd>MarkdownPreviewToggle<cr>', {
+                desc = 'Markdown preview',
             })
 
             vim.fn['mkdp#util#install']()

@@ -27,7 +27,7 @@ add {
                         -- Register the leader group with miniclue.
                         vim.b[bufnr].miniclue_config = {
                             clues = {
-                                { mode = 'n', keys = '<leader>G', desc = '+diffview' },
+                                { mode = 'n', keys = '<leader>gx', desc = '+git conflicts' },
                             },
                         }
                     end,
@@ -42,14 +42,14 @@ add {
                         { 'n', '[x',         actions.prev_conflict,                 { desc = 'Merge-tool: jump to the previous conflict' } },
                         { 'n', ']x',         actions.next_conflict,                 { desc = 'Merge-tool: jump to the next conflict' } },
                         { 'n', 'gf',         actions.goto_file_tab,                 { desc = 'Open the file in a new tabpage' } },
-                        { 'n', '<leader>Go', actions.conflict_choose('ours'),       { desc = 'Choose the OURS version of a conflict' } },
-                        { 'n', '<leader>Gt', actions.conflict_choose('theirs'),     { desc = 'Choose the THEIRS version of a conflict' } },
-                        { 'n', '<leader>Gb', actions.conflict_choose('base'),       { desc = 'Choose the BASE version of a conflict' } },
-                        { 'n', '<leader>Ga', actions.conflict_choose('all'),        { desc = 'Choose all the versions of a conflict' } },
-                        { 'n', '<leader>Gd', actions.conflict_choose('none'),       { desc = 'Delete the conflict region' } },
-                        { 'n', '<leader>GO', actions.conflict_choose_all('ours'),   { desc = 'Choose the OURS version of a conflict for the whole file' } },
-                        { 'n', '<leader>GT', actions.conflict_choose_all('theirs'), { desc = 'Choose the THEIRS version of a conflict for the whole file' } },
-                        { 'n', '<leader>GB', actions.conflict_choose_all('base'),   { desc = 'Choose the BASE version of a conflict for the whole file' } },
+                        { 'n', '<leader>gxo', actions.conflict_choose('ours'),       { desc = 'Choose the OURS version of a conflict' } },
+                        { 'n', '<leader>gxt', actions.conflict_choose('theirs'),     { desc = 'Choose the THEIRS version of a conflict' } },
+                        { 'n', '<leader>gxb', actions.conflict_choose('base'),       { desc = 'Choose the BASE version of a conflict' } },
+                        { 'n', '<leader>gxa', actions.conflict_choose('all'),        { desc = 'Choose all the versions of a conflict' } },
+                        { 'n', '<leader>gxd', actions.conflict_choose('none'),       { desc = 'Delete the conflict region' } },
+                        { 'n', '<leader>gxO', actions.conflict_choose_all('ours'),   { desc = 'Choose the OURS version of a conflict for the whole file' } },
+                        { 'n', '<leader>gxT', actions.conflict_choose_all('theirs'), { desc = 'Choose the THEIRS version of a conflict for the whole file' } },
+                        { 'n', '<leader>gxB', actions.conflict_choose_all('base'),   { desc = 'Choose the BASE version of a conflict for the whole file' } },
                         unpack(actions.compat.fold_cmds),
                     },
                     diff2 = {
@@ -79,11 +79,11 @@ add {
                         { 'n', '[x',         actions.prev_conflict,                 { desc = 'Go to the previous conflict' } },
                         { 'n', ']x',         actions.next_conflict,                 { desc = 'Go to the next conflict' } },
                         { 'n', '?',          actions.help('file_panel'),            { desc = 'Open the help panel' } },
-                        { 'n', '<leader>GO', actions.conflict_choose_all('ours'),   { desc = 'Choose the OURS version of a conflict for the whole file' } },
-                        { 'n', '<leader>GT', actions.conflict_choose_all('theirs'), { desc = 'Choose the THEIRS version of a conflict for the whole file' } },
-                        { 'n', '<leader>GB', actions.conflict_choose_all('base'),   { desc = 'Choose the BASE version of a conflict for the whole file' } },
-                        { 'n', '<leader>GA', actions.conflict_choose_all('all'),    { desc = 'Choose all the versions of a conflict for the whole file' } },
-                        { 'n', '<leader>GD', actions.conflict_choose_all('none'),   { desc = 'Delete the conflict region for the whole file' } },
+                        { 'n', '<leader>gxO', actions.conflict_choose_all('ours'),   { desc = 'Choose the OURS version of a conflict for the whole file' } },
+                        { 'n', '<leader>gxT', actions.conflict_choose_all('theirs'), { desc = 'Choose the THEIRS version of a conflict for the whole file' } },
+                        { 'n', '<leader>gxB', actions.conflict_choose_all('base'),   { desc = 'Choose the BASE version of a conflict for the whole file' } },
+                        { 'n', '<leader>gxA', actions.conflict_choose_all('all'),    { desc = 'Choose all the versions of a conflict for the whole file' } },
+                        { 'n', '<leader>gxD', actions.conflict_choose_all('none'),   { desc = 'Delete the conflict region for the whole file' } },
                     },
                     file_history_panel = {
                         { 'n', '!',         actions.options,                    { desc = 'Open the option panel' } },
@@ -117,7 +117,7 @@ add {
             }
         end,
         on_setup = function()
-            vim.keymap.set('n', '<leader>gf', '<cmd>DiffviewFileHistory<cr>', { desc = 'File history' })
+            vim.keymap.set('n', '<leader>gh', '<cmd>DiffviewFileHistory<cr>', { desc = 'File history' })
             vim.keymap.set('n', '<leader>gd', '<cmd>DiffviewOpen<cr>', { desc = 'Diff view' })
         end,
     },

@@ -20,11 +20,11 @@ vim.keymap.set('v', '<', '<gv')
 vim.keymap.set('v', '>', '>gv')
 
 --buffers
-vim.keymap.set('n', 'L', ':bnext<CR>', { silent = true })
-vim.keymap.set('n', 'H', ':bprev<CR>', { silent = true })
+vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Next buffer', silent = true })
+vim.keymap.set('n', '<leader>bp', ':bprev<CR>', { desc = 'Previous buffer', silent = true })
 
 -- Formatting.
-vim.keymap.set('n', 'gQ', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })
+vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })
 
 -- Switch between windows.
 vim.keymap.set('n', '<C-h>', '<C-w>h', { desc = 'Move to the left window', remap = true })
@@ -45,4 +45,4 @@ end, { desc = 'Escape, clear hlsearch, and stop snippet session', expr = true })
 
 -- Switch between windows.
 vim.keymap.set('n', '<leader>pu', '<cmd>packupdate<cr>', { desc = 'Update packages' })
-vim.keymap.set('n', '<leader>ps', '<cmd>packupdate ++lockfile<cr>', { desc = 'Sync packages to lockfile' })
+vim.keymap.set('n', '<leader>pl', '<cmd>packupdate ++lockfile<cr>', { desc = 'Sync packages to lockfile' })

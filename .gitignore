@@ -1,4 +1,8 @@
 *.DS_Store
+*.tmp
+*.swp
+.vscode/
+.idea/
 lazy-lock*
 
 .opencode/

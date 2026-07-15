@@ -166,7 +166,7 @@ add {
             }
         end,
         on_setup = function()
-            vim.keymap.set({ 'n', 'x' }, '<leader>f/', function()
+            vim.keymap.set({ 'n', 'x' }, '<leader>sb', function()
                 local opts = {
                     winopts = {
                         height = 0.6,
@@ -188,24 +188,24 @@ add {
                 else
                     require('fzf-lua').blines(opts)
                 end
-            end, { desc = 'search current buffer' })
+            end, { desc = 'Search current buffer' })
 
-            vim.keymap.set('n', '<leader>fb', '<cmd>FzfLua buffers<cr>', { desc = 'buffers' })
-            vim.keymap.set('n', '<leader>fc', '<cmd>FzfLua highlights<cr>', { desc = 'highlights' })
+            vim.keymap.set('n', '<leader>bb', '<cmd>FzfLua buffers<cr>', { desc = 'Buffers' })
+            vim.keymap.set('n', '<leader>uh', '<cmd>FzfLua highlights<cr>', { desc = 'Highlights' })
             vim.keymap.set(
                 'n',
-                '<leader>fd',
+                '<leader>sd',
                 '<cmd>FzfLua lsp_document_diagnostics<cr>',
-                { desc = 'document diagnostics' }
+                { desc = 'Document diagnostics' }
             )
             vim.keymap.set('n', '<leader>ff', '<cmd>FzfLua files<cr>', { desc = 'Find files' })
-            vim.keymap.set('n', '<leader>fg', '<cmd>FzfLua live_grep<cr>', { desc = 'Grep' })
-            vim.keymap.set('x', '<leader>fg', '<cmd>FzfLua grep_visual<cr>', { desc = 'Grep' })
-            vim.keymap.set('n', '<leader>fh', '<cmd>FzfLua help_tags<cr>', { desc = 'Help' })
+            vim.keymap.set('n', '<leader>sg', '<cmd>FzfLua live_grep<cr>', { desc = 'Grep' })
+            vim.keymap.set('x', '<leader>sg', '<cmd>FzfLua grep_visual<cr>', { desc = 'Grep selection' })
+            vim.keymap.set('n', '<leader>sh', '<cmd>FzfLua help_tags<cr>', { desc = 'Help' })
             vim.keymap.set('n', '<leader>fr', function()
                 require('fzf-lua').oldfiles { winopts = { title = 'Recent opend files' } }
             end, { desc = 'Recently opened files' })
-            vim.keymap.set('n', '<leader>f<', '<cmd>FzfLua resume<cr>', { desc = 'Resume last fzf command' })
+            vim.keymap.set('n', '<leader>sr', '<cmd>FzfLua resume<cr>', { desc = 'Resume search' })
             vim.keymap.set('n', 'z=', '<cmd>FzfLua spell_suggest<cr>', { desc = 'Spelling suggestions' })
             vim.keymap.set('i', '<C-x><C-f>', function()
                 require('fzf-lua').complete_path {

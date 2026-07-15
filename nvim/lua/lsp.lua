@@ -47,7 +47,7 @@ local function on_attach(client, bufnr)
     end
 
     if client:supports_method 'textDocument/documentSymbol' then
-        keymap('<leader>fs', '<cmd>FzfLua lsp_document_symbols<cr>', 'Document symbols')
+        keymap('<leader>cs', '<cmd>FzfLua lsp_document_symbols<cr>', 'Document symbols')
     end
 
     if client:supports_method 'textDocument/definition' then
@@ -124,7 +124,7 @@ local function on_attach(client, bufnr)
 
     -- Add "Fix all" command for linters.
     if client.name == 'eslint' or client.name == 'stylelint_lsp' then
-        vim.keymap.set('n', '<leader>cl', function()
+        vim.keymap.set('n', '<leader>cL', function()
             if not client then
                 return
             end
