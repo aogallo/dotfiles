@@ -9,6 +9,12 @@ vim.o.sw = 2
 vim.o.ts = 2
 vim.o.et = true
 
+-- Minimal number of screen lines to keep above and below the cursor.
+vim.opt.scrolloff = 10
+
+-- Don't show the mode, since it's already in the status line
+vim.opt.showmode = false
+
 -- Show whitespace
 vim.opt.list = true
 vim.opt.listchars = { space = '⋅', trail = '⋅', tab = '  ↦' }
