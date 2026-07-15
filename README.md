@@ -1,5 +1,11 @@
 # Developer Environment Configurations
 
+## Contribution Workflow
+
+Implementation commits must not go directly to `main`. Create a feature branch, commit the
+work there with conventional commit messages, and submit it through a pull request linked to
+the approved issue for the change.
+
 ## Keyboard
 
 ### Iris Keyboard
