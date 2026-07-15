@@ -1,5 +1,19 @@
 local add = require('vim-pack').add
-local ensure_installed = { 'eslint-lsp', 'html-lsp', 'css-lsp', 'json-lsp', 'marksman', 'terraform-ls', 'prettier' }
+local ensure_installed = {
+    'bash-language-server',
+    'css-lsp',
+    'dprint',
+    'eslint-lsp',
+    'gopls',
+    'html-lsp',
+    'json-lsp',
+    'lua-language-server',
+    'marksman',
+    'prettier',
+    'stylelint-lsp',
+    'terraform-ls',
+    'yaml-language-server',
+}
 
 add {
     {
