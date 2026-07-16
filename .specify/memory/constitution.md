@@ -1,10 +1,10 @@
 <!--
 Sync Impact Report
-Version change: 1.0.0 -> 1.1.0
+Version change: 1.1.0 -> 1.2.0
 Modified principles:
-- XII. Documentation and Governance: expanded governance enforcement expectations
+- XIII. Feature Branch and PR Discipline: expanded PR creation gate to validate active spec linkage and closure decision
 Added sections:
-- XIII. Feature Branch and PR Discipline
+- None
 Removed sections:
 - None
 Templates requiring updates:
@@ -130,8 +130,11 @@ them consistently.
 Implementation commits MUST NOT be made directly on `main`. Every repository change MUST be
 developed on a feature branch, committed there with conventional commit messages, and
 submitted through a pull request before merge. Pull requests MUST link an approved issue
-when the repository workflow requires issue approval. Direct commits to `main` are permitted
-only for emergency recovery explicitly documented after the fact.
+when the repository workflow requires issue approval. Before a pull request is created, the
+active specification MUST be checked, the PR scope MUST be verified as related or unrelated
+to that specification, and the contributor MUST be asked whether the related specification
+should be closed when the PR represents the completed solution. Direct commits to `main` are
+permitted only for emergency recovery explicitly documented after the fact.
 
 Rationale: `main` is the integration branch. Keeping work on feature branches preserves
 reviewability, rollback boundaries, CI visibility, and a clean history of why changes were
@@ -166,7 +169,8 @@ tool behavior MUST pass these gates before completion:
 - Documentation gate: usage, customization, validation, rollback, and troubleshooting docs
   are updated when behavior changes.
 - Branch/PR gate: implementation work happens on a feature branch, commits do not target
-  `main` directly, and the pull request links the required approved issue before review.
+  `main` directly, the pull request links the required approved issue before review, and PR
+  creation verifies whether the active specification is related and should be closed.
 
 ## Repository Scope
 
@@ -196,7 +200,7 @@ installation, configuration, dependencies, secrets, portability, validation, or 
 Implementation plans MUST evaluate every applicable quality gate before design and again
 after design. Task lists MUST include concrete validation, documentation, and rollback
 tasks whenever the change creates those obligations. Code review MUST block changes that
-violate MUST-level principles, commit implementation work directly to `main`, or leave
-required validation failing.
+violate MUST-level principles, commit implementation work directly to `main`, skip active
+specification linkage review during PR creation, or leave required validation failing.
 
-**Version**: 1.1.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-15
+**Version**: 1.2.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-15
