@@ -4,7 +4,9 @@
 
 Implementation commits must not go directly to `main`. Create a feature branch, commit the
 work there with conventional commit messages, and submit it through a pull request linked to
-the approved issue for the change.
+the approved issue for the change. Before creating a pull request, verify whether the active
+specification is related to the PR and ask whether that specification should be closed when
+the PR completes the solution.
 
 ## Keyboard
 

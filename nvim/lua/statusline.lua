@@ -2,6 +2,8 @@ local icons = require 'icons'
 
 local M = {}
 
+local starting_directory = vim.fn.fnamemodify(vim.fn.getcwd(), ':p'):gsub('/$', '')
+
 -- Do not show the command that produced the quickfix list
 vim.g.qf_disable_statusline = 1
 
@@ -101,7 +103,7 @@ function M.git_component()
 
     local num_hunks = #(require('gitsigns').get_hunks() or {})
     if num_hunks > 0 then
-        component = component .. string.format(' (#Hunks: %d)', num_hunks)
+        component = component .. string.format(' ~%d', num_hunks)
     end
 
     return component
@@ -114,64 +116,6 @@ function M.dap_component()
         return nil
     end
     return string.format('%%#%s#%s  %s', M.get_or_create_hl 'Special', icons.misc.bug, require('dap').status())
-end
-
----@type table<string, string?>
-local progress_status = {
-    client = nil,
-    kind = nil,
-    title = nil,
-}
-
-vim.api.nvim_create_autocmd('LspProgress', {
-
-    group = vim.api.nvim_create_augroup('aogallo/statusline', { clear = true }),
-    desc = 'Update LSP progress in statusline',
-    pattern = { 'begin', 'end' },
-    callback = function(args)
-        if not args.data then
-            vim.notify_once('No lsp data [begin or end]', vim.log.levels.INFO)
-            return
-        end
-
-        local client = vim.lsp.get_client_by_id(args.data.client_id)
-        if not client then
-            return
-        end
-
-        progress_status = {
-            client = client.name,
-            kind = args.data.params.value.kind,
-            title = args.data.params.value.title,
-        }
-
-        if progress_status.kind == 'end' then
-            progress_status.title = nil
-            vim.defer_fn(function()
-                vim.cmd.redrawstatus()
-            end, 3000)
-        else
-            vim.cmd.redrawstatus()
-        end
-    end,
-})
-
---- The latest LSP progress message.
----@return string
-function M.lsp_progress_component()
-    if not progress_status.client or not progress_status.title then
-        return ''
-    end
-
-    if vim.startswith(vim.api.nvim_get_mode().mode, 'i') then
-        return ''
-    end
-
-    return table.concat {
-        '%#StatuslineSpinner#󱥸 ',
-        string.format('%%#StatuslineTitle#%s  ', progress_status.client),
-        string.format('%%#StatuslineItalic#%s...', progress_status.title),
-    }
 end
 
 --- The buffer's filetype.
@@ -214,10 +158,122 @@ function M.filetype_component()
     return string.format('%%#%s#%s %%#StatuslineTitle#%s', icon_hl, icon, filetype)
 end
 
+---@param path string
+---@return string
+local function statusline_escape(path)
+    return path:gsub('%%', '%%%%'):gsub('[\r\n]', ' ')
+end
+
+---@param buftype string
+---@param filetype string
+---@param name string
+---@return string?
+local function special_buffer_label(buftype, filetype, name)
+    if buftype == '' then
+        return nil
+    end
+
+    if buftype == 'quickfix' then
+        return 'Quickfix'
+    end
+
+    if buftype == 'help' then
+        return string.format('Help: %s', vim.fn.fnamemodify(name, ':t:r'))
+    end
+
+    if buftype == 'terminal' then
+        return 'Terminal'
+    end
+
+    if filetype ~= '' then
+        return string.format('%s buffer', filetype)
+    end
+
+    return string.format('%s buffer', buftype)
+end
+
+---@param path string
+---@return string
+local function path_from_starting_directory(path)
+    local absolute_path = vim.fn.fnamemodify(path, ':p')
+    local base = starting_directory .. '/'
+
+    if vim.startswith(absolute_path, base) then
+        return absolute_path:sub(#base + 1)
+    end
+
+    local home_path = vim.fn.fnamemodify(absolute_path, ':~')
+    if home_path ~= absolute_path then
+        return home_path
+    end
+
+    return string.format(
+        '…/%s/%s',
+        vim.fn.fnamemodify(absolute_path, ':h:t'),
+        vim.fn.fnamemodify(absolute_path, ':t')
+    )
+end
+
+---@param path string
+---@return string
+local function width_aware_path(path)
+    local width = vim.api.nvim_win_get_width(0)
+    local max_width = math.min(80, math.max(24, math.floor(width * 0.45)))
+
+    if #path <= max_width then
+        return path
+    end
+
+    local segments = vim.split(path, '/', { plain = true, trimempty = true })
+    for count = math.min(4, #segments), 2, -1 do
+        local tail = table.concat(vim.list_slice(segments, #segments - count + 1), '/')
+        local candidate = count < #segments and string.format('…/%s', tail) or tail
+        if #candidate <= max_width then
+            return candidate
+        end
+    end
+
+    local filename = vim.fn.fnamemodify(path, ':t')
+    local parent = vim.fn.fnamemodify(path, ':h')
+    local shortened = parent ~= '.' and string.format('%s/%s', vim.fn.pathshorten(parent), filename) or filename
+
+    if #shortened <= max_width then
+        return shortened
+    end
+
+    local parent_name = vim.fn.fnamemodify(parent, ':t')
+    local parent_filename = parent_name ~= '' and string.format('…/%s/%s', parent_name, filename) or filename
+
+    if #parent_filename <= max_width then
+        return parent_filename
+    end
+
+    return filename
+end
+
 --- Return the file name
---- @return string
+---@return string
 function M.file_component()
-    return '%f'
+    local name = vim.api.nvim_buf_get_name(0)
+    local buftype = vim.bo.buftype
+    local filetype = vim.bo.filetype
+    local label = special_buffer_label(buftype, filetype, name)
+
+    if not label then
+        label = name == '' and '[No Name]' or width_aware_path(path_from_starting_directory(name))
+    end
+
+    local indicators = {}
+    if vim.bo.modified then
+        table.insert(indicators, '●')
+    end
+    if vim.bo.readonly or not vim.bo.modifiable then
+        table.insert(indicators, '')
+    end
+
+    local state = #indicators > 0 and string.format(' %%#StatuslineItalic#%s', table.concat(indicators, '')) or ''
+
+    return string.format('%%<%%#StatuslineTitle#%s%s', statusline_escape(label), state)
 end
 
 --- File-content encoding for the current buffer.
@@ -257,7 +313,7 @@ function M.render()
             M.mode_component(),
             M.git_component(),
             M.file_component(),
-            M.dap_component() or M.lsp_progress_component(),
+            M.dap_component() or '',
         },
         '%#StatusLine#%=',
         concat_components {

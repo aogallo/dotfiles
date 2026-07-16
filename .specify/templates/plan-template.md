@@ -62,7 +62,9 @@ Document how the plan satisfies each applicable dotfiles constitution gate:
 - **Documentation**: install, update, customize, validate, rollback, and troubleshooting
   updates required by this change.
 - **Branch/PR discipline**: implementation commits are planned for a feature branch, not
-  direct `main` commits, and the pull request will link the required approved issue.
+  direct `main` commits, the pull request will link the required approved issue, and PR
+  creation will verify the active spec relationship and ask whether a related completed
+  spec should be closed.
 
 Plans with unresolved MUST-level violations cannot proceed unless the violation is
 explicitly documented as a constitutional exception with rationale and risk.
