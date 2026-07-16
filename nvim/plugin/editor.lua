@@ -1,11 +1,50 @@
 local add_on_event = require('vim-pack').add_on_event
 local add = require('vim-pack').add
+local diagnostic_icons = require('icons').diagnostics
+local misc_icons = require('icons').misc
 
 add {
     {
         src = 'folke/snacks.nvim',
-        opts = { explorer = { enabled = true }, lazygit = { enabled = true } },
+        opts = {
+            explorer = { enabled = true },
+            lazygit = { enabled = true },
+            notifier = {
+                enabled = true,
+                timeout = 3000,
+                width = { min = 40, max = 0.4 },
+                height = { min = 1, max = 0.6 },
+                margin = { top = 0, right = 1, bottom = 0 },
+                padding = true,
+                level = vim.log.levels.TRACE,
+                icons = {
+                    error = diagnostic_icons.ERROR .. ' ',
+                    warn = diagnostic_icons.WARN .. ' ',
+                    info = diagnostic_icons.INFO .. ' ',
+                    debug = misc_icons.bug .. ' ',
+                    trace = misc_icons.ellipsis .. ' ',
+                },
+                keep = function()
+                    return vim.fn.getcmdpos() > 0
+                end,
+                style = 'compact',
+                top_down = true,
+                date_format = '%R',
+            },
+        },
         on_setup = function()
+            if not Snacks.notifier then
+                vim.notify(
+                    'Snacks notifier is unavailable; using the default notification handler.',
+                    vim.log.levels.WARN
+                )
+            else
+                vim.keymap.set('n', '<leader>un', Snacks.notifier.show_history, {
+                    desc = 'Notification history',
+                    silent = true,
+                })
+            end
+
             vim.keymap.set('n', '<leader>fe', Snacks.explorer.open, { desc = 'Explorer', silent = true })
             vim.keymap.set('n', '<leader>bo', Snacks.bufdelete.other, { desc = 'Delete other buffers', silent = true })
             vim.keymap.set('n', '<leader>gg', Snacks.lazygit.open, { desc = 'Lazygit', silent = true })
