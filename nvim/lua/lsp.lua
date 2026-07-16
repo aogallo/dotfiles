@@ -1,6 +1,24 @@
 local diagnostic_icons = require('icons').diagnostics
+local misc_icons = require('icons').misc
 
 local M = {}
+local lsp_progress = vim.defaulttable()
+local lsp_attach_notified = {}
+
+local function notify_lsp_exit(code, signal, client_id)
+    if code == 0 and signal == 0 then
+        return
+    end
+
+    local client = vim.lsp.get_client_by_id(client_id)
+    local name = client and client.name or ('client %d'):format(client_id)
+    local reason = code ~= 0 and ('exit code %d'):format(code) or ('signal %d'):format(signal)
+
+    vim.notify(('%s failed: %s'):format(name, reason), vim.log.levels.ERROR, {
+        id = 'lsp_exit_' .. client_id,
+        title = 'LSP',
+    })
+end
 
 -- Disable inlay hints initially (and enable if needed with my ToggleInlayHints command).
 vim.g.inlay_hints = false
@@ -236,6 +254,59 @@ vim.lsp.handlers['client/registerCapability'] = function(err, res, ctx)
     return register_capability(err, res, ctx)
 end
 
+vim.api.nvim_create_autocmd('LspProgress', {
+    group = vim.api.nvim_create_augroup('aogallo/lsp_progress_notifications', { clear = true }),
+    desc = 'Notify LSP progress',
+    callback = function(args)
+        local data = args.data or {}
+        local client = data.client_id and vim.lsp.get_client_by_id(data.client_id)
+        local params = data.params or {}
+        local value = params.value
+
+        if not client or type(value) ~= 'table' then
+            return
+        end
+
+        local progress = lsp_progress[client.id]
+        local percentage = value.kind == 'end' and 100 or value.percentage or 100
+        local title = value.title or 'Progress'
+        local message = value.message and (' %s'):format(value.message) or ''
+        local item = {
+            token = params.token,
+            msg = ('[%3d%%] %s%s'):format(percentage, title, message),
+            done = value.kind == 'end',
+        }
+
+        local replaced = false
+        for index, current in ipairs(progress) do
+            if current.token == item.token then
+                progress[index] = item
+                replaced = true
+                break
+            end
+        end
+
+        if not replaced then
+            table.insert(progress, item)
+        end
+
+        local lines = {}
+        lsp_progress[client.id] = vim.tbl_filter(function(current)
+            table.insert(lines, current.msg)
+            return not current.done
+        end, progress)
+
+        vim.notify(table.concat(lines, '\n'), vim.log.levels.INFO, {
+            id = 'lsp_progress_' .. client.id,
+            title = client.name,
+            opts = function(notif)
+                notif.icon = #lsp_progress[client.id] == 0 and diagnostic_icons.INFO .. ' '
+                    or misc_icons.ellipsis .. ' '
+            end,
+        })
+    end,
+})
+
 vim.api.nvim_create_autocmd('LspAttach', {
     desc = 'Configure LSP keymaps',
     callback = function(args)
@@ -247,6 +318,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
         end
 
         on_attach(client, args.buf)
+
+        local key = ('%d:%d'):format(client.id, args.buf)
+        if not lsp_attach_notified[key] then
+            lsp_attach_notified[key] = true
+            vim.notify(('%s is attached'):format(client.name), vim.log.levels.INFO, {
+                id = 'lsp_attach_' .. key,
+                title = 'LSP',
+            })
+        end
     end,
 })
 
@@ -255,7 +335,10 @@ vim.api.nvim_create_autocmd({ 'BufReadPre', 'BufNewFile' }, {
     once = true,
     callback = function()
         -- Extend neovim's client capabilities with the completion ones.
-        vim.lsp.config('*', { capabilities = require('blink.cmp').get_lsp_capabilities(nil, true) })
+        vim.lsp.config('*', {
+            capabilities = require('blink.cmp').get_lsp_capabilities(nil, true),
+            on_exit = notify_lsp_exit,
+        })
 
         local servers = vim.iter(vim.api.nvim_get_runtime_file('lsp/*.lua', true))
             :map(function(file)

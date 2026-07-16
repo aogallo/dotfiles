@@ -1,6 +1,7 @@
 local add = require('vim-pack').add
 
 -- Database exploration and SQL query execution.
+-- DB Configuration: https://github.com/sqls-server/sqls#db-configuration
 add {
     { src = 'tpope/vim-dadbod', setup = false },
     {
