@@ -2,9 +2,12 @@
 # Format: name|executable|required|source|install_hint|used_by
 # required: yes/no. source: mason/homebrew/npm/pnpm/go/curl/external/plugin.
 Go language server|gopls|no|go|go install golang.org/x/tools/gopls@latest|nvim/lsp/gopls.lua
+SQL language server|sqls|no|go|go install github.com/sqls-server/sqls@latest|nvim/lsp/sqls.lua
+Dockerfile language server|docker-langserver|no|mason/npm|Mason dockerfile-language-server or pnpm add -g dockerfile-language-server-nodejs|nvim/lsp/dockerls.lua
 TypeScript native preview|tsgo|yes|pnpm|pnpm install -g @typescript/native-preview|nvim/lsp/tsgo.lua
 dprint|dprint|no|homebrew|brew install dprint|nvim/lsp/dprint.lua,nvim/plugin/conform.lua
 ty Python language server|ty|no|curl|Use the installer documented at https://astral.sh/ty|nvim/lsp/ty.lua
+Ruff Python formatter|ruff|no|mason/homebrew|Mason ruff or brew install ruff|nvim/plugin/conform.lua
 Lua language server|lua-language-server|yes|homebrew|brew install lua-language-server|nvim/lsp/lua_ls.lua
 JSON language server|vscode-json-language-server|yes|mason/npm|Mason json-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/jsonls.lua
 ESLint language server|vscode-eslint-language-server|yes|mason/npm|Mason eslint-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/eslint.lua

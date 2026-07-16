@@ -1,4 +1,6 @@
 vim.keymap.set('i', 'jk', '<esc>')
+vim.keymap.set('i', 'JK', '<esc>', { desc = 'Exit insert mode' })
+vim.keymap.set('n', '<C-s>', '<cmd>w<cr>', { desc = 'Save file', silent = true })
 
 -- Remap for dealing with word wrap and adding jumps to the jumplist.
 vim.keymap.set('n', 'j', [[(v:count > 1 ? 'm`' . v:count : 'g') . 'j']], { expr = true })
@@ -8,6 +10,9 @@ vim.keymap.set('n', 'k', [[(v:count > 1 ? 'm`' . v:count : 'g') . 'k']], { expr 
 vim.keymap.set('x', 'p', [["_dP]])
 
 vim.keymap.set('n', '<leader>cd', vim.diagnostic.open_float, { silent = true, desc = 'Diagnostics' })
+vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, { desc = 'Previous diagnostic' })
+vim.keymap.set('n', ']d', vim.diagnostic.goto_next, { desc = 'Next diagnostic' })
+vim.keymap.set('n', '<leader>cq', vim.diagnostic.setloclist, { desc = 'Open diagnostic list' })
 
 -- Keeping the cursor centered.
 vim.keymap.set('n', '<C-d>', '<C-d>zz', { desc = 'Scroll downwards' })
@@ -19,9 +24,14 @@ vim.keymap.set('n', 'N', 'Nzzzv', { desc = 'Previous result' })
 vim.keymap.set('v', '<', '<gv')
 vim.keymap.set('v', '>', '>gv')
 
+-- Move selected lines while remaining in visual mode.
+vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down', silent = true })
+vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up', silent = true })
+
 --buffers
 vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Next buffer', silent = true })
 vim.keymap.set('n', '<leader>bp', ':bprev<CR>', { desc = 'Previous buffer', silent = true })
+vim.keymap.set('n', '<leader>bx', '<cmd>bdelete<cr>', { desc = 'Close buffer', silent = true })
 
 -- Formatting.
 vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })

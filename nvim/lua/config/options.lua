@@ -19,8 +19,16 @@ vim.o.relativenumber = true
 vim.o.mouse = 'a'
 
 vim.o.linebreak = true
+vim.o.breakindent = true
+vim.o.cursorline = true
+vim.o.scrolloff = 10
 
 vim.o.mousescroll = 'ver:3,hor:0'
+
+vim.o.showmode = false
+vim.o.splitright = true
+vim.o.splitbelow = true
+vim.o.inccommand = 'split'
 
 -- Folding
 vim.o.foldcolumn = '1'
@@ -48,6 +56,7 @@ vim.o.exrc = true
 
 vim.o.ignorecase = true
 vim.o.smartcase = true
+vim.o.hlsearch = true
 
 vim.wo.signcolumn = 'yes'
 

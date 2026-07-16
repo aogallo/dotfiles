@@ -2,6 +2,7 @@ local add = require('vim-pack').add
 local ensure_installed = {
     'bash-language-server',
     'css-lsp',
+    'dockerfile-language-server',
     'dprint',
     'eslint-lsp',
     'gopls',
@@ -10,6 +11,8 @@ local ensure_installed = {
     'lua-language-server',
     'marksman',
     'prettier',
+    'ruff',
+    'sqls',
     'stylelint-lsp',
     'terraform-ls',
     'yaml-language-server',
@@ -23,6 +26,10 @@ add {
             PATH = 'prepend',
         },
         on_setup = function()
+            if #vim.api.nvim_list_uis() == 0 then
+                return
+            end
+
             local registry = require 'mason-registry'
 
             local function install_missing()

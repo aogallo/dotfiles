@@ -27,6 +27,7 @@ local parses = {
     'regex',
     'rust',
     'scss',
+    'sql',
     'toml',
     'tsx',
     'typescript',
