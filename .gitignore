@@ -1,8 +1,14 @@
 *.DS_Store
+Thumbs.db
 *.tmp
 *.swp
+*.log
+.env*
 .vscode/
 .idea/
+node_modules/
+dist/
+build/
 lazy-lock*
 
 .opencode/
