@@ -1,7 +1,7 @@
 local add_on_event = require('vim-pack').add_on_event
 local add = require('vim-pack').add
-local diagnostic_icons = require('icons').diagnostics
-local misc_icons = require('icons').misc
+local notification_icons = require('icons').notifications
+local notifications = require 'notifications'
 
 add {
     {
@@ -18,11 +18,11 @@ add {
                 padding = true,
                 level = vim.log.levels.TRACE,
                 icons = {
-                    error = diagnostic_icons.ERROR .. ' ',
-                    warn = diagnostic_icons.WARN .. ' ',
-                    info = diagnostic_icons.INFO .. ' ',
-                    debug = misc_icons.bug .. ' ',
-                    trace = misc_icons.ellipsis .. ' ',
+                    error = notification_icons.error .. ' ',
+                    warn = notification_icons.warn .. ' ',
+                    info = notification_icons.info .. ' ',
+                    debug = notification_icons.debug .. ' ',
+                    trace = notification_icons.trace .. ' ',
                 },
                 keep = function()
                     return vim.fn.getcmdpos() > 0
@@ -33,13 +33,54 @@ add {
             },
         },
         on_setup = function()
+            local titles = {
+                trace = 'Trace',
+                debug = 'Debug',
+                info = 'Info',
+                progress = 'Progress',
+                warn = 'Warning',
+                error = 'Error',
+            }
+
+            local function install_notify_wrapper()
+                _G.__aogallo_notify = _G.__aogallo_notify or {}
+                local state = _G.__aogallo_notify
+
+                if vim.notify == state.wrapped then
+                    return
+                end
+
+                state.base = vim.notify
+                state.wrapped = state.wrapped
+                    or function(message, level, opts)
+                        opts = vim.tbl_deep_extend('force', {}, opts or {})
+
+                        local severity = select(1, notifications.normalize_severity(level or opts.level))
+                        opts.title = opts.title or titles[severity]
+                        opts.icon = opts.icon or (notification_icons[severity] or notification_icons.info) .. ' '
+
+                        local result = state.base(message, level, opts)
+                        if vim.notify ~= state.wrapped then
+                            state.base = vim.notify
+                            vim.notify = state.wrapped
+                        end
+                        return result
+                    end
+
+                vim.notify = state.wrapped
+            end
+
+            install_notify_wrapper()
+            vim.schedule(install_notify_wrapper)
+
             if not Snacks.notifier then
-                vim.notify(
+                notifications.notify(
                     'Snacks notifier is unavailable; using the default notification handler.',
-                    vim.log.levels.WARN
+                    'warn',
+                    { title = 'Notifications' }
                 )
             else
-                vim.keymap.set('n', '<leader>un', Snacks.notifier.show_history, {
+                vim.keymap.set('n', '<leader>un', notifications.open_history, {
                     desc = 'Notification history',
                     silent = true,
                 })

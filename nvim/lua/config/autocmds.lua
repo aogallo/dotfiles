@@ -64,7 +64,53 @@ vim.api.nvim_create_autocmd('TextYankPost', {
     end,
 })
 
+local message_capture_group = vim.api.nvim_create_augroup('aogallo/unified_message_capture', { clear = true })
+local last_captured_messages = {}
+
+local function is_notification_lifecycle_error(message)
+    return message:match '^E716: Key not present in Dictionary: "collapsed"$'
+        or message:match '^E803: ID not found: %d+$'
+end
+
+local function capture_v_message(name, severity)
+    local message = tostring(vim.v[name] or ''):gsub('^%s+', ''):gsub('%s+$', '')
+
+    if message == '' or last_captured_messages[name] == message then
+        return false
+    end
+
+    last_captured_messages[name] = message
+    if severity == 'error' and is_notification_lifecycle_error(message) then
+        vim.v[name] = ''
+        return false
+    end
+
+    require('notifications').capture_message(message, severity, {
+        title = 'Editor message',
+        source = 'Messages',
+        details = message,
+        visible = severity ~= 'info',
+    })
+    return true
+end
+
+vim.api.nvim_create_autocmd('CmdlineLeave', {
+    group = message_capture_group,
+    desc = 'Capture command-line messages in unified notification history',
+    callback = function()
+        vim.schedule(function()
+            local captured = capture_v_message('errmsg', 'error')
+                or capture_v_message('warningmsg', 'warn')
+                or capture_v_message('statusmsg', 'info')
+            if captured and vim.api.nvim_get_mode().mode ~= 'c' then
+                pcall(vim.cmd, 'redraw!')
+            end
+        end)
+    end,
+})
+
 vim.api.nvim_create_user_command('PackClean', function()
+    local notifications = require 'notifications'
     local inactive = vim.iter(vim.pack.get())
         :filter(function(x)
             return not x.active
@@ -75,10 +121,14 @@ vim.api.nvim_create_user_command('PackClean', function()
         :totable()
 
     if #inactive == 0 then
-        vim.notify('No inactive plugins to remove', vim.log.levels.INFO)
+        notifications.notify('No inactive plugins to remove', 'info', { title = 'PackClean', source = 'Packages' })
         return
     end
 
     vim.pack.del(inactive)
-    vim.notify('Removed: ' .. table.concat(inactive, ', '), vim.log.levels.INFO)
+    notifications.notify(
+        'Removed: ' .. table.concat(inactive, ', '),
+        'info',
+        { title = 'PackClean', source = 'Packages' }
+    )
 end, { desc = 'Remove plugins not in vim.pack.add() specs' })

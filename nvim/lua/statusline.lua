@@ -19,7 +19,10 @@ function M.get_or_create_hl(hl)
     if not statusline_hls[hl] then
         local bg_hl = vim.api.nvim_get_hl(0, { name = 'StatusLine' })
         local fg_hl = vim.api.nvim_get_hl(0, { name = hl })
-        vim.api.nvim_set_hl(0, hl_name, { bg = ('#%06x'):format(bg_hl.bg), fg = ('#%06x'):format(fg_hl.fg) })
+        vim.api.nvim_set_hl(0, hl_name, {
+            bg = bg_hl.bg and ('#%06x'):format(bg_hl.bg) or nil,
+            fg = fg_hl.fg and ('#%06x'):format(fg_hl.fg) or nil,
+        })
         statusline_hls[hl] = true
     end
 
@@ -154,7 +157,7 @@ function M.filetype_component()
             icon, icon_hl = devicons.get_icon_by_filetype(filetype, { default = true })
         end
     end
-    icon_hl = M.get_or_create_hl(icon_hl)
+    icon_hl = M.get_or_create_hl(icon_hl or 'Normal')
     return string.format('%%#%s#%s %%#StatuslineTitle#%s', icon_hl, icon, filetype)
 end
 

@@ -74,6 +74,22 @@ installing or updating plugins, use these Neovim commands when parser work is ne
 :TSUpdateConfigured
 ```
 
+## Notifications and Message History
+
+Notifications, captured editor messages, command/keymap failures, and LSP progress use the
+shared helper in `lua/notifications.lua`. The helper keeps visible messages concise, stores
+full details in session history where available, and falls back safely when Snacks UI pieces
+are not loaded.
+
+Use `<leader>un` to open notification/message history. The mapping prefers Snacks native
+notifier history when available, falls back to the helper's custom Snacks picker for
+internal-only captured entries, and finally opens a quickfix-backed session history if
+Snacks is unavailable.
+
+Manual validation for notification changes is documented in
+`specs/002-unify-notifications/quickstart.md`. Diagnostics UI is intentionally out of scope
+for the notification flow and should only be checked for no-regression behavior.
+
 ## Linking
 
 `setup/link-nvim-config.sh` manages the `~/.config/nvim` symlink safely. It defaults to

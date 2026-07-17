@@ -43,11 +43,15 @@ return {
             return {}
         end,
         ['eslint/probeFailed'] = function()
-            vim.notify('LSP[eslint]: Probe failed.', vim.log.levels.WARN)
+            require('notifications').notify('Probe failed.', 'warn', { title = 'LSP', source = 'eslint' })
             return {}
         end,
         ['eslint/noLibrary'] = function()
-            vim.notify('LSP[eslint]: Unable to load ESLint library.', vim.log.levels.WARN)
+            require('notifications').notify(
+                'Unable to load ESLint library.',
+                'warn',
+                { title = 'LSP', source = 'eslint' }
+            )
             return {}
         end,
     },

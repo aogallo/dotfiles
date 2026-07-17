@@ -1,5 +1,6 @@
 local diagnostic_icons = require('icons').diagnostics
 local misc_icons = require('icons').misc
+local notifications = require 'notifications'
 
 local M = {}
 local lsp_progress = vim.defaulttable()
@@ -14,9 +15,10 @@ local function notify_lsp_exit(code, signal, client_id)
     local name = client and client.name or ('client %d'):format(client_id)
     local reason = code ~= 0 and ('exit code %d'):format(code) or ('signal %d'):format(signal)
 
-    vim.notify(('%s failed: %s'):format(name, reason), vim.log.levels.ERROR, {
+    notifications.notify(('%s failed: %s'):format(name, reason), 'error', {
         id = 'lsp_exit_' .. client_id,
         title = 'LSP',
+        source = name,
     })
 end
 
@@ -36,6 +38,9 @@ local function on_attach(client, bufnr)
         ---@cast opts vim.keymap.set.Opts
         opts = type(opts) == 'string' and { desc = opts } or opts
         opts.buffer = bufnr
+        if type(rhs) == 'function' then
+            rhs = notifications.wrap_action(opts.desc or lhs, rhs)
+        end
         vim.keymap.set(mode, lhs, rhs, opts)
     end
 
@@ -155,7 +160,11 @@ local function on_attach(client, bufnr)
                         version = vim.lsp.util.buf_versions[bufnr],
                     },
                 },
-            }, nil, bufnr)
+            }, function(err)
+                if err then
+                    notifications.command_failure(string.format('Fix all %s errors', client.name), err.message or err)
+                end
+            end, bufnr)
         end, {
             desc = string.format('Fix all %s errors', client.name == 'eslint' and 'ESLint' or 'Stylelint'),
             buffer = bufnr,
@@ -296,13 +305,11 @@ vim.api.nvim_create_autocmd('LspProgress', {
             return not current.done
         end, progress)
 
-        vim.notify(table.concat(lines, '\n'), vim.log.levels.INFO, {
+        notifications.notify(table.concat(lines, '\n'), 'progress', {
             id = 'lsp_progress_' .. client.id,
             title = client.name,
-            opts = function(notif)
-                notif.icon = #lsp_progress[client.id] == 0 and diagnostic_icons.INFO .. ' '
-                    or misc_icons.ellipsis .. ' '
-            end,
+            source = 'LSP',
+            icon = #lsp_progress[client.id] == 0 and diagnostic_icons.INFO .. ' ' or misc_icons.ellipsis .. ' ',
         })
     end,
 })
@@ -319,12 +326,13 @@ vim.api.nvim_create_autocmd('LspAttach', {
 
         on_attach(client, args.buf)
 
-        local key = ('%d:%d'):format(client.id, args.buf)
+        local key = tostring(client.id)
         if not lsp_attach_notified[key] then
             lsp_attach_notified[key] = true
-            vim.notify(('%s is attached'):format(client.name), vim.log.levels.INFO, {
+            notifications.notify(('%s is attached'):format(client.name), 'info', {
                 id = 'lsp_attach_' .. key,
                 title = 'LSP',
+                source = client.name,
             })
         end
     end,
