@@ -8,6 +8,17 @@ M.diagnostics = {
     INFO = '',
 }
 
+--- Notification severities and states.
+M.notifications = {
+    error = M.diagnostics.ERROR,
+    warn = M.diagnostics.WARN,
+    info = M.diagnostics.INFO,
+    debug = '',
+    trace = '…',
+    progress = '…',
+    success = '',
+}
+
 --- For folding.
 M.arrows = {
     right = '',

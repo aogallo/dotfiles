@@ -1,6 +1,7 @@
 local add = require('vim-pack').add
 
 local icons = require 'icons'
+local notifications = require 'notifications'
 
 -- Diffs for git revisions.
 add {
@@ -37,6 +38,7 @@ add {
                     -- Easier to just configure what I need.
                     disable_defaults = true,
                     view = {
+                        { 'n', 'q',          '<cmd>DiffviewClose<cr>',             { desc = 'Close Diffview' } },
                         { 'n', '<tab>',      actions.select_next_entry,             { desc = 'Open the diff for the next file' } },
                         { 'n', '<s-tab>',    actions.select_prev_entry,             { desc = 'Open the diff for the previous file' } },
                         { 'n', '[x',         actions.prev_conflict,                 { desc = 'Merge-tool: jump to the previous conflict' } },
@@ -59,6 +61,7 @@ add {
                         { 'n', '?', actions.help { 'view', 'diff3' }, { desc = 'Open the help panel' } },
                     },
                     file_panel = {
+                        { 'n', 'q',          '<cmd>DiffviewClose<cr>',             { desc = 'Close Diffview' } },
                         { 'n', 'j',          actions.next_entry,                    { desc = 'Bring the cursor to the next file entry' } },
                         { 'n', 'k',          actions.prev_entry,                    { desc = 'Bring the cursor to the previous file entry' } },
                         { 'n', '<cr>',       actions.select_entry,                  { desc = 'Open the diff for the selected entry' } },
@@ -86,6 +89,7 @@ add {
                         { 'n', '<leader>gxD', actions.conflict_choose_all('none'),   { desc = 'Delete the conflict region for the whole file' } },
                     },
                     file_history_panel = {
+                        { 'n', 'q',         '<cmd>DiffviewClose<cr>',          { desc = 'Close Diffview' } },
                         { 'n', '!',         actions.options,                    { desc = 'Open the option panel' } },
                         { 'n', '<leader>d', actions.open_in_diffview,           { desc = 'Open the entry under the cursor in a diffview' } },
                         { 'n', 'y',         actions.copy_hash,                  { desc = 'Copy the commit hash of the entry under the cursor' } },
@@ -118,7 +122,14 @@ add {
         end,
         on_setup = function()
             vim.keymap.set('n', '<leader>gh', '<cmd>DiffviewFileHistory<cr>', { desc = 'File history' })
-            vim.keymap.set('n', '<leader>gd', '<cmd>DiffviewOpen<cr>', { desc = 'Diff view' })
+            vim.keymap.set(
+                'n',
+                '<leader>gd',
+                notifications.wrap_action('Diff view', function()
+                    vim.cmd.DiffviewOpen()
+                end),
+                { desc = 'Diff view' }
+            )
         end,
     },
 }
