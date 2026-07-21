@@ -10,13 +10,18 @@ end
 add {
     {
         src = 'obsidian-nvim/obsidian.nvim',
-        opts = {
-            picker = { name = 'snacks.picker' },
-            legacy_commands = false,
-            workspaces = { { name = 'notes', path = notes_dir } },
-        },
+        opts = function()
+            return {
+                picker = { name = 'snacks.picker' },
+                legacy_commands = false,
+                note_id_func = require('obsidian.builtin').title_id,
+                workspaces = { { name = 'notes', path = notes_dir } },
+            }
+        end,
         on_setup = function()
             vim.opt.conceallevel = 2
+
+            vim.keymap.set('n', '<leader>nn', ':Obsidian new ', { desc = 'New note' })
         end,
     },
 }

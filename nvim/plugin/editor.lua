@@ -141,6 +141,7 @@ add {
                 { '<leader>c', group = 'code' },
                 { '<leader>f', group = 'files' },
                 { '<leader>g', group = 'git' },
+                { '<leader>n', group = 'notes' },
                 { '<leader>p', group = 'packages' },
                 { '<leader>s', group = 'search' },
                 { '<leader>u', group = 'ui' },
