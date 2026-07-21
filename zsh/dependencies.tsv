@@ -1,0 +1,17 @@
+# name|executable|required|source|install_hint|used_by
+zsh|zsh|yes|macos|Provided by macOS or install a current zsh with Homebrew|Shell runtime and syntax validation
+Oh My Zsh|oh-my-zsh.sh|no|manual|Install Oh My Zsh into ~/.oh-my-zsh|Plugin framework and command-not-found/pj plugins
+zsh-autocomplete|zsh-autocomplete.plugin.zsh|no|homebrew|brew install zsh-autocomplete|Completion suggestions
+zsh-syntax-highlighting|zsh-syntax-highlighting.zsh|no|homebrew|brew install zsh-syntax-highlighting|Command-line syntax highlighting
+zsh-autosuggestions|zsh-autosuggestions.zsh|no|homebrew|brew install zsh-autosuggestions|History-based autosuggestions
+powerlevel10k|powerlevel10k.zsh-theme|no|homebrew|brew install powerlevel10k|Prompt theme and ~/.p10k.zsh support
+fzf|fzf|no|homebrew|brew install fzf|Fuzzy finder shell integration and aliases
+zoxide|zoxide|no|homebrew|brew install zoxide|Directory jumping integration
+atuin|atuin|no|homebrew|brew install atuin|Shell history integration
+carapace|carapace|no|homebrew|brew install carapace|Cross-shell completions
+tmux|tmux|no|homebrew|brew install tmux|Optional interactive shell auto-start
+fd|fd|no|homebrew|brew install fd|FZF default file and directory commands
+bat|bat|no|homebrew|brew install bat|FZF preview aliases
+nvm|nvm.sh|no|manual|Install nvm into ~/.nvm|Node version management
+pnpm|pnpm|no|homebrew|brew install pnpm|Package manager availability for local workflows
+terraform|terraform|no|homebrew|brew install terraform|Terraform shell completion

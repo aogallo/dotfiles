@@ -13,3 +13,8 @@ lazy-lock*
 
 .opencode/
 .atl/
+
+# Local zsh overrides managed outside the repository.
+zsh/.zshrc.local
+zsh/.zshenv.local
+*.local.zsh
