@@ -12,6 +12,9 @@ the PR completes the solution.
 
 ### Iris Keyboard
 
+The shared VIA configuration for the Iris Rev. 5 keyboard lives in
+`keyboard/iris_rev__5.json`. See `keyboard/README.md` for validation and rollback guidance.
+
 #### Remapping each key
 
 I use `Via Configurator App`, you can follow this [Via Usage Guide](https://www.usevia.app/)
