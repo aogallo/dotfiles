@@ -1,0 +1,18 @@
+# Copy values from this example into ~/.zshenv.local when they are needed locally.
+# Do not commit real personal paths, work settings, credentials, or secrets.
+
+# Flutter SDK installed outside a package manager.
+# export FLUTTER_HOME="$HOME/path/to/flutter"
+# export PATH="$FLUTTER_HOME/bin:$PATH"
+
+# Android tooling for local mobile development.
+# export JAVA_HOME="/path/to/java/home"
+# export ANDROID_HOME="$HOME/Library/Android/sdk"
+# export PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
+
+# pnpm user directory. Keep user-specific values local.
+# export PNPM_HOME="$HOME/Library/pnpm"
+# case ":$PATH:" in
+#   *":$PNPM_HOME:"*) ;;
+#   *) export PATH="$PNPM_HOME:$PATH" ;;
+# esac

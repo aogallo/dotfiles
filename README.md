@@ -86,6 +86,10 @@ TPM setup, activation, reload, plugin behavior, validation, and rollback guidanc
 See `nvim/README.md` for the safe Neovim linking workflow. It documents the dry-run path and
 refuses to overwrite unmanaged local configuration by default.
 
+## Zsh
+
+The repository-managed zsh configuration lives in `zsh/`. See `zsh/README.md` for the current-machine inventory, local-only override boundaries, dependency validation, and future safe-linking expectations.
+
 ## Install Stylua formatter
 
 This is the repository with all information about StyLua: [Stylua](https://github.com/JohnnyMorganz/StyLua)
