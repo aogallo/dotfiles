@@ -120,3 +120,17 @@ requiring the private resource.
 
 `setup/link-nvim-config.sh --apply` creates the default Obsidian notes directory if needed.
 With no override, that directory is `~/dev/notes`.
+
+## Obsidian Notes
+
+Obsidian notes use `OBSIDIAN_NOTES_DIR` for the workspace path, falling back to
+`~/dev/notes`. New notes created with `:Obsidian new {title}` derive the note ID and
+Markdown filename from the provided title, so `:Obsidian new AWS CodePipeline` creates a
+recognizable title-based filename instead of an opaque numeric ID.
+
+Use `<leader>nn` (`New note`) to open `:Obsidian new ` and enter the note title from the
+command line. The mapping is grouped under `<leader>n` as `notes` in Which-Key.
+
+Rollback is a normal repository revert of `nvim/plugin/markdown.lua`,
+`nvim/plugin/editor.lua`, and this README. Existing notes created in an Obsidian vault are
+user content and are not removed by reverting the configuration.
