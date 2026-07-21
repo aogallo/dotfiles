@@ -131,6 +131,28 @@ recognizable title-based filename instead of an opaque numeric ID.
 Use `<leader>nn` (`New note`) to open `:Obsidian new ` and enter the note title from the
 command line. The mapping is grouped under `<leader>n` as `notes` in Which-Key.
 
+### Markdown Formatting in Notes Folders
+
+Notes folders can stay lightweight. A plain Markdown directory, or an Obsidian-style vault
+with Markdown files plus optional `.obsidian/` vault-local settings, is enough for basic
+editing in Neovim. The shared formatter config does not require every notes folder to include
+Node tooling, package manifests, or Prettier configuration.
+
+Markdown uses project Prettier when the current file is under a portable project/config signal,
+such as `package.json`, `.prettierrc*`, or `prettier.config.*`. Without those signals, Markdown
+still attempts the shared Neovim Prettier formatter for normal Markdown cleanup, then falls
+back to safe whitespace cleanup if Prettier is unavailable.
+
+If a specific notes vault should use project-style Markdown formatting, add formatter config
+to that vault intentionally. For example, adding a Prettier config or package manifest opts
+that folder into the Prettier path; installing and managing formatter dependencies for that
+vault remains optional and vault-specific.
+
+When syncing notes across machines, keep secrets and machine-specific paths out of the vault.
+Vault-local app settings such as `.obsidian/` are normal if you want to sync them, but package
+manager state and formatter dependencies should only be added when the vault is deliberately
+managed like a project.
+
 Rollback is a normal repository revert of `nvim/plugin/markdown.lua`,
-`nvim/plugin/editor.lua`, and this README. Existing notes created in an Obsidian vault are
-user content and are not removed by reverting the configuration.
+`nvim/plugin/editor.lua`, `nvim/plugin/conform.lua`, and this README. Existing notes created
+in an Obsidian vault are user content and are not removed by reverting the configuration.
