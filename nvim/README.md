@@ -62,6 +62,29 @@ setup/bootstrap-nvim-deps.sh --install
 setup/bootstrap-nvim-deps.sh --install --include-optional
 ```
 
+### Optional Shell Tools
+
+`shfmt` and `shellcheck` are intentionally optional. They improve shell-script formatting
+and diagnostics in Neovim, but missing them must not block the baseline Neovim setup or
+validation flow.
+
+When `setup/validate-nvim-deps.sh` reports them as optional missing tools, choose one of two
+valid paths:
+
+- Install them when you want a fully provisioned shell-editing environment:
+
+  ```sh
+  setup/bootstrap-nvim-deps.sh --dry-run --include-optional
+  setup/bootstrap-nvim-deps.sh --install --include-optional
+  ```
+
+  The current manifest resolves both through Homebrew: `brew install shfmt` and
+  `brew install shellcheck`.
+
+- Leave them absent when you do not need shell formatting or shell diagnostics. The validator
+  will continue to report them as optional and should still exit successfully when required
+  dependencies are present.
+
 Mason-backed entries are reported with instructions instead of being installed by the shell
 script. This keeps the bootstrap non-surprising until Mason installation is promoted to its
 own explicit work unit.
