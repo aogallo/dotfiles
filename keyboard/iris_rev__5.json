@@ -109,7 +109,7 @@
       "S(KC_LBRC)",
       "KC_NO",
       "KC_NO",
-      "KC_NO",
+      "MO(3)",
       "KC_NO",
       "KC_DEL",
       "S(KC_9)",
@@ -140,7 +140,7 @@
       "KC_NO",
       "KC_NO",
       "KC_0",
-      "MO(3)",
+      "KC_SPC",
       "KC_DEL",
       "S(KC_0)"
     ],
