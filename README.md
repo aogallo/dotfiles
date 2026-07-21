@@ -66,39 +66,22 @@ brew install nvim
 
 For more information about Neovim you can visit this [neovim](https://neovim.io/)
 
+This repository's Neovim configuration is documented in `nvim/README.md`. Use that file for
+validation, dependency checks, linking, local overrides, and rollback guidance.
+
 ## Tmux
 
 ### Tmux installation
 
 To install tmux go to Installation section in this <a target="_blank" href="https://github.com/tmux/tmux#welcome-to-tmux">tmux repository</a>
 
-### Tmux plugins
-
-For manage plugins in Tmux clone the following <a target="_blank" href="https://github.com/tmux-plugins/tpm">tmux-plugins repository</a>
-
-```bash
-git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
-```
-
-Add the following configuration to your `.tmux.conf` file
-
-```zsh
-set -g @plugin 'tmux-plugins/tpm'
-```
-
-### Tmux Theme
-
-I use dracula theme for tmux, to install the theme adding the following command in your `.tmux.conf` file:
-
-```bash
-set -g @plugin 'dracula/tmux'
-```
+This repository's tmux configuration is documented in `Tmux/README.md`. Use that file for
+TPM setup, activation, reload, plugin behavior, validation, and rollback guidance.
 
 ## Create a symbolic link
 
-```bash
-ln -s ~/dotfiles/.config/nvim ~/.config
-```
+See `nvim/README.md` for the safe Neovim linking workflow. It documents the dry-run path and
+refuses to overwrite unmanaged local configuration by default.
 
 ## Install Stylua formatter
 
