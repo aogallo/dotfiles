@@ -9,6 +9,7 @@ add {
         opts = {
             explorer = { enabled = true },
             lazygit = { enabled = true },
+            image = { enabled = true },
             notifier = {
                 enabled = true,
                 timeout = 3000,
