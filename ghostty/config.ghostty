@@ -1,0 +1,23 @@
+# Repository-managed Ghostty defaults.
+# Keep private or machine-specific overrides outside this repository.
+
+font-family = IosevkaTerm NF
+font-size = 19
+
+theme = Catppuccin Frappe
+background = 0E1419
+background-opacity = 0.95
+background-blur-radius = 20
+
+window-decoration = true
+window-padding-color = extend
+window-step-resize = false
+window-padding-balance = true
+window-height = 100
+window-width = 100
+
+gtk-tabs-location = hidden
+
+# Optional local override. Missing file is allowed because of the '?' prefix.
+# Copy ghostty/local.example.ghostty to this path when host-specific values are needed.
+config-file = ?~/.config/ghostty/local.ghostty

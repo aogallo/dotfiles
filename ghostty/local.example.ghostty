@@ -1,0 +1,15 @@
+# Example-only Ghostty local overrides.
+# Copy to ~/.config/ghostty/local.ghostty and edit there.
+# Do not commit real local overrides, private paths, or work-specific values.
+
+# Use a different font if IosevkaTerm NF is unavailable on this Mac.
+# font-family = JetBrainsMono Nerd Font
+
+# Tune display-specific sizing without changing shared defaults.
+# font-size = 18
+# window-width = 120
+# window-height = 80
+
+# Tune visual effects for a specific display or performance profile.
+# background-opacity = 1
+# background-blur-radius = 0

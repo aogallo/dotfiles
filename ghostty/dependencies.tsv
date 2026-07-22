@@ -1,0 +1,4 @@
+# name	executable	required	source	install_hint	used_by
+Ghostty.app	/Applications/Ghostty.app	yes	Ghostty	Install from https://ghostty.org/download	Terminal application and config loader
+ghostty CLI	ghostty	no	Ghostty	Install Ghostty and expose its CLI on PATH if desired	Optional config smoke checks
+IosevkaTerm NF	IosevkaTerm NF	no	Nerd Fonts	Install IosevkaTerm Nerd Font	Shared font-family default
