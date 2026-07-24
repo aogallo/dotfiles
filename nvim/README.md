@@ -97,6 +97,182 @@ installing or updating plugins, use these Neovim commands when parser work is ne
 :TSUpdateConfigured
 ```
 
+## AWS YAML, CloudFormation, and SAM Editing
+
+The editor uses layered YAML support:
+
+- `yamlls` plus SchemaStore remains active for normal YAML files.
+- `cfn_lsp` is CloudFormation-first and only attaches to buffers classified as
+  CloudFormation or SAM templates.
+- Serverless Framework files stay generic YAML by default because `serverless.yml` is not a
+  CloudFormation/SAM template document.
+
+This keeps Docker Compose, application configuration, notes, and other YAML formats free from
+CloudFormation-only diagnostics and completion noise.
+
+### Template Classification
+
+CloudFormation/SAM classification is intentionally narrow. `nvim/lsp/cfn_lsp.lua` starts the
+AWS CloudFormation language server only when a YAML/JSON buffer matches one of these signals:
+
+- A CloudFormation/SAM filename such as `*.cfn.yaml`, `*.cloudformation.yaml`,
+  `*.template.yaml`, `cloudformation*.yaml`, `cfn*.yaml`, `sam*.yaml`, or `template.yaml`.
+- CloudFormation markers in the first part of the file, such as
+  `AWSTemplateFormatVersion`, `Resources`, `Parameters`, `Mappings`, `Conditions`, `Outputs`,
+  or resource types like `AWS::S3::Bucket`.
+- SAM markers such as `Transform: AWS::Serverless-2016-10-31` or `AWS::Serverless::*`
+  resources.
+- A manual classification comment near the top of an ambiguous file:
+
+  ```yaml
+  # cfn-lsp: cloudformation
+  # cfn-lsp: sam
+  ```
+
+When the CloudFormation language server attaches, Neovim records the classified context in
+`vim.b.aws_template_context` as `cloudformation` or `sam`. Use this when troubleshooting which
+AWS template context a suggestion or diagnostic belongs to:
+
+```vim
+:lua print(vim.b.aws_template_context or 'generic-yaml')
+:LspInfo
+```
+
+### Local CloudFormation Language Server
+
+The CloudFormation language server is optional and local-only. Missing it must not break normal
+YAML editing.
+
+Default path:
+
+```text
+~/.local/share/cfn-lsp/cfn-lsp-server-standalone.js
+```
+
+Install/update manually from the standalone bundle:
+
+```sh
+mkdir -p ~/.local/share/cfn-lsp
+# Download a release from https://github.com/aws-cloudformation/cloudformation-languageserver/releases
+# and unzip cfn-lsp-server-standalone.js into ~/.local/share/cfn-lsp/
+```
+
+To test another local bundle without changing shared config:
+
+```sh
+CFN_LSP_SERVER=/path/to/cfn-lsp-server-standalone.js nvim template.yaml
+```
+
+Do not commit downloaded language server bundles, generated parser binaries, caches, quarantine
+state, or machine-specific absolute paths.
+
+### Fallback Validation
+
+Editor diagnostics are useful feedback, but `cfn-lint` is the fallback validation authority for
+CloudFormation and SAM templates.
+
+CloudFormation:
+
+```sh
+cfn-lint specs/archive/2026-07-24-001-aws-yaml-lsp/fixtures/cloudformation-valid.yaml
+cfn-lint specs/archive/2026-07-24-001-aws-yaml-lsp/fixtures/cloudformation-invalid.yaml
+```
+
+SAM:
+
+```sh
+cfn-lint specs/archive/2026-07-24-001-aws-yaml-lsp/fixtures/sam-template.yaml
+sam validate --lint --template-file specs/archive/2026-07-24-001-aws-yaml-lsp/fixtures/sam-template.yaml
+```
+
+Install optional fallback tools only when needed:
+
+```sh
+brew install cfn-lint aws-sam-cli
+```
+
+Missing `cfn-lint`, `sam`, or the CloudFormation language server is reported as optional by
+`setup/validate-nvim-deps.sh`; it should not block unrelated Neovim startup.
+
+### Support Strategy and Tradeoffs
+
+CloudFormation is the first-class supported AWS template context because it has a concrete
+document shape and direct validation tooling. SAM is supported as a CloudFormation extension:
+files with the SAM transform or `AWS::Serverless::*` resources are classified for
+CloudFormation/SAM assistance, and `sam validate --lint` is the documented fallback when editor
+diagnostics are incomplete.
+
+Serverless Framework is intentionally generic YAML by default. Although it can deploy AWS
+resources, its top-level `service`, `provider`, `functions`, `plugins`, and `custom` sections are
+Serverless Framework configuration, not a CloudFormation template. Treating it as
+CloudFormation would create misleading diagnostics.
+
+### YAML Parser and AWS LSP Troubleshooting
+
+These are separate layers; fix the failing layer instead of treating every YAML error as an AWS
+LSP problem.
+
+#### macOS blocks `@tree-sitter-grammars+tree-sitter-yaml.node`
+
+That warning points to the YAML Treesitter parser binary, not the CloudFormation language server.
+Symptoms include YAML highlight/parser failures before AWS template analysis is trustworthy.
+
+Validate parser health:
+
+```sh
+nvim --headless -u nvim/init.lua "+checkhealth nvim-treesitter" "+quitall"
+```
+
+Reinstall/update configured parsers:
+
+```vim
+:TSInstallConfigured
+:TSUpdateConfigured
+```
+
+If macOS quarantine blocks a locally generated parser, remove or approve the local machine's
+blocked parser state outside this repository. Do not commit parser binaries or security state.
+
+#### CloudFormation language server internal errors
+
+If generic YAML works but AWS template diagnostics fail or `cfn_lsp` exits, check the AWS layer:
+
+```vim
+:LspInfo
+:messages
+:lua print(vim.b.aws_template_context or 'generic-yaml')
+```
+
+Then confirm the local server path and Node.js are available:
+
+```sh
+node --version
+test -r "${CFN_LSP_SERVER:-$HOME/.local/share/cfn-lsp/cfn-lsp-server-standalone.js}"
+```
+
+While the language server is unavailable, keep editing with generic YAML support and run the
+fallback `cfn-lint` or `sam validate --lint` commands above.
+
+If Node reports no native build for
+`@tree-sitter-grammars/tree-sitter-yaml` on `darwin arm64`, the downloaded AWS bundle is missing
+the Apple Silicon YAML parser prebuild. Reinstall the AWS release bundle first. If the release is
+still missing `prebuilds/darwin-arm64/@tree-sitter-grammars+tree-sitter-yaml.node`, repair the
+local bundle from the npm package and remove quarantine from the trusted local copy:
+
+```sh
+tmpdir=$(mktemp -d)
+npm pack @tree-sitter-grammars/tree-sitter-yaml@0.7.1 --pack-destination "$tmpdir"
+mkdir -p ~/.local/share/cfn-lsp/node_modules/@tree-sitter-grammars/tree-sitter-yaml/prebuilds/darwin-arm64
+tar -xzf "$tmpdir"/tree-sitter-grammars-tree-sitter-yaml-0.7.1.tgz \
+  -C "$tmpdir" \
+  package/prebuilds/darwin-arm64/@tree-sitter-grammars+tree-sitter-yaml.node
+cp "$tmpdir"/package/prebuilds/darwin-arm64/@tree-sitter-grammars+tree-sitter-yaml.node \
+  ~/.local/share/cfn-lsp/node_modules/@tree-sitter-grammars/tree-sitter-yaml/prebuilds/darwin-arm64/
+xattr -dr com.apple.quarantine ~/.local/share/cfn-lsp
+```
+
+That repair is machine-local setup. Do not commit the copied `.node` file or any quarantine state.
+
 ## Notifications and Message History
 
 Notifications, captured editor messages, command/keymap failures, and LSP progress use the

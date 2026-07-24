@@ -1,0 +1,22 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: SAM fixture for CloudFormation/SAM classification smoke checks.
+
+Resources:
+  HelloFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs20.x
+      Handler: index.handler
+      InlineCode: |
+        exports.handler = async () => ({ statusCode: 200, body: 'ok' })
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+
+Outputs:
+  HelloFunctionArn:
+    Value: !GetAtt HelloFunction.Arn

@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Valid CloudFormation fixture for editor assistance smoke checks.
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Name for the S3 bucket created by this template.
+
+Resources:
+  AppBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  BucketArn:
+    Description: ARN of the created bucket.
+    Value: !GetAtt AppBucket.Arn

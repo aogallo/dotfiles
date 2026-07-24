@@ -1,0 +1,6 @@
+app:
+  name: yaml-fixture
+  logLevel: info
+
+features:
+  awsTemplateAssistance: false
