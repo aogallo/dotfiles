@@ -1,0 +1,3 @@
+notes:
+  - Keep generic YAML editing independent from CloudFormation diagnostics.
+  - This fixture intentionally has no AWS template markers.

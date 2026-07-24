@@ -5,6 +5,7 @@ set -u
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST="${1:-$ROOT_DIR/nvim/dependencies.tsv}"
 MASON_BIN="${MASON:-$HOME/.local/share/nvim/mason}/bin"
+CFN_LSP_SERVER="${CFN_LSP_SERVER:-$HOME/.local/share/cfn-lsp/cfn-lsp-server-standalone.js}"
 
 if [[ ! -f "$MANIFEST" ]]; then
   printf 'Missing dependency manifest: %s\n' "$MANIFEST" >&2
@@ -17,6 +18,11 @@ missing_optional=0
 
 has_executable() {
   local executable="$1"
+  if [[ "$executable" == 'cfn-lsp-server-standalone.js' ]]; then
+    [[ -f "$CFN_LSP_SERVER" && -r "$CFN_LSP_SERVER" ]]
+    return
+  fi
+
   command -v "$executable" >/dev/null 2>&1 || [[ -x "$MASON_BIN/$executable" ]]
 }
 
@@ -38,12 +44,15 @@ while IFS='|' read -r name executable required source install_hint used_by; do
     printf 'missing  %s (%s) [required]\n' "$name" "$executable"
   else
     missing_optional=$((missing_optional + 1))
-    printf 'optional %s (%s) [missing]\n' "$name" "$executable"
+    printf 'optional %s (%s) [missing, non-blocking]\n' "$name" "$executable"
   fi
 
   printf '         source: %s\n' "$source"
   printf '         used by: %s\n' "$used_by"
   printf '         install: %s\n' "$install_hint"
+  if [[ "$name" == AWS* || "$executable" == cfn-lint || "$executable" == sam ]]; then
+    printf '         note: AWS template tooling is optional; generic YAML and baseline Neovim validation continue without it.\n'
+  fi
 done <"$MANIFEST"
 
 printf '\nSummary: %d checked, %d required missing, %d optional missing\n' \

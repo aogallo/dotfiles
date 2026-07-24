@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Descrption: Invalid CloudFormation fixture for diagnostic smoke checks.
+
+Resources:
+  AppBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref MissingBucketName
+      NotARealS3BucketProperty: true
+
+Outputs:
+  MissingReference:
+    Value: !GetAtt MissingResource.Arn

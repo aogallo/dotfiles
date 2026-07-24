@@ -15,6 +15,9 @@ CSS language server|vscode-css-language-server|yes|mason/npm|Mason css-lsp or pn
 HTML language server|vscode-html-language-server|yes|mason/npm|Mason html-lsp or pnpm add -g vscode-langservers-extracted|nvim/lsp/html.lua
 Bash language server|bash-language-server|no|npm|pnpm add -g bash-language-server|nvim/lsp/bashls.lua
 YAML language server|yaml-language-server|yes|mason/npm|Mason yaml-language-server or pnpm add -g yaml-language-server|nvim/lsp/yamlls.lua
+AWS CloudFormation language server|cfn-lsp-server-standalone.js|no|external|Download the standalone bundle from https://github.com/aws-cloudformation/cloudformation-languageserver/releases and place cfn-lsp-server-standalone.js under ~/.local/share/cfn-lsp/ or set CFN_LSP_SERVER|nvim/lsp/cfn_lsp.lua
+CloudFormation linter|cfn-lint|no|homebrew/pipx|brew install cfn-lint or pipx install cfn-lint|nvim/README.md fallback validation
+AWS SAM CLI|sam|no|homebrew|brew install aws-sam-cli|nvim/README.md SAM fallback validation
 Marksman Markdown language server|marksman|no|mason/homebrew|brew install marksman or Mason marksman|nvim/lsp/marksman.lua
 Stylelint language server|stylelint-lsp|no|npm|npm install -g stylelint-lsp|nvim/lsp/stylelint_lsp.lua
 Prettier|prettier|yes|mason/npm|Mason prettier or pnpm add -g prettier|nvim/plugin/conform.lua
