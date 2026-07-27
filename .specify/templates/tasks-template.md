@@ -9,7 +9,7 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. For dotfiles changes, validation tasks are REQUIRED when the constitution applies, including clean install, repeated install, conflict handling, partial failure, syntax/static checks, smoke tests relevant to the changed modules, feature-branch/PR workflow verification, and active spec closure review before PR creation.
+**Tests**: The examples below include test tasks. For dotfiles changes, validation tasks are REQUIRED when the constitution applies, including clean install, repeated install, conflict handling, partial failure, syntax/static checks, smoke tests relevant to the changed modules, module README coverage, feature-branch/PR workflow verification, and active spec closure review before PR creation.
 
 **Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
 
@@ -160,7 +160,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
 - [ ] TXXX Verify idempotent install/update/remove behavior for affected modules
-- [ ] TXXX Document customization, validation, rollback, and troubleshooting updates
+- [ ] TXXX Document affected module README purpose, usage, manual install, installer support, validation, rollback, and troubleshooting updates in path/to/module/README.md
 - [ ] TXXX Verify commits are on a feature branch, the PR links the approved issue, and PR creation reviews whether the active spec is related and should be closed
 
 ---
@@ -254,5 +254,8 @@ With multiple developers:
 - Verify tests fail before implementing
 - Commit after each task or logical group on a feature branch, never directly on `main`
 - Before creating a PR, verify whether the active spec is related to the PR and ask whether a related completed spec should be closed
+- Every affected maintained module must have a README with purpose, source-of-truth files,
+  prerequisites, manual install/activation, installer support, validation, customization
+  boundaries, rollback/recovery, and manual-only operations.
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

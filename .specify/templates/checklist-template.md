@@ -40,6 +40,6 @@
 - Items are numbered sequentially for easy reference
 - Constitution-driven checklists for dotfiles changes should include portability,
   idempotency, non-destructive behavior, modularity, dependencies, security,
-  validation, installer experience, recovery, maintainability, documentation, and
-  feature-branch/PR workflow compliance, including active spec relationship and closure
-  review before PR creation.
+  validation, installer experience, recovery, maintainability, module README coverage,
+  documentation, and feature-branch/PR workflow compliance, including active spec relationship
+  and closure review before PR creation.

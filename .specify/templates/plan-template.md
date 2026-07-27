@@ -60,7 +60,11 @@ Document how the plan satisfies each applicable dotfiles constitution gate:
 - **Recovery**: documented restore, unlink/remove, and interrupted-install recovery paths.
 - **Maintainability**: smallest practical scripts and justified dependencies/complexity.
 - **Documentation**: install, update, customize, validate, rollback, and troubleshooting
-  updates required by this change.
+  updates required by this change, including affected module `README.md` files.
+- **Module README**: each maintained module directory affected by this change has a
+  `README.md` covering purpose, source-of-truth files, prerequisites, manual
+  install/activation, installer support, validation, customization boundaries,
+  rollback/recovery, and manual-only operations.
 - **Branch/PR discipline**: implementation commits are planned for a feature branch, not
   direct `main` commits, the pull request will link the required approved issue, and PR
   creation will verify the active spec relationship and ask whether a related completed

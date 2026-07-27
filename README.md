@@ -8,6 +8,24 @@ the approved issue for the change. Before creating a pull request, verify whethe
 specification is related to the PR and ask whether that specification should be closed when
 the PR completes the solution.
 
+## Module README Standard
+
+Every maintained module directory must include a `README.md`. Treat it as the module's operating
+manual, not as decoration.
+
+Each module README should cover:
+
+- Purpose: what the module configures and why it exists.
+- Source of truth: important files, scripts, manifests, and generated/local files.
+- Prerequisites: required and optional tools, fonts, apps, services, or OS assumptions.
+- Usage: how the module is activated, linked, validated, updated, and used day to day.
+- Manual installation: steps that remain outside automation.
+- Installer support: what the guided installer can safely validate, install, link, sync, or report.
+- Validation: commands or checks that prove the module is healthy.
+- Customization: local override files and private/work-specific boundaries.
+- Recovery: rollback, unlink, backup restore, and interrupted-run guidance.
+- Manual-only boundaries: risky or user-consent actions that must not be automated silently.
+
 ## Dotfiles Installer
 
 ### Clean-machine bootstrap
