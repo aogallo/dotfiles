@@ -264,8 +264,49 @@ EOF
   assert_contains "$disabled" 'go_run' 'no-binary uses source launch'
 
   missing="$(BOOTSTRAP_BINARY_DIR="$TEST_ROOT/no-such-dir" base_env "$fakebin" "$log" "$SCRIPT" --dry-run --prefer-binary)"
-  assert_contains "$missing" 'missing or incompatible; falling back to go run' 'missing binary fallback'
+  assert_contains "$missing" 'release_binary' 'missing binary checks release fallback'
+  assert_contains "$missing" 'missing, unavailable, or unverifiable; falling back to go run' 'missing binary fallback'
   assert_contains "$missing" 'go_run' 'missing binary uses go run'
+}
+
+test_release_binary_paths() {
+  local fakebin releasedir log output mismatch mismatch_output missing_output checksum
+  fakebin="$(make_fakebin release-binary)"
+  releasedir="$TEST_ROOT/release-assets"
+  log="$TEST_ROOT/release-binary.log"
+  mkdir -p "$releasedir"
+  : >"$log"
+  write_uname "$fakebin"
+  write_xcode_select "$fakebin"
+  write_brew "$fakebin"
+  write_go "$fakebin"
+
+  cat >"$releasedir/dotfiles-installer-darwin-arm64" <<'EOF'
+#!/usr/bin/env bash
+printf 'release binary launched\n' >>"${BOOTSTRAP_TEST_LOG:?}"
+EOF
+  chmod +x "$releasedir/dotfiles-installer-darwin-arm64"
+  checksum="$(cd "$releasedir" && shasum -a 256 dotfiles-installer-darwin-arm64)"
+  printf '%s\n' "$checksum" >"$releasedir/checksums.txt"
+
+  output="$(BOOTSTRAP_RELEASE_BASE_URL="file://$releasedir" base_env "$fakebin" "$log" "$SCRIPT" --prefer-binary)"
+  assert_contains "$output" 'release_binary' 'release binary selected'
+  assert_contains "$output" 'outcome: ready' 'release binary reaches ready'
+  assert_contains "$(<"$log")" 'release binary launched' 'release binary executed'
+
+  mismatch="$TEST_ROOT/release-mismatch"
+  mkdir -p "$mismatch"
+  cp "$releasedir/dotfiles-installer-darwin-arm64" "$mismatch/dotfiles-installer-darwin-arm64"
+  printf '%s  %s\n' '0000000000000000000000000000000000000000000000000000000000000000' 'dotfiles-installer-darwin-arm64' >"$mismatch/checksums.txt"
+  : >"$log"
+  mismatch_output="$(BOOTSTRAP_RELEASE_BASE_URL="file://$mismatch" base_env "$fakebin" "$log" "$SCRIPT" --prefer-binary)"
+  assert_contains "$mismatch_output" 'checksum verification failed' 'checksum mismatch reported'
+  assert_contains "$mismatch_output" 'go_run' 'checksum mismatch falls back to source'
+  assert_not_contains "$(<"$log")" 'release binary launched' 'checksum mismatch does not execute binary'
+
+  missing_output="$(BOOTSTRAP_RELEASE_BASE_URL="file://$TEST_ROOT/no-release" base_env "$fakebin" "$log" "$SCRIPT" --dry-run --prefer-binary)"
+  assert_contains "$missing_output" 'would download' 'dry-run release download is reported'
+  assert_contains "$missing_output" 'go_run' 'dry-run release path still reports source fallback'
 }
 
 test_dry_run_default_and_minimal_path
@@ -274,5 +315,6 @@ test_homebrew_and_go_prerequisites
 test_homebrew_install_success_with_fake_installer
 test_go_install_success_with_fake_brew
 test_binary_launch_paths
+test_release_binary_paths
 
 printf 'ok - bootstrap-dotfiles-installer tests passed\n'

@@ -67,9 +67,11 @@ PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry
 ```
 
 `--prefer-binary` uses a compatible local prebuilt `dotfiles-installer` binary when one is
-available, but Go is still required and will be installed with Homebrew when missing. `--no-binary`
-always launches from source with `cd installer && go run ./cmd/dotfiles-installer`. Dry-run mode
-never installs Homebrew or Go and never invokes `xcode-select --install`.
+available. If none is available, it tries the latest GitHub Release asset for the detected macOS
+architecture and verifies it with `checksums.txt` before execution. Go is still required and will be
+installed with Homebrew when missing. `--no-binary` always launches from source with
+`cd installer && go run ./cmd/dotfiles-installer`. Dry-run mode never installs Homebrew or Go and
+never invokes `xcode-select --install`.
 
 The bootstrap deliberately does not run broad setup or identity/configuration actions. It never
 invokes `setup/macos.sh`, GitHub account setup, SSH key generation, Git identity changes, or the
@@ -106,6 +108,22 @@ Rollback and recovery stay module-specific. Neovim and Ghostty link scripts refu
 overwrites by default, can create backups only with explicit `--backup`, and remove only
 repository-managed links. For troubleshooting, rerun the dry-run command first, inspect the final
 installer report for skipped/failed/manual items, then use the relevant module README below.
+
+### Installer releases
+
+The first stable installer release is `v1.0.0`, representing the merged PR #49 installer behavior.
+Future installer UX/UI redesign work should use a later version unless the active release spec is
+changed before publication.
+
+Release assets are published through `.github/workflows/release-installer.yml` when a `v*` tag is
+pushed:
+
+- `dotfiles-installer-darwin-arm64`
+- `dotfiles-installer-darwin-amd64`
+- `checksums.txt`
+
+See `installer/README.md` for the manual release playbook, automated release behavior, and
+post-publish verification checklist.
 
 ## Keyboard
 

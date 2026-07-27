@@ -46,9 +46,11 @@ setup/bootstrap-dotfiles-installer.sh --no-binary
 PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run
 ```
 
-`--prefer-binary` uses a compatible prebuilt installer binary when available, but Go is still
-installed when missing because it is required for development and Neovim tooling. `--no-binary`
-forces source execution with `go run` after prerequisites are ready.
+`--prefer-binary` first uses a compatible local prebuilt installer binary when available. If none
+is available, it tries the latest GitHub Release asset for the detected macOS architecture and
+verifies it with `checksums.txt` before execution. Go is still installed when missing because it is
+required for development and Neovim tooling. `--no-binary` forces source execution with `go run`
+after prerequisites are ready.
 
 Manual Go installation is not the preferred first-run path anymore. Use it only for recovery if
 the bootstrap cannot complete on the current machine.
@@ -99,6 +101,59 @@ Manual-only items stay manual until a later spec designs safe automation:
 - macOS security approvals
 - GitHub SSH/account setup from `setup/macos.sh`
 - AWS CloudFormation language server bundle repair
+
+## Release Playbook
+
+`v1.0.0` is the first stable release of the merged installer from PR #49. It intentionally excludes
+the next installer UX/UI redesign; that work should ship in a later version unless the release spec
+changes first.
+
+### Manual release
+
+Run these checks from a clean checkout of the intended default-branch commit:
+
+```sh
+git status --short
+git tag --list 'v1.0.0'
+gh release view v1.0.0
+(cd installer && go test ./...)
+setup/bootstrap-dotfiles-installer_test.sh
+bash -n setup/bootstrap-dotfiles-installer.sh setup/bootstrap-dotfiles-installer_test.sh
+git diff --check
+```
+
+Build assets and checksums:
+
+```sh
+mkdir -p dist
+(cd installer && CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags='-s -w' -o ../dist/dotfiles-installer-darwin-arm64 ./cmd/dotfiles-installer)
+(cd installer && CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o ../dist/dotfiles-installer-darwin-amd64 ./cmd/dotfiles-installer)
+(cd dist && shasum -a 256 dotfiles-installer-darwin-* > checksums.txt && shasum -a 256 -c checksums.txt)
+```
+
+Publish only after the checks pass:
+
+```sh
+git tag v1.0.0
+git push origin v1.0.0
+gh release create v1.0.0 dist/* --verify-tag --title "Dotfiles Installer v1.0.0" --generate-notes
+```
+
+After publishing, confirm the release contains:
+
+- `dotfiles-installer-darwin-arm64`
+- `dotfiles-installer-darwin-amd64`
+- `checksums.txt`
+
+### Automated release
+
+The GitHub Actions workflow at `.github/workflows/release-installer.yml` runs when a `v*` tag is
+pushed. It validates the installer and bootstrap, builds both macOS binaries, generates
+`checksums.txt`, verifies the checksums, and publishes the GitHub Release with generated notes.
+
+`--prefer-binary` consumes release assets from GitHub Releases by default. For validation or
+recovery, override the base asset URL with `BOOTSTRAP_RELEASE_BASE_URL`; use `--no-binary` to skip
+release and local binary discovery entirely.
 
 ## Development Notes
 
