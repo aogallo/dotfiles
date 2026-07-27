@@ -9,6 +9,10 @@ Thumbs.db
 node_modules/
 dist/
 build/
+*.exe
+*.test
+*.out
+vendor/
 lazy-lock*
 
 .opencode/
