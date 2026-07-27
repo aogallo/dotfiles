@@ -90,6 +90,10 @@ The linker creates a symlink from the active Ghostty config path to `ghostty/con
 It defaults to dry-run, refuses unmanaged overwrites without `--backup`, and reports changed,
 skipped, failed, and backup paths.
 
+The guided installer in `installer/` uses this same validator/linker boundary. Its TUI previews
+Ghostty config work first, reports readiness and optional dependencies, and requires confirmation
+before apply, backup, or removal steps.
+
 ## Removal and Rollback
 
 Remove only the repository-managed active config link:

@@ -8,6 +8,105 @@ the approved issue for the change. Before creating a pull request, verify whethe
 specification is related to the PR and ask whether that specification should be closed when
 the PR completes the solution.
 
+## Module README Standard
+
+Every maintained module directory must include a `README.md`. Treat it as the module's operating
+manual, not as decoration.
+
+Each module README should cover:
+
+- Purpose: what the module configures and why it exists.
+- Source of truth: important files, scripts, manifests, and generated/local files.
+- Prerequisites: required and optional tools, fonts, apps, services, or OS assumptions.
+- Usage: how the module is activated, linked, validated, updated, and used day to day.
+- Manual installation: steps that remain outside automation.
+- Installer support: what the guided installer can safely validate, install, link, sync, or report.
+- Validation: commands or checks that prove the module is healthy.
+- Customization: local override files and private/work-specific boundaries.
+- Recovery: rollback, unlink, backup restore, and interrupted-run guidance.
+- Manual-only boundaries: risky or user-consent actions that must not be automated silently.
+
+## Spec Artifact Navigation
+
+Spec Kit artifacts should be easy to resume after days away from a change. In `tasks.md`, every
+user-story phase must include a `Story Link` pointing to the matching heading in `spec.md`.
+Setup, foundational, polish, and convergence phases stay unlinked unless they clearly belong to a
+specific user story.
+
+Use a visible legend near the top of `tasks.md`:
+
+- `T###`: stable task ID.
+- `[P]`: task can run in parallel because it has no dependency on incomplete work and touches
+  different files.
+- `[US#]`: task belongs to the linked user story phase.
+
+## Dotfiles Installer
+
+### Clean-machine bootstrap
+
+On a new macOS machine, start with the shell bootstrap. It is intentionally small and
+detection-first so it can run before Go is installed:
+
+```sh
+setup/bootstrap-dotfiles-installer.sh --dry-run
+setup/bootstrap-dotfiles-installer.sh
+```
+
+The bootstrap checks Xcode Command Line Tools, Homebrew, and Go, then launches the guided
+installer. If Xcode Command Line Tools are missing, the non-dry-run path initiates
+`xcode-select --install`, stops with `prompt_required`, and asks you to complete the macOS
+system prompt before rerunning the bootstrap.
+
+Useful bootstrap modes:
+
+```sh
+setup/bootstrap-dotfiles-installer.sh --dry-run
+setup/bootstrap-dotfiles-installer.sh --prefer-binary
+setup/bootstrap-dotfiles-installer.sh --no-binary
+PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run
+```
+
+`--prefer-binary` uses a compatible local prebuilt `dotfiles-installer` binary when one is
+available, but Go is still required and will be installed with Homebrew when missing. `--no-binary`
+always launches from source with `cd installer && go run ./cmd/dotfiles-installer`. Dry-run mode
+never installs Homebrew or Go and never invokes `xcode-select --install`.
+
+The bootstrap deliberately does not run broad setup or identity/configuration actions. It never
+invokes `setup/macos.sh`, GitHub account setup, SSH key generation, Git identity changes, or the
+Neovim/Ghostty config linkers. Use the guided installer and module-specific dry-run commands for
+those reports and confirmations.
+
+The guided installer lives in `installer/` as an isolated Go module. During development, run
+commands from that directory:
+
+```sh
+cd installer && go run ./cmd/dotfiles-installer
+cd installer && go test ./...
+```
+
+The TUI starts with `start installation`, `sync configs`, `Upgrade tools`, and `quit`. It uses
+Neovim-style `j`/`k` navigation and defaults to dry-run, report, and confirmation gates before
+any mutating action. Existing setup scripts remain the source of truth; the installer previews
+and reports first, then delegates only approved commands such as:
+
+```sh
+setup/validate-nvim-deps.sh
+setup/bootstrap-nvim-deps.sh --dry-run
+setup/link-nvim-config.sh --dry-run
+setup/validate-zsh-config.sh
+setup/validate-ghostty-config.sh
+setup/link-ghostty-config.sh --dry-run
+```
+
+Manual-only boundaries stay manual/report-only until a later spec designs safe automation:
+keyboard VIA import, TPM keypress installation, macOS security approvals, GitHub SSH/account
+setup from `setup/macos.sh`, and AWS CloudFormation language server bundle repair.
+
+Rollback and recovery stay module-specific. Neovim and Ghostty link scripts refuse unmanaged
+overwrites by default, can create backups only with explicit `--backup`, and remove only
+repository-managed links. For troubleshooting, rerun the dry-run command first, inspect the final
+installer report for skipped/failed/manual items, then use the relevant module README below.
+
 ## Keyboard
 
 ### Iris Keyboard

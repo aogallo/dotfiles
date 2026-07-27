@@ -50,6 +50,8 @@ or linking that file into the active tmux config location.
 - Do not overwrite an existing `~/.tmux.conf` without reviewing or backing it up first.
 - Keep shared behavior in `Tmux/tmux.conf`; keep machine-specific changes in your local tmux config or another ignored local file.
 - After changing plugins, reload tmux and use TPM's install/update bindings from inside tmux.
+- The guided installer in `installer/` reports tmux readiness from this `Tmux/` module, but TPM
+  clone/install keypresses and local activation remain manual-only.
 
 ## Validation
 

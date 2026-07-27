@@ -99,8 +99,10 @@ Silicon vs Intel differences where relevant, and rollback/recovery paths.
 
 For dotfiles changes, requirements MUST state applicable portability, idempotency,
 non-destructive behavior, modularity, dependency validation, secret handling,
-verification, installer output, rollback, documentation, and feature-branch/PR workflow
-obligations, including active spec relationship and closure review before PR creation.
+verification, installer output, rollback, module README documentation, and feature-branch/PR
+workflow obligations, including active spec relationship and closure review before PR creation.
+Generated task artifacts MUST link each user-story phase back to the matching heading in this
+specification.
 
 *Example of marking unclear requirements:*
 

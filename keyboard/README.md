@@ -23,6 +23,10 @@ test ! -e iris_rev__5.json
 When relocating this file, compare checksums before and after the move to confirm the VIA
 configuration content was preserved exactly.
 
+The guided installer in `installer/` reports keyboard readiness from this module, but VIA import
+and hardware flashing remain manual-only. Use the installer report as a reminder; make changes in
+VIA directly and keep exported shared layouts under `keyboard/`.
+
 ## Rollback
 
 To restore the previous layout location, move `keyboard/iris_rev__5.json` back to

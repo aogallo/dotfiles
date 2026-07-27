@@ -9,15 +9,16 @@ description: "Task list template for feature implementation"
 
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, contracts/
 
-**Tests**: The examples below include test tasks. For dotfiles changes, validation tasks are REQUIRED when the constitution applies, including clean install, repeated install, conflict handling, partial failure, syntax/static checks, smoke tests relevant to the changed modules, feature-branch/PR workflow verification, and active spec closure review before PR creation.
+**Tests**: The examples below include test tasks. For dotfiles changes, validation tasks are REQUIRED when the constitution applies, including clean install, repeated install, conflict handling, partial failure, syntax/static checks, smoke tests relevant to the changed modules, module README coverage, feature-branch/PR workflow verification, and active spec closure review before PR creation.
 
-**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story.
+**Organization**: Tasks are grouped by user story to enable independent implementation and testing of each story. Each user-story phase MUST link to its matching heading in `spec.md`.
 
 ## Format: `[ID] [P?] [Story] Description`
 
-- **[P]**: Can run in parallel (different files, no dependencies)
-- **[Story]**: Which user story this task belongs to (e.g., US1, US2, US3)
-- Include exact file paths in descriptions
+- **T###**: Stable task ID used for tracking implementation.
+- **[P]**: Parallelizable task that can run independently because it touches different files or has no dependency on incomplete work.
+- **[US#]**: User story marker. The phase's `Story Link` points to the matching `spec.md` heading.
+- Include exact file paths in task descriptions.
 
 ## Path Conventions
 
@@ -78,6 +79,8 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase 3: User Story 1 - [Title] (Priority: P1) 🎯 MVP
 
+**Story Link**: [US1 in spec.md](./spec.md#user-story-1---title-priority-p1)
+
 **Goal**: [Brief description of what this story delivers]
 
 **Independent Test**: [How to verify this story works on its own]
@@ -104,6 +107,8 @@ Examples of foundational tasks (adjust based on your project):
 
 ## Phase 4: User Story 2 - [Title] (Priority: P2)
 
+**Story Link**: [US2 in spec.md](./spec.md#user-story-2---title-priority-p2)
+
 **Goal**: [Brief description of what this story delivers]
 
 **Independent Test**: [How to verify this story works on its own]
@@ -125,6 +130,8 @@ Examples of foundational tasks (adjust based on your project):
 ---
 
 ## Phase 5: User Story 3 - [Title] (Priority: P3)
+
+**Story Link**: [US3 in spec.md](./spec.md#user-story-3---title-priority-p3)
 
 **Goal**: [Brief description of what this story delivers]
 
@@ -160,7 +167,7 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] TXXX Security hardening
 - [ ] TXXX Run quickstart.md validation
 - [ ] TXXX Verify idempotent install/update/remove behavior for affected modules
-- [ ] TXXX Document customization, validation, rollback, and troubleshooting updates
+- [ ] TXXX Document affected module README purpose, usage, manual install, installer support, validation, rollback, and troubleshooting updates in path/to/module/README.md
 - [ ] TXXX Verify commits are on a feature branch, the PR links the approved issue, and PR creation reviews whether the active spec is related and should be closed
 
 ---
@@ -249,10 +256,13 @@ With multiple developers:
 ## Notes
 
 - [P] tasks = different files, no dependencies
-- [Story] label maps task to specific user story for traceability
+- [US#] tasks map to the linked story phase; update the phase `Story Link` if the spec heading changes
 - Each user story should be independently completable and testable
 - Verify tests fail before implementing
 - Commit after each task or logical group on a feature branch, never directly on `main`
 - Before creating a PR, verify whether the active spec is related to the PR and ask whether a related completed spec should be closed
+- Every affected maintained module must have a README with purpose, source-of-truth files,
+  prerequisites, manual install/activation, installer support, validation, customization
+  boundaries, rollback/recovery, and manual-only operations.
 - Stop at any checkpoint to validate story independently
 - Avoid: vague tasks, same file conflicts, cross-story dependencies that break independence

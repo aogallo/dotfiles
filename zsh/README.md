@@ -48,9 +48,13 @@ Expected results:
 - Repeated sourcing does not duplicate managed PATH entries.
 - Shared files do not contain real secrets or private absolute paths.
 
-## Future Installation Contract
+The guided installer in `installer/` uses `setup/validate-zsh-config.sh` for zsh readiness
+reporting. Because this module does not yet have a safe linker, zsh install/sync behavior remains
+report-only/manual guidance and must not overwrite local shell startup files.
 
-This feature prepares the module for a future installer but does not link files automatically.
+## Installer Contract
+
+The current installer reports this module but does not link files automatically.
 
 A future zsh linker must:
 

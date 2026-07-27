@@ -1,10 +1,10 @@
 <!--
 Sync Impact Report
-Version change: 1.1.0 -> 1.2.0
+Version change: 1.3.0 -> 1.4.0
 Modified principles:
-- XIII. Feature Branch and PR Discipline: expanded PR creation gate to validate active spec linkage and closure decision
+- XII. Documentation and Governance: clarified module README and Spec Kit navigation obligations
 Added sections:
-- None
+- XV. Spec Artifact Navigation
 Removed sections:
 - None
 Templates requiring updates:
@@ -13,7 +13,7 @@ Templates requiring updates:
 - ✅ updated: .specify/templates/tasks-template.md
 - ✅ updated: .specify/templates/checklist-template.md
 - ⚠ pending: .specify/templates/commands/*.md does not exist in this checkout
-- ✅ reviewed: .opencode/commands/*.md
+- ⚠ pending: .opencode/commands/*.md does not exist in this checkout
 - ✅ updated: README.md
 Follow-up TODOs:
 - None
@@ -118,10 +118,10 @@ is a maintenance liability.
 
 ### XII. Documentation and Governance
 Supported environments, installation, updates, customization, validation, rollback, and
-troubleshooting MUST remain documented. Every specification, implementation plan, and code
-review MUST verify compliance with this constitution. Exceptions MUST be explicit and
-justified. Constitutional amendments MUST document rationale, compatibility impact, and
-semantic version change.
+troubleshooting MUST remain documented at the repository and module level. Every specification,
+implementation plan, and code review MUST verify compliance with this constitution. Exceptions
+MUST be explicit and justified. Constitutional amendments MUST document rationale, compatibility
+impact, and semantic version change.
 
 Rationale: governance only works when contributors know the rules and reviewers can check
 them consistently.
@@ -139,6 +139,33 @@ permitted only for emergency recovery explicitly documented after the fact.
 Rationale: `main` is the integration branch. Keeping work on feature branches preserves
 reviewability, rollback boundaries, CI visibility, and a clean history of why changes were
 accepted.
+
+### XIV. Module README Contract
+
+Every maintained module directory MUST include a `README.md` that explains the module's purpose,
+source-of-truth files, prerequisites, manual installation or activation path, automated installer
+support when available, validation commands, customization/local override boundaries, rollback or
+recovery steps, and known manual-only operations. A module README MUST be updated in the same
+change that alters module behavior, dependencies, setup, validation, recovery, or user-facing
+configuration.
+
+Rationale: module directories are operational units, not random folders. A future clean-machine
+install, review, or recovery session must be able to understand each module without reverse
+engineering scripts or editor configuration.
+
+### XV. Spec Artifact Navigation
+
+Spec Kit artifacts MUST be navigable with standard Markdown links. Every `tasks.md` user-story
+phase MUST link to the associated user story heading in `spec.md`; setup, foundational, polish,
+and convergence tasks MUST remain unlinked unless they are tied to a specific user story. Task
+marker meanings such as `[P]`, `[US#]`, and `T###` MUST be documented in a visible legend near the
+top of `tasks.md`. Related artifacts such as spec, plan, research, data model, contracts,
+quickstart, tasks, and verify report SHOULD use relative links where they materially improve
+review or continuation across sessions.
+
+Rationale: specs are often resumed days after they were written. Reviewers and future agents must
+be able to jump from implementation tasks back to the requirement context without remembering what
+each marker means or manually searching headings.
 
 ## Quality Gates
 
@@ -167,7 +194,13 @@ tool behavior MUST pass these gates before completion:
   paths are documented and validated where practical.
 - Simplicity gate: new abstractions or dependencies have a documented concrete requirement.
 - Documentation gate: usage, customization, validation, rollback, and troubleshooting docs
-  are updated when behavior changes.
+  are updated when behavior changes, including the affected module `README.md` files.
+- Module README gate: every maintained module directory has a `README.md` covering purpose,
+  source-of-truth files, prerequisites, manual install/activation, installer support,
+  validation, customization boundaries, rollback/recovery, and manual-only operations.
+- Spec navigation gate: `tasks.md` includes a marker legend and links each user-story phase to
+  its matching `spec.md` heading; non-story phases stay unlinked unless they have a clear story
+  owner.
 - Branch/PR gate: implementation work happens on a feature branch, commits do not target
   `main` directly, the pull request links the required approved issue before review, and PR
   creation verifies whether the active specification is related and should be closed.
@@ -198,9 +231,10 @@ templates or runtime guidance, and document the semantic version impact:
 Specifications MUST include constitution-relevant requirements when a change touches
 installation, configuration, dependencies, secrets, portability, validation, or rollback.
 Implementation plans MUST evaluate every applicable quality gate before design and again
-after design. Task lists MUST include concrete validation, documentation, and rollback
-tasks whenever the change creates those obligations. Code review MUST block changes that
-violate MUST-level principles, commit implementation work directly to `main`, skip active
-specification linkage review during PR creation, or leave required validation failing.
+after design. Task lists MUST include concrete validation, documentation, module README, spec
+navigation, and rollback tasks whenever the change creates those obligations. Code review MUST
+block changes that violate MUST-level principles, commit implementation work directly to `main`,
+skip affected module README updates, skip task-to-story navigation, skip active specification
+linkage review during PR creation, or leave required validation failing.
 
-**Version**: 1.2.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-15
+**Version**: 1.4.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-27
