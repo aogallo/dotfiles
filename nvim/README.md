@@ -305,6 +305,11 @@ setup/link-nvim-config.sh --apply --remove
 Removal is conservative: it removes only a symlink that points back to this repository's
 `nvim/` directory. It refuses to delete unmanaged files or directories.
 
+The guided installer in `installer/` uses this same script boundary. Its TUI previews Neovim
+dependency and link work first, reports required, optional, Mason-backed, and manual items, and
+requires confirmation before running install or apply steps. Manual AWS language server bundle
+repair remains report-only guidance.
+
 ## Local Overrides
 
 Use environment variables for private or machine-specific settings:

@@ -8,6 +8,39 @@ the approved issue for the change. Before creating a pull request, verify whethe
 specification is related to the PR and ask whether that specification should be closed when
 the PR completes the solution.
 
+## Dotfiles Installer
+
+The guided installer lives in `installer/` as an isolated Go module. During development, run
+commands from that directory:
+
+```sh
+cd installer && go run ./cmd/dotfiles-installer
+cd installer && go test ./...
+```
+
+The TUI starts with `start installation`, `sync configs`, `Upgrade tools`, and `quit`. It uses
+Neovim-style `j`/`k` navigation and defaults to dry-run, report, and confirmation gates before
+any mutating action. Existing setup scripts remain the source of truth; the installer previews
+and reports first, then delegates only approved commands such as:
+
+```sh
+setup/validate-nvim-deps.sh
+setup/bootstrap-nvim-deps.sh --dry-run
+setup/link-nvim-config.sh --dry-run
+setup/validate-zsh-config.sh
+setup/validate-ghostty-config.sh
+setup/link-ghostty-config.sh --dry-run
+```
+
+Manual-only boundaries stay manual/report-only until a later spec designs safe automation:
+keyboard VIA import, TPM keypress installation, macOS security approvals, GitHub SSH/account
+setup from `setup/macos.sh`, and AWS CloudFormation language server bundle repair.
+
+Rollback and recovery stay module-specific. Neovim and Ghostty link scripts refuse unmanaged
+overwrites by default, can create backups only with explicit `--backup`, and remove only
+repository-managed links. For troubleshooting, rerun the dry-run command first, inspect the final
+installer report for skipped/failed/manual items, then use the relevant module README below.
+
 ## Keyboard
 
 ### Iris Keyboard
