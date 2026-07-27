@@ -17,6 +17,12 @@ Chained PRs recommended: Yes
 Chain strategy: feature-branch-chain
 400-line budget risk: High
 
+## Legend
+
+- `T###`: Stable task ID used for implementation tracking.
+- `[P]`: Parallelizable task with no dependency on incomplete work and different file ownership.
+- `[US#]`: User story marker. The phase's `Story Link` points to the matching heading in `spec.md`.
+
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Initialize the Go CLI/TUI project structure without changing existing setup behavior.
@@ -49,6 +55,8 @@ Chain strategy: feature-branch-chain
 
 ## Phase 3: User Story 1 - Run Guided Installation (Priority: P1) 🎯 MVP
 
+**Story Link**: [US1 in spec.md](./spec.md#user-story-1---run-guided-installation-priority-p1)
+
 **Goal**: Show a safe main menu with required actions, Neovim-style navigation, and quit/back behavior without applying unconfirmed changes.
 
 **Independent Test**: Run `cd installer && go run ./cmd/dotfiles-installer` and confirm the first screen shows `start installation`, `sync configs`, `Upgrade tools`, and `quit`; `j`/`k` moves focus; `q` exits safely.
@@ -72,6 +80,8 @@ Chain strategy: feature-branch-chain
 ---
 
 ## Phase 4: User Story 2 - Install and Validate Modules Safely (Priority: P1)
+
+**Story Link**: [US2 in spec.md](./spec.md#user-story-2---install-and-validate-modules-safely-priority-p1)
 
 **Goal**: Build install-all and per-module dry-run/report flows that inventory existing setup sources, classify work safely, invoke only approved scripts, and report manual-only guidance.
 
@@ -99,6 +109,8 @@ Chain strategy: feature-branch-chain
 ---
 
 ## Phase 5: User Story 3 - Upgrade and Sync Existing Setup (Priority: P2)
+
+**Story Link**: [US3 in spec.md](./spec.md#user-story-3---upgrade-and-sync-existing-setup-priority-p2)
 
 **Goal**: Support safe `sync configs` and `Upgrade tools` flows for repeated runs without duplicate links, backup loops, or unclear ownership.
 
@@ -223,6 +235,8 @@ Use chained PRs because the implementation is likely above the 400-line review b
 ---
 
 ## Phase 8: User Story 4 - Clean-Machine Bootstrap (Priority: P1)
+
+**Story Link**: [US4 in spec.md](./spec.md#user-story-4---clean-machine-bootstrap-priority-p1)
 
 **Goal**: Provide a rerunnable macOS shell bootstrap that prepares prerequisites and launches the guided installer.
 

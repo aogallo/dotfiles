@@ -23,10 +23,9 @@ As the dotfiles owner, I want a terminal installer menu so I can install the rep
 
 **Acceptance Scenarios**:
 
-1. **Given** a clean macOS machine has only system-provided tools, **When** the bootstrap entrypoint runs, **Then** it checks or initiates Xcode Command Line Tools, installs Homebrew when missing, installs Go when missing, and then starts the guided installer or reports the remaining manual system prompt.
-2. **Given** the installer is launched, **When** the main menu appears, **Then** it shows `start installation`, `sync configs`, `Upgrade tools`, and `quit`.
-3. **Given** the main menu is focused, **When** the user presses `j` or `k`, **Then** focus moves like Neovim navigation.
-4. **Given** any safe screen is active, **When** the user presses `q`, **Then** the installer exits or returns to the prior screen without applying unconfirmed changes.
+1. **Given** the installer is launched, **When** the main menu appears, **Then** it shows `start installation`, `sync configs`, `Upgrade tools`, and `quit`.
+2. **Given** the main menu is focused, **When** the user presses `j` or `k`, **Then** focus moves like Neovim navigation.
+3. **Given** any safe screen is active, **When** the user presses `q`, **Then** the installer exits or returns to the prior screen without applying unconfirmed changes.
 
 ---
 
@@ -59,6 +58,22 @@ As the dotfiles owner, I want upgrade and sync actions so an already-installed m
 1. **Given** supported tools are installed, **When** `Upgrade tools` runs, **Then** the report identifies upgraded, skipped, failed, optional, and manual items.
 2. **Given** repository-managed links already exist, **When** `sync configs` runs, **Then** managed config state is refreshed or reported without replacing unmanaged files.
 3. **Given** a prior installer run was interrupted, **When** the installer is rerun, **Then** it reports the current state and offers safe next actions.
+
+---
+
+### User Story 4 - Clean-Machine Bootstrap (Priority: P1)
+
+As the dotfiles owner, I want a first-run bootstrap so a clean macOS machine can prepare the minimum prerequisites before launching the guided installer.
+
+**Why this priority**: A Go TUI cannot be the first command on a machine without Go, Homebrew, or Xcode Command Line Tools.
+
+**Independent Test**: Run bootstrap dry-run and fake prerequisite flows to confirm it reports or installs Xcode Command Line Tools, Homebrew, and Go safely before launching the installer.
+
+**Acceptance Scenarios**:
+
+1. **Given** a clean macOS machine has only system-provided tools, **When** the bootstrap entrypoint runs, **Then** it checks or initiates Xcode Command Line Tools, installs Homebrew when missing, installs Go when missing, and then starts the guided installer or reports the remaining manual system prompt.
+2. **Given** a compatible prebuilt installer binary is available, **When** bootstrap runs with `--prefer-binary`, **Then** it can launch that binary but still ensures Go is installed as a managed development dependency.
+3. **Given** no compatible prebuilt binary is available or `--no-binary` is selected, **When** prerequisites are ready, **Then** bootstrap falls back to `cd installer && go run ./cmd/dotfiles-installer`.
 
 ## Edge Cases
 

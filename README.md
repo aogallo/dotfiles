@@ -26,6 +26,20 @@ Each module README should cover:
 - Recovery: rollback, unlink, backup restore, and interrupted-run guidance.
 - Manual-only boundaries: risky or user-consent actions that must not be automated silently.
 
+## Spec Artifact Navigation
+
+Spec Kit artifacts should be easy to resume after days away from a change. In `tasks.md`, every
+user-story phase must include a `Story Link` pointing to the matching heading in `spec.md`.
+Setup, foundational, polish, and convergence phases stay unlinked unless they clearly belong to a
+specific user story.
+
+Use a visible legend near the top of `tasks.md`:
+
+- `T###`: stable task ID.
+- `[P]`: task can run in parallel because it has no dependency on incomplete work and touches
+  different files.
+- `[US#]`: task belongs to the linked user story phase.
+
 ## Dotfiles Installer
 
 ### Clean-machine bootstrap

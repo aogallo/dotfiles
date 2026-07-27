@@ -1,10 +1,10 @@
 <!--
 Sync Impact Report
-Version change: 1.2.0 -> 1.3.0
+Version change: 1.3.0 -> 1.4.0
 Modified principles:
-- XII. Documentation and Governance: clarified module-level README obligations
+- XII. Documentation and Governance: clarified module README and Spec Kit navigation obligations
 Added sections:
-- XIV. Module README Contract
+- XV. Spec Artifact Navigation
 Removed sections:
 - None
 Templates requiring updates:
@@ -153,6 +153,20 @@ Rationale: module directories are operational units, not random folders. A futur
 install, review, or recovery session must be able to understand each module without reverse
 engineering scripts or editor configuration.
 
+### XV. Spec Artifact Navigation
+
+Spec Kit artifacts MUST be navigable with standard Markdown links. Every `tasks.md` user-story
+phase MUST link to the associated user story heading in `spec.md`; setup, foundational, polish,
+and convergence tasks MUST remain unlinked unless they are tied to a specific user story. Task
+marker meanings such as `[P]`, `[US#]`, and `T###` MUST be documented in a visible legend near the
+top of `tasks.md`. Related artifacts such as spec, plan, research, data model, contracts,
+quickstart, tasks, and verify report SHOULD use relative links where they materially improve
+review or continuation across sessions.
+
+Rationale: specs are often resumed days after they were written. Reviewers and future agents must
+be able to jump from implementation tasks back to the requirement context without remembering what
+each marker means or manually searching headings.
+
 ## Quality Gates
 
 Every change that affects installation, configuration, dependencies, or repository-managed
@@ -184,6 +198,9 @@ tool behavior MUST pass these gates before completion:
 - Module README gate: every maintained module directory has a `README.md` covering purpose,
   source-of-truth files, prerequisites, manual install/activation, installer support,
   validation, customization boundaries, rollback/recovery, and manual-only operations.
+- Spec navigation gate: `tasks.md` includes a marker legend and links each user-story phase to
+  its matching `spec.md` heading; non-story phases stay unlinked unless they have a clear story
+  owner.
 - Branch/PR gate: implementation work happens on a feature branch, commits do not target
   `main` directly, the pull request links the required approved issue before review, and PR
   creation verifies whether the active specification is related and should be closed.
@@ -214,10 +231,10 @@ templates or runtime guidance, and document the semantic version impact:
 Specifications MUST include constitution-relevant requirements when a change touches
 installation, configuration, dependencies, secrets, portability, validation, or rollback.
 Implementation plans MUST evaluate every applicable quality gate before design and again
-after design. Task lists MUST include concrete validation, documentation, module README, and
-rollback tasks whenever the change creates those obligations. Code review MUST block changes that
-violate MUST-level principles, commit implementation work directly to `main`, skip affected module
-README updates, skip active specification linkage review during PR creation, or leave required
-validation failing.
+after design. Task lists MUST include concrete validation, documentation, module README, spec
+navigation, and rollback tasks whenever the change creates those obligations. Code review MUST
+block changes that violate MUST-level principles, commit implementation work directly to `main`,
+skip affected module README updates, skip task-to-story navigation, skip active specification
+linkage review during PR creation, or leave required validation failing.
 
-**Version**: 1.3.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-27
+**Version**: 1.4.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-27

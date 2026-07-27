@@ -65,6 +65,9 @@ Document how the plan satisfies each applicable dotfiles constitution gate:
   `README.md` covering purpose, source-of-truth files, prerequisites, manual
   install/activation, installer support, validation, customization boundaries,
   rollback/recovery, and manual-only operations.
+- **Spec navigation**: `tasks.md` will include a marker legend and link each user-story
+  phase to the matching `spec.md` heading; non-story phases remain unlinked unless they
+  have a clear story owner.
 - **Branch/PR discipline**: implementation commits are planned for a feature branch, not
   direct `main` commits, the pull request will link the required approved issue, and PR
   creation will verify the active spec relationship and ask whether a related completed
