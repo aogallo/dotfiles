@@ -10,6 +10,40 @@ the PR completes the solution.
 
 ## Dotfiles Installer
 
+### Clean-machine bootstrap
+
+On a new macOS machine, start with the shell bootstrap. It is intentionally small and
+detection-first so it can run before Go is installed:
+
+```sh
+setup/bootstrap-dotfiles-installer.sh --dry-run
+setup/bootstrap-dotfiles-installer.sh
+```
+
+The bootstrap checks Xcode Command Line Tools, Homebrew, and Go, then launches the guided
+installer. If Xcode Command Line Tools are missing, the non-dry-run path initiates
+`xcode-select --install`, stops with `prompt_required`, and asks you to complete the macOS
+system prompt before rerunning the bootstrap.
+
+Useful bootstrap modes:
+
+```sh
+setup/bootstrap-dotfiles-installer.sh --dry-run
+setup/bootstrap-dotfiles-installer.sh --prefer-binary
+setup/bootstrap-dotfiles-installer.sh --no-binary
+PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run
+```
+
+`--prefer-binary` uses a compatible local prebuilt `dotfiles-installer` binary when one is
+available, but Go is still required and will be installed with Homebrew when missing. `--no-binary`
+always launches from source with `cd installer && go run ./cmd/dotfiles-installer`. Dry-run mode
+never installs Homebrew or Go and never invokes `xcode-select --install`.
+
+The bootstrap deliberately does not run broad setup or identity/configuration actions. It never
+invokes `setup/macos.sh`, GitHub account setup, SSH key generation, Git identity changes, or the
+Neovim/Ghostty config linkers. Use the guided installer and module-specific dry-run commands for
+those reports and confirmations.
+
 The guided installer lives in `installer/` as an isolated Go module. During development, run
 commands from that directory:
 

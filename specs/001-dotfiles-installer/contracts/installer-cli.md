@@ -12,6 +12,43 @@ During development the equivalent command is:
 cd installer && go run ./cmd/dotfiles-installer
 ```
 
+## Bootstrap Command
+
+Clean-machine setup starts from a shell bootstrap that can run before Go is available:
+
+```sh
+setup/bootstrap-dotfiles-installer.sh [--dry-run] [--prefer-binary] [--no-binary]
+```
+
+### Options
+
+- `--dry-run`: report prerequisite state and planned actions without installing or launching.
+- `--prefer-binary`: use a compatible prebuilt `dotfiles-installer` binary when available, then
+  fall back to source execution if needed.
+- `--no-binary`: skip prebuilt binary discovery and launch with `go run` after Go is available.
+
+### Required Bootstrap Behavior
+
+- Detect macOS and fail clearly on unsupported platforms.
+- Check Xcode Command Line Tools with `xcode-select -p` before attempting install.
+- Run `xcode-select --install` when CLT are missing, then stop with rerun instructions if macOS
+  requires manual prompt completion.
+- Install Homebrew only when `brew` is missing.
+- Load Homebrew shellenv for Apple Silicon (`/opt/homebrew`) and Intel (`/usr/local`) installs.
+- Install Go only when `go` is missing; Go remains required even when a prebuilt binary is used.
+- Prefer a compatible prebuilt binary only when explicitly available and allowed.
+- Fall back to `cd installer && go run ./cmd/dotfiles-installer` when no compatible binary is used.
+- Avoid GitHub account setup, SSH key generation, Git identity changes, config linking, or any
+  unmanaged dotfiles overwrite.
+- Be safe to rerun after partial completion.
+
+### Bootstrap Outcomes
+
+- `ready`: prerequisites are present and the guided installer was launched or would launch in dry-run.
+- `prompt_required`: Xcode CLT installation was initiated and the user must complete the macOS
+  system prompt before rerunning bootstrap.
+- `failed`: a prerequisite install or launch failed and the output includes an actionable next step.
+
 ## Main Menu
 
 The initial screen must expose exactly these top-level actions:

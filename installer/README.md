@@ -20,40 +20,45 @@ go test ./...
 
 ## Clean macOS Setup
 
-The installer is written in Go, so a completely clean machine needs Go before it can run.
+On a clean macOS machine, run the repository bootstrap from the repository root. It prepares the
+minimum prerequisites before launching this Go installer:
 
-1. Install Apple command line tools:
+```sh
+setup/bootstrap-dotfiles-installer.sh --dry-run
+setup/bootstrap-dotfiles-installer.sh
+```
 
-   ```sh
-   xcode-select --install
-   ```
+The bootstrap checks or installs:
 
-2. Install Go using one of these paths:
+- Xcode Command Line Tools
+- Homebrew
+- Go
 
-   ```sh
-   # Option A: official installer from https://go.dev/dl/
-   go version
-   ```
+If Xcode Command Line Tools are missing, macOS may require a system prompt. In that case the
+bootstrap starts `xcode-select --install`, exits with `prompt_required`, and tells you to rerun it
+after completing the prompt.
 
-   ```sh
-   # Option B: Homebrew, if brew is already installed
-   brew install go
-   go version
-   ```
+Useful modes:
 
-3. Clone the repository:
+```sh
+setup/bootstrap-dotfiles-installer.sh --prefer-binary
+setup/bootstrap-dotfiles-installer.sh --no-binary
+PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run
+```
 
-   ```sh
-   git clone https://github.com/aogallo/dotfiles.git
-   cd dotfiles
-   ```
+`--prefer-binary` uses a compatible prebuilt installer binary when available, but Go is still
+installed when missing because it is required for development and Neovim tooling. `--no-binary`
+forces source execution with `go run` after prerequisites are ready.
 
-4. Start the installer:
+Manual Go installation is not the preferred first-run path anymore. Use it only for recovery if
+the bootstrap cannot complete on the current machine.
 
-   ```sh
-   cd installer
-   go run ./cmd/dotfiles-installer
-   ```
+After prerequisites are ready, this direct command also works:
+
+```sh
+cd installer
+go run ./cmd/dotfiles-installer
+```
 
 ## What It Does
 

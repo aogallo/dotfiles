@@ -13,6 +13,39 @@ progress, and testable screen transitions harder. A separate `installer/` Go mod
 considered. The implementation now uses an isolated `installer/` module to keep installer code,
 dependencies, and tests away from root dotfiles content.
 
+## Decision: Add a minimal shell bootstrap before the Go TUI
+
+**Rationale**: A clean macOS machine may not have Go, Homebrew, or Xcode Command Line Tools, so a
+Go-only entrypoint cannot be the first command. A small detection-first shell bootstrap can run
+with system tools, initiate Xcode CLT installation, install Homebrew when missing, install Go as a
+required development dependency, and then launch the Go TUI.
+
+**Alternatives considered**: Requiring the user to install Go manually was rejected because the
+installer should prepare the minimum required environment. Rewriting the entire TUI as shell was
+rejected because it would lose the testable state model and report structure already chosen for
+the installer.
+
+## Decision: Support prebuilt binaries as an optional fast path
+
+**Rationale**: A compatible prebuilt `dotfiles-installer` binary can improve first-run experience
+by avoiding local compilation before the TUI opens. It does not remove the need to install Go,
+because Go is part of the user's development environment and Neovim tooling must validate it.
+
+**Alternatives considered**: Making prebuilt binaries mandatory was rejected because releases may
+not exist for every architecture or branch. Skipping binary support was rejected because it leaves
+avoidable first-run friction when a trusted compatible binary is available.
+
+## Decision: Treat Xcode Command Line Tools as prompt-gated
+
+**Rationale**: `xcode-select --install` can be initiated from a script, but macOS may require a
+system UI prompt and manual completion. The bootstrap should detect absence with `xcode-select -p`,
+start the install prompt when needed, and stop with clear rerun instructions instead of pretending
+the install can always complete unattended.
+
+**Alternatives considered**: Looping until CLT appears was rejected because it can hang scripts and
+produce unclear failures. Using broad `setup/macos.sh` behavior was rejected because that script
+performs unrelated mutations such as SSH, Git config, clone paths, and symlink setup.
+
 ## Decision: Treat the TUI as an orchestrator, not a script replacement
 
 **Rationale**: Existing setup scripts already encode important safety behavior: Neovim and

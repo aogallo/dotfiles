@@ -143,12 +143,15 @@ Chain strategy: feature-branch-chain
 - **Phase 4 US2**: Depends on Phase 2 and can use US1 screens for integration, but planner/report tests remain independently executable.
 - **Phase 5 US3**: Depends on Phase 2 and benefits from US2 report normalization.
 - **Phase 6 Polish**: Depends on selected story completion and final validation.
+- **Phase 7 Convergence**: Depends on full TUI implementation and validation findings.
+- **Phase 8 US4**: Depends on Phase 1 setup artifacts and can be implemented after the TUI entrypoint exists; it is independently testable with dry-run bootstrap commands.
 
 ### User Story Dependencies
 
 - **US1 Run Guided Installation (P1)**: No dependency on US2 or US3 after foundation.
 - **US2 Install and Validate Modules Safely (P1)**: No dependency on US3; integrates with US1 TUI if available.
 - **US3 Upgrade and Sync Existing Setup (P2)**: Depends conceptually on shared planner/report safety rules from Phase 2 and may reuse US2 normalization.
+- **US4 Clean-Machine Bootstrap (P1)**: Depends on the TUI entrypoint existing, but its shell bootstrap behavior can be tested independently from TUI internals.
 
 ### Within Each User Story
 
@@ -183,6 +186,14 @@ Task: "T033 [P] [US3] Add upgrade report tests in installer/internal/installer/r
 Task: "T034 [P] [US3] Add repeated-run tests in installer/internal/installer/plan_test.go"
 ```
 
+### User Story 4
+
+```bash
+Task: "T045 [US4] Add dry-run and minimal PATH bootstrap tests in setup/bootstrap-dotfiles-installer_test.sh"
+Task: "T049 [US4] Create executable setup/bootstrap-dotfiles-installer.sh with option parsing"
+Task: "T057 [US4] Update bootstrap documentation in README.md and specs/001-dotfiles-installer/quickstart.md"
+```
+
 ## Implementation Strategy
 
 ### MVP First
@@ -196,7 +207,8 @@ Task: "T034 [P] [US3] Add repeated-run tests in installer/internal/installer/pla
 1. Deliver US1 for the guided menu shell.
 2. Deliver US2 for safe install planning, dry-run/report, confirmation gates, and approved script orchestration.
 3. Deliver US3 for rerun-safe sync and upgrade maintenance flows.
-4. Finish Phase 6 with docs, smoke checks, constitution gates, and PR/spec linkage.
+4. Deliver US4 for clean-machine bootstrap and first-run prerequisite installation.
+5. Finish Phase 6 with docs, smoke checks, constitution gates, and PR/spec linkage.
 
 ### Review Strategy
 
@@ -207,3 +219,33 @@ Use chained PRs because the implementation is likely above the 400-line review b
 ## Phase 7: Convergence
 
 - [x] T044 Correct tmux source-path casing to `Tmux/` in `installer/internal/installer/module.go`, `installer/internal/installer/module_test.go`, and installer documentation references per FR-008 (partial)
+
+---
+
+## Phase 8: User Story 4 - Clean-Machine Bootstrap (Priority: P1)
+
+**Goal**: Provide a rerunnable macOS shell bootstrap that prepares prerequisites and launches the guided installer.
+
+**Independent Test**: Run `setup/bootstrap-dotfiles-installer.sh --dry-run` and `PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run`; verify no installs occur, CLT/Homebrew/Go state is reported, forbidden setup actions are not run, and launch path is reported.
+
+### Tests for User Story 4
+
+- [x] T045 [US4] Add dry-run and minimal PATH bootstrap tests in `setup/bootstrap-dotfiles-installer_test.sh` for `setup/bootstrap-dotfiles-installer.sh --dry-run` and `PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run`
+- [x] T046 [US4] Add prompt-gated Xcode CLT tests in `setup/bootstrap-dotfiles-installer_test.sh` that fake missing `xcode-select -p` and assert `xcode-select --install` is initiated then exits with rerun guidance
+- [x] T047 [US4] Add Homebrew and Go prerequisite tests in `setup/bootstrap-dotfiles-installer_test.sh` that fake missing `brew`/`go`, assert planned installs in dry-run, and assert Go remains required with `--prefer-binary`
+- [x] T048 [US4] Add binary launch tests in `setup/bootstrap-dotfiles-installer_test.sh` for `--prefer-binary`, `--no-binary`, missing binary fallback, and explicit binary execution without shell interpolation
+
+### Implementation for User Story 4
+
+- [x] T049 [US4] Create executable `setup/bootstrap-dotfiles-installer.sh` with strict mode, usage text, and parsing for `--dry-run`, `--prefer-binary`, and `--no-binary`
+- [x] T050 [US4] Implement macOS-only platform detection, architecture detection, and repository-root resolution in `setup/bootstrap-dotfiles-installer.sh`
+- [x] T051 [US4] Implement Xcode Command Line Tools detection with `xcode-select -p`; when missing, run `xcode-select --install` outside dry-run and stop with `prompt_required` rerun instructions in `setup/bootstrap-dotfiles-installer.sh`
+- [x] T052 [US4] Implement Homebrew detection and installation in `setup/bootstrap-dotfiles-installer.sh`, including shellenv loading from `/opt/homebrew/bin/brew` and `/usr/local/bin/brew`
+- [x] T053 [US4] Implement Go detection and `brew install go` planning/execution in `setup/bootstrap-dotfiles-installer.sh`, preserving Go as required even when `--prefer-binary` is used
+- [x] T054 [US4] Implement optional prebuilt binary launch discovery in `setup/bootstrap-dotfiles-installer.sh`, falling back to `cd installer && go run ./cmd/dotfiles-installer` when unavailable or disabled
+- [x] T055 [US4] Add safety guards in `setup/bootstrap-dotfiles-installer.sh` so bootstrap never invokes GitHub account setup, SSH key generation, Git identity changes, config linkers, or `setup/macos.sh`
+
+### Validation & Documentation
+
+- [x] T056 [US4] Validate bootstrap behavior by running `setup/bootstrap-dotfiles-installer_test.sh`, `setup/bootstrap-dotfiles-installer.sh --dry-run`, and `PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run`
+- [x] T057 [US4] Update bootstrap usage, rerun guidance, dry-run validation, and clean-machine troubleshooting in `README.md` and `specs/001-dotfiles-installer/quickstart.md`

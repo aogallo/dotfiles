@@ -5,6 +5,12 @@
 **Status**: Draft
 **Input**: GitHub issue #37: "feat(installer): add Bubble Tea TUI for dotfiles installation"
 
+## Clarifications
+
+### Session 2026-07-27
+
+- Q: Should clean-machine setup use a shell bootstrap, a prebuilt binary, or keep Go as a prerequisite? → A: Use both a minimal shell bootstrap and an optional prebuilt binary; Go remains a managed required development dependency.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Run Guided Installation (Priority: P1)
@@ -17,9 +23,10 @@ As the dotfiles owner, I want a terminal installer menu so I can install the rep
 
 **Acceptance Scenarios**:
 
-1. **Given** the installer is launched, **When** the main menu appears, **Then** it shows `start installation`, `sync configs`, `Upgrade tools`, and `quit`.
-2. **Given** the main menu is focused, **When** the user presses `j` or `k`, **Then** focus moves like Neovim navigation.
-3. **Given** any safe screen is active, **When** the user presses `q`, **Then** the installer exits or returns to the prior screen without applying unconfirmed changes.
+1. **Given** a clean macOS machine has only system-provided tools, **When** the bootstrap entrypoint runs, **Then** it checks or initiates Xcode Command Line Tools, installs Homebrew when missing, installs Go when missing, and then starts the guided installer or reports the remaining manual system prompt.
+2. **Given** the installer is launched, **When** the main menu appears, **Then** it shows `start installation`, `sync configs`, `Upgrade tools`, and `quit`.
+3. **Given** the main menu is focused, **When** the user presses `j` or `k`, **Then** focus moves like Neovim navigation.
+4. **Given** any safe screen is active, **When** the user presses `q`, **Then** the installer exits or returns to the prior screen without applying unconfirmed changes.
 
 ---
 
@@ -55,6 +62,9 @@ As the dotfiles owner, I want upgrade and sync actions so an already-installed m
 
 ## Edge Cases
 
+- Xcode Command Line Tools are absent and macOS requires user interaction to complete `xcode-select --install`.
+- Homebrew, Go, or Git are absent before the TUI can be compiled locally.
+- A prebuilt installer binary is unavailable for the current architecture, so bootstrap must fall back to installing Go and running from source.
 - Homebrew, Node, Git, Neovim, Ghostty, tmux, zsh, or platform assumptions are absent.
 - Dependency manifests include tools the installer cannot safely install automatically.
 - Backups already exist under `~/.dotfiles_backup`.
@@ -80,10 +90,13 @@ As the dotfiles owner, I want upgrade and sync actions so an already-installed m
 - **FR-011**: The installer MUST provide `sync configs` results for managed, unmanaged, missing, backed-up, removed, and failed config targets.
 - **FR-012**: The installer MUST generate a final report summarizing actions, validation status, backups, skipped items, failures, and manual next steps.
 - **FR-013**: The installer MUST NOT automate manual-only or unsafe actions such as AWS local bundle repair, macOS security approval, VIA import, or TPM keypress installation unless a later spec explicitly makes them safe.
+- **FR-014**: The feature MUST provide a minimal shell bootstrap entrypoint that can run on a clean macOS machine, check or initiate Xcode Command Line Tools installation, install Homebrew when missing, install Go when missing, and then launch the guided installer.
+- **FR-015**: The feature SHOULD support a prebuilt installer binary path for first-run convenience, but the bootstrap MUST still ensure Go is installed because Go is a required development dependency for this dotfiles environment.
 
 ### Key Entities
 
 - **Installer Session**: One interactive run, including selected action, confirmations, results, and exit state.
+- **Bootstrap Entrypoint**: A minimal shell-based first-run path that prepares prerequisites required to launch the TUI on a clean macOS machine.
 - **Module**: A repository area with setup or validation behavior, including Neovim, zsh, Ghostty, tmux, keyboard, and macOS setup.
 - **Action Plan**: The classified set of install, upgrade, sync, backup, validation, and manual guidance steps.
 - **Managed Config Target**: A local file or symlink owned by this repository's setup flow.
@@ -100,10 +113,12 @@ As the dotfiles owner, I want upgrade and sync actions so an already-installed m
 - **SC-004**: Existing unmanaged Neovim and Ghostty configs are never overwritten without explicit backup confirmation.
 - **SC-005**: Manual-only items are reported with actionable guidance and are not silently skipped.
 - **SC-006**: The final report distinguishes changed, unchanged, skipped, failed, backup, and manual-next-step items.
+- **SC-007**: On a clean supported macOS machine, the bootstrap path reaches the guided installer after prerequisites are installed, or stops with a clear message when macOS requires manual completion of Xcode Command Line Tools installation.
 
 ## Assumptions
 
 - The initial target platform is macOS because existing setup paths and scripts are macOS-oriented.
 - Existing setup scripts and dependency manifests remain the source of truth for installable tools and config targets.
 - Bubble Tea is the intended TUI framework from issue #37, but this specification defines behavior rather than implementation structure.
+- Go is not a prerequisite the user must install manually; it is a managed required development dependency installed by the bootstrap when absent.
 - Manual AWS setup already documented in issue comments remains report/action-guidance unless safe automation is designed later.

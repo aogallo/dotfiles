@@ -20,6 +20,70 @@ Represents one interactive TUI run.
 - `q` exits from the main menu and returns/backtracks from safe sub-screens without applying
   unconfirmed changes.
 
+## Bootstrap Session
+
+Represents one first-run shell bootstrap execution before the Go TUI starts.
+
+**Fields**:
+- `platform`: detected operating system, initially `macos`
+- `architecture`: detected CPU architecture, such as `arm64` or `amd64`
+- `repositoryRoot`: resolved repository root for launching the installer
+- `prerequisites`: ordered Bootstrap Prerequisite results
+- `selectedLaunchPath`: `prebuilt_binary` or `go_run`
+- `exitStatus`: `ready`, `prompt_required`, or `failed`
+
+**Relationships**:
+- A Bootstrap Session evaluates one or more Bootstrap Prerequisites.
+- A successful Bootstrap Session produces one Launch Result.
+
+**Validation rules**:
+- Bootstrap must be safe to rerun and must check current state before installing anything.
+- Bootstrap must stop with clear guidance when Xcode Command Line Tools require manual system
+  prompt completion.
+- Bootstrap must not configure GitHub accounts, SSH keys, user Git identity, or dotfiles links.
+
+## Bootstrap Prerequisite
+
+One prerequisite required before the TUI can run or before development tools are healthy.
+
+**Fields**:
+- `name`: `xcode_clt`, `homebrew`, or `go`
+- `status`: `present`, `installed`, `prompt_required`, `failed`, or `skipped`
+- `detectedPath`: optional discovered executable or installation path
+- `message`: concise user-facing status or next step
+
+**Validation rules**:
+- Missing Xcode CLT is `prompt_required` after `xcode-select --install` is initiated.
+- Homebrew and Go install steps must be skipped when already present.
+- Go remains required even when a prebuilt installer binary is used.
+
+## Binary Candidate
+
+Optional compiled installer artifact that can launch the TUI without local compilation.
+
+**Fields**:
+- `pathOrURL`: local path or release URL for the candidate binary
+- `architecture`: supported CPU architecture
+- `version`: optional version or commit identifier
+- `status`: `available`, `incompatible`, `missing`, or `failed`
+
+**Validation rules**:
+- An incompatible or missing binary must not block bootstrap when Go can run from source.
+- Binary execution must use an explicit path; no shell interpolation.
+
+## Launch Result
+
+Outcome of starting the guided installer after prerequisites are prepared.
+
+**Fields**:
+- `method`: `prebuilt_binary` or `go_run`
+- `fallbackUsed`: boolean indicating whether source execution replaced binary execution
+- `message`: concise user-facing launch result
+
+**Validation rules**:
+- Failed prebuilt binary launch falls back to `go run` when Go is available.
+- Launch failure must produce a non-zero exit and actionable message.
+
 ## Module
 
 Repository area with setup, validation, or guidance behavior.
