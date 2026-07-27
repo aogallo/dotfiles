@@ -7,7 +7,6 @@ add {
     {
         src = 'folke/snacks.nvim',
         opts = {
-            input = { enabled = true },
             explorer = { enabled = true },
             lazygit = { enabled = true },
             notifier = {
