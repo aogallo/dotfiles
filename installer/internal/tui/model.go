@@ -14,12 +14,14 @@ type Screen string
 
 const (
 	ScreenMainMenu     Screen = "main_menu"
+	ScreenStartupError Screen = "startup_error"
 	ScreenFlowInfo     Screen = "flow_info"
 	ScreenModuleList   Screen = "module_list"
 	ScreenActionPlan   Screen = "action_plan"
 	ScreenConfirmation Screen = "confirmation"
 	ScreenRunning      Screen = "running"
 	ScreenReport       Screen = "report"
+	ScreenHelp         Screen = "help"
 	ScreenExit         Screen = "exit"
 )
 
@@ -32,6 +34,10 @@ type MenuItem struct {
 // Model is the root Bubble Tea model for the installer TUI.
 type Model struct {
 	screen       Screen
+	helpReturn   Screen
+	startupError StartupError
+	terminal     TerminalSession
+	progress     ProgressSession
 	menuItems    []MenuItem
 	cursor       int
 	dryRun       bool
@@ -41,12 +47,46 @@ type Model struct {
 	report       installer.Report
 	exitCode     installer.ExitCode
 	runner       runner.Runner
+	results      map[string]runner.Result
+}
+
+type StartupError struct {
+	Reason  string
+	Command string
+	Details string
+}
+
+type TerminalSession struct {
+	Interactive bool
+	Width       int
+	Height      int
+	Compact     bool
+}
+
+type ProgressSession struct {
+	CurrentStepIndex  int
+	TotalSteps        int
+	ActiveStepID      string
+	ActiveModuleID    installer.ModuleID
+	ActiveDescription string
+	CompletedSteps    int
+	RecentResults     []ProgressResult
+	Cancelled         bool
+	IncompleteStepIDs []string
+}
+
+type ProgressResult struct {
+	StepID  string
+	Status  installer.ActionStatus
+	Message string
+	Details string
 }
 
 // NewModel creates the initial installer TUI model.
 func NewModel() Model {
 	return Model{
-		screen: ScreenMainMenu,
+		screen:   ScreenMainMenu,
+		terminal: TerminalSession{Interactive: true},
 		menuItems: []MenuItem{
 			{Label: "start installation", Flow: installer.FlowInstall},
 			{Label: "sync configs", Flow: installer.FlowSync},
@@ -58,7 +98,17 @@ func NewModel() Model {
 		report:   installer.NewReport(installer.FlowInstall),
 		exitCode: installer.ExitSuccess,
 		runner:   runner.ExecRunner{},
+		results:  map[string]runner.Result{},
 	}
+}
+
+func NewStartupErrorModel(err StartupError) Model {
+	model := NewModel()
+	model.screen = ScreenStartupError
+	model.startupError = err
+	model.exitCode = installer.ExitFailure
+	model.terminal.Interactive = false
+	return model
 }
 
 // Init performs startup work for the TUI.
@@ -109,4 +159,14 @@ func (m Model) Plan() installer.Plan {
 // Report returns the current installation report.
 func (m Model) Report() installer.Report {
 	return m.report
+}
+
+// StartupError returns the current startup guidance, if any.
+func (m Model) StartupError() StartupError {
+	return m.startupError
+}
+
+// Terminal returns the current terminal rendering state.
+func (m Model) Terminal() TerminalSession {
+	return m.terminal
 }

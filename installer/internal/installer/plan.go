@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 // Plan describes the ordered installer work prepared before execution.
@@ -41,6 +43,7 @@ type ManagedConfigTarget struct {
 	ModuleID    ModuleID
 	TargetPath  string
 	SourcePath  string
+	BackupPath  string
 	State       ConfigTargetState
 	SafeActions []StepKind
 }
@@ -53,12 +56,13 @@ type ModulePlan struct {
 
 // PlanBuilder builds a plan while enforcing foundational safety invariants.
 type PlanBuilder struct {
-	plan Plan
+	plan    Plan
+	stepIDs map[string]struct{}
 }
 
 // NewPlanBuilder creates a builder for a flow.
 func NewPlanBuilder(flow Flow) *PlanBuilder {
-	return &PlanBuilder{plan: Plan{Flow: flow}}
+	return &PlanBuilder{plan: Plan{Flow: flow}, stepIDs: map[string]struct{}{}}
 }
 
 // AddInventorySource records a repository-relative source consulted for the plan.
@@ -73,6 +77,12 @@ func (b *PlanBuilder) AddConfigTarget(target ManagedConfigTarget) {
 
 // AddStep appends an action step after validating command and ordering rules.
 func (b *PlanBuilder) AddStep(step Action) error {
+	if step.ID == "" {
+		return fmt.Errorf("planned step ID must not be empty")
+	}
+	if _, exists := b.stepIDs[step.ID]; exists {
+		return fmt.Errorf("planned step ID %q must be unique", step.ID)
+	}
 	if err := step.Validate(); err != nil {
 		return err
 	}
@@ -82,6 +92,7 @@ func (b *PlanBuilder) AddStep(step Action) error {
 	}
 
 	b.plan.Steps = append(b.plan.Steps, step)
+	b.stepIDs[step.ID] = struct{}{}
 	if step.RequiresConfirmation() {
 		b.plan.RequiresConfirmation = true
 	}
@@ -94,6 +105,15 @@ func (b *PlanBuilder) AddStep(step Action) error {
 	}
 
 	return nil
+}
+
+// PlannedStepIDs returns stable step identifiers in execution order.
+func (p Plan) PlannedStepIDs() []string {
+	ids := make([]string, 0, len(p.Steps))
+	for _, step := range p.Steps {
+		ids = append(ids, step.ID)
+	}
+	return ids
 }
 
 // Build returns the completed plan with per-module step groups populated.
@@ -259,11 +279,11 @@ func addLinkSteps(builder *PlanBuilder, moduleID ModuleID, prefix, script string
 	if flow != FlowInstall && flow != FlowSync {
 		return nil
 	}
-	if err := builder.AddStep(Action{ID: prefix + "-link-apply", ModuleID: moduleID, Kind: StepLink, Classification: ActionConfirmationRequired, Command: mustApprovedCommand(script, "--apply"), Description: "Apply repository-managed config link; existing scripts refuse unmanaged overwrite without backup.", ExpectedStatuses: []ActionStatus{StatusChanged, StatusSkipped, StatusManaged, StatusUnmanaged, StatusFailed}}); err != nil {
+	if err := builder.AddStep(Action{ID: prefix + "-link-backup-apply", ModuleID: moduleID, Kind: StepBackup, Classification: ActionConfirmationRequired, Command: mustApprovedCommand(script, "--apply", "--backup"), Description: "Back up any existing local config automatically before linking after you confirm installation.", ExpectedStatuses: []ActionStatus{StatusBackedUp, StatusChanged, StatusSkipped, StatusManaged, StatusFailed}}); err != nil {
 		return err
 	}
-	if err := builder.AddStep(Action{ID: prefix + "-link-backup-apply", ModuleID: moduleID, Kind: StepBackup, Classification: ActionConfirmationRequired, Command: mustApprovedCommand(script, "--apply", "--backup"), Description: "Back up unmanaged target before linking when explicitly selected.", ExpectedStatuses: []ActionStatus{StatusBackedUp, StatusChanged, StatusFailed}}); err != nil {
-		return err
+	if flow == FlowInstall {
+		return nil
 	}
 	if script == "setup/link-ghostty-config.sh" {
 		return builder.AddStep(Action{ID: prefix + "-link-remove", ModuleID: moduleID, Kind: StepRemove, Classification: ActionConfirmationRequired, Command: mustApprovedCommand(script, "--remove"), Description: "Remove only repository-managed Ghostty config link.", ExpectedStatuses: []ActionStatus{StatusRemoved, StatusSkipped, StatusFailed}})
@@ -320,16 +340,48 @@ func inspectManagedConfigTarget(moduleID ModuleID, root, home string) (ManagedCo
 		if _, err := os.Stat(target.TargetPath); os.IsNotExist(err) {
 			target.State = ConfigTargetBrokenSymlink
 			target.SafeActions = []StepKind{StepBackup}
+			target.BackupPath = plannedBackupPath(moduleID, home, time.Now(), pathExists)
 			return target, nil
 		}
 	}
 
 	target.State = ConfigTargetUnmanaged
 	target.SafeActions = []StepKind{StepBackup}
+	target.BackupPath = plannedBackupPath(moduleID, home, time.Now(), pathExists)
 	return target, nil
 }
 
+func plannedBackupPath(moduleID ModuleID, home string, at time.Time, exists func(string) bool) string {
+	timestamp := at.Format("20060102-150405")
+	var candidate string
+	switch moduleID {
+	case ModuleGhostty:
+		candidate = filepath.Join(home, ".dotfiles_backup", "ghostty", "config.ghostty-"+timestamp)
+	default:
+		candidate = filepath.Join(home, ".dotfiles_backup", string(moduleID)+"-"+timestamp)
+	}
+	return nextAvailableBackupPath(candidate, exists)
+}
+
+func nextAvailableBackupPath(candidate string, exists func(string) bool) string {
+	if exists == nil || !exists(candidate) {
+		return candidate
+	}
+	for suffix := 1; ; suffix++ {
+		next := fmt.Sprintf("%s-%d", candidate, suffix)
+		if !exists(next) {
+			return next
+		}
+	}
+}
+
+func pathExists(path string) bool {
+	_, err := os.Lstat(path)
+	return err == nil
+}
+
 func addManualStep(builder *PlanBuilder, moduleID ModuleID, id, message string) error {
+	message = strings.TrimSpace(message)
 	return builder.AddStep(Action{ID: id, ModuleID: moduleID, Kind: StepManualGuidance, Classification: ActionManualOnly, Description: message, ExpectedStatuses: []ActionStatus{StatusManual}})
 }
 

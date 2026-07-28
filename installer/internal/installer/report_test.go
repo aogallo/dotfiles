@@ -16,10 +16,10 @@ func TestBuildReportNormalizesStatusesBackupsLogsAndExitCode(t *testing.T) {
 	}
 
 	results := map[string]runner.Result{
-		"nvim-validate":          {Stdout: "missing  TypeScript native preview (tsgo) [required]\noptional AWS SAM CLI (sam) [missing, non-blocking]\n", ExitCode: 1},
-		"nvim-bootstrap-dry-run": {Stdout: "manual   JSON language server: install via Mason\nmanual   AWS CloudFormation language server: Download bundle\n", ExitCode: 0},
-		"ghostty-link-dry-run":   {Stdout: "State: unmanaged\nskip     backup required before apply\n", ExitCode: 0},
-		"ghostty-link-apply":     {Stdout: "backup   /tmp/config.ghostty-1\nSummary: 1 changed, 0 skipped, 0 failed\n", ExitCode: 0},
+		"nvim-validate":             {Stdout: "missing  TypeScript native preview (tsgo) [required]\noptional AWS SAM CLI (sam) [missing, non-blocking]\n", ExitCode: 1},
+		"nvim-bootstrap-dry-run":    {Stdout: "manual   JSON language server: install via Mason\nmanual   AWS CloudFormation language server: Download bundle\n", ExitCode: 0},
+		"ghostty-link-dry-run":      {Stdout: "State: unmanaged\nskip     backup required before apply\n", ExitCode: 0},
+		"ghostty-link-backup-apply": {Stdout: "backup   /tmp/config.ghostty-1\nSummary: 1 changed, 0 skipped, 0 failed\n", ExitCode: 0},
 	}
 
 	report := BuildReport(plan, results)
@@ -34,6 +34,9 @@ func TestBuildReportNormalizesStatusesBackupsLogsAndExitCode(t *testing.T) {
 	}
 	if len(report.Backups) != 1 || report.Backups[0].BackupPath != "/tmp/config.ghostty-1" {
 		t.Fatalf("Backups = %#v, want parsed backup path", report.Backups)
+	}
+	if report.Backups[0].SourceTarget == "" || !strings.Contains(report.Backups[0].RestoreGuidance, "To restore") || !strings.Contains(report.Backups[0].RestoreGuidance, report.Backups[0].BackupPath) {
+		t.Fatalf("backup restore guidance = %#v, want source target and actionable restore text", report.Backups[0])
 	}
 	if len(report.ManualNextSteps) == 0 {
 		t.Fatal("ManualNextSteps should include manual-only and report-only guidance")
@@ -80,6 +83,65 @@ func TestBuildUpgradeReportNormalizesToolCategories(t *testing.T) {
 	}
 	if !reportHasDetails(report, StatusOptional, "AWS") || !reportHasDetails(report, StatusOptional, "external") {
 		t.Fatalf("upgrade report should mark AWS/external entries optional: %#v", report.Items)
+	}
+	if report.ExitCode != ExitFailure {
+		t.Fatalf("ExitCode = %d, want failure", report.ExitCode)
+	}
+}
+
+func TestBuildReportAccountsForPlannedStepsWithoutResults(t *testing.T) {
+	t.Parallel()
+
+	plan := Plan{
+		Flow: FlowInstall,
+		Steps: []Action{
+			{ID: "preview", ModuleID: ModuleNeovim, Kind: StepDryRun, Classification: ActionDryRunReportOnly, Description: "Preview changes."},
+			{ID: "install", ModuleID: ModuleNeovim, Kind: StepInstall, Classification: ActionConfirmationRequired, Command: []string{"setup/bootstrap-nvim-deps.sh", "--install"}, Description: "Install tools."},
+			{ID: "manual", ModuleID: ModuleTmux, Kind: StepManualGuidance, Classification: ActionManualOnly, Description: "Install TPM manually."},
+		},
+	}
+
+	report := BuildReport(plan, map[string]runner.Result{})
+
+	if report.Totals.Skipped != 1 {
+		t.Fatalf("skipped total = %d, want preview accounted as skipped", report.Totals.Skipped)
+	}
+	if report.Totals.Cancelled != 1 {
+		t.Fatalf("cancelled total = %d, want incomplete install accounted", report.Totals.Cancelled)
+	}
+	if report.Totals.Manual != 1 {
+		t.Fatalf("manual total = %d, want manual step accounted", report.Totals.Manual)
+	}
+	if report.ExitCode != ExitFailure {
+		t.Fatalf("ExitCode = %d, want failure when planned work is incomplete", report.ExitCode)
+	}
+	if !reportHasDetails(report, StatusCancelled, "Rerun the installer from a terminal") {
+		t.Fatalf("cancelled item should include launch guidance: %#v", report.Items)
+	}
+}
+
+func TestBuildReportAccountsFailedAndSkippedCommandOutcomes(t *testing.T) {
+	t.Parallel()
+
+	plan := Plan{Flow: FlowInstall, Steps: []Action{
+		{ID: "failed", ModuleID: ModuleNeovim, Kind: StepInstall, Classification: ActionConfirmationRequired, Description: "Install tools."},
+		{ID: "skipped", ModuleID: ModuleGhostty, Kind: StepSync, Classification: ActionConfirmationRequired, Description: "Link Ghostty."},
+	}}
+	results := map[string]runner.Result{
+		"failed":  {ExitCode: 7},
+		"skipped": {Stdout: "skip     already managed", ExitCode: 0},
+	}
+
+	report := BuildReport(plan, results)
+
+	if report.Totals.Failed != 1 || report.Totals.Skipped != 1 {
+		t.Fatalf("totals = %#v, want one failed and one skipped", report.Totals)
+	}
+	if !reportHasDetails(report, StatusFailed, "rerun the installer from a terminal") {
+		t.Fatalf("failed item missing recovery detail: %#v", report.Items)
+	}
+	if !reportHasDetails(report, StatusSkipped, "already managed") {
+		t.Fatalf("skipped item missing command detail: %#v", report.Items)
 	}
 	if report.ExitCode != ExitFailure {
 		t.Fatalf("ExitCode = %d, want failure", report.ExitCode)
