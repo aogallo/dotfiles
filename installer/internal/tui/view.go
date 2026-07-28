@@ -62,6 +62,34 @@ func (m Model) View() string {
 		b.WriteString("\nPress enter to confirm and run the approved actions, or q to cancel without changing files.\n")
 	case ScreenRunning:
 		b.WriteString("running approved actions...\n")
+		completed := m.progress.CompletedSteps
+		total := m.progress.TotalSteps
+		if total == 0 {
+			total = len(m.plan.Steps)
+		}
+		b.WriteString(fmt.Sprintf("Overall progress: %d of %d steps complete\n", completed, total))
+		if m.progress.ActiveStepID != "" {
+			b.WriteString(fmt.Sprintf("Current step: %d of %d — %s\n", m.progress.CurrentStepIndex, total, m.progress.ActiveDescription))
+			b.WriteString(fmt.Sprintf("Status: Working (%s)\n", m.progress.ActiveStepID))
+		} else if completed < total {
+			b.WriteString("Status: Preparing the next step.\n")
+		} else {
+			b.WriteString("Status: Finalizing report.\n")
+		}
+		if len(m.progress.RecentResults) > 0 {
+			b.WriteString("Recent results:\n")
+			for _, result := range m.progress.RecentResults {
+				b.WriteString(fmt.Sprintf("- [%s] %s", statusLabel(result.Status), result.Message))
+				if result.Details != "" {
+					b.WriteString(fmt.Sprintf(" — %s", result.Details))
+				}
+				b.WriteString("\n")
+			}
+		}
+		if len(m.progress.IncompleteStepIDs) > 0 {
+			b.WriteString(fmt.Sprintf("Remaining steps: %d\n", len(m.progress.IncompleteStepIDs)))
+		}
+		b.WriteString("If a step fails, the final report will show the reason and recovery guidance.\n")
 	case ScreenReport:
 		b.WriteString("final report\n")
 		b.WriteString(fmt.Sprintf("changed=%d unchanged=%d skipped=%d failed=%d not_completed=%d backups=%d manual=%d\n", m.report.Totals.Changed, m.report.Totals.Unchanged, m.report.Totals.Skipped, m.report.Totals.Failed, m.report.Totals.Cancelled, m.report.Totals.Backup, m.report.Totals.Manual))

@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // Command describes an external process boundary without shell interpolation.
@@ -23,6 +24,45 @@ type Result struct {
 	Stdout   string
 	Stderr   string
 	ExitCode int
+}
+
+// StepStarted records that an installer step became active in the UI.
+type StepStarted struct {
+	StepID      string
+	ModuleID    string
+	Index       int
+	Total       int
+	Description string
+	StartedAt   time.Time
+}
+
+// StepCompleted records a successful command-backed installer step result.
+type StepCompleted struct {
+	StepID      string
+	Status      string
+	Result      Result
+	CompletedAt time.Time
+}
+
+// StepFailed records a failed command-backed installer step result.
+type StepFailed struct {
+	StepID      string
+	Err         error
+	Result      Result
+	CompletedAt time.Time
+}
+
+// StepSkipped records a non-command installer step that was accounted for without execution.
+type StepSkipped struct {
+	StepID string
+	Reason string
+	Status string
+}
+
+// InstallCancelled records cancellation progress for the installer session.
+type InstallCancelled struct {
+	CompletedCount int
+	RemainingCount int
 }
 
 // Runner defines the boundary for invoking external commands.

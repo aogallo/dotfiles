@@ -2,8 +2,11 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -19,6 +22,59 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.startupError = msg
 		m.exitCode = installer.ExitFailure
 		return m, tea.Quit
+	case runner.StepStarted:
+		m.screen = ScreenRunning
+		m.progress.ActiveStepID = msg.StepID
+		m.progress.ActiveModuleID = installer.ModuleID(msg.ModuleID)
+		m.progress.ActiveDescription = msg.Description
+		m.progress.CurrentStepIndex = msg.Index
+		m.progress.TotalSteps = msg.Total
+		return m, m.executeActiveStep(msg.StepID)
+	case runner.StepCompleted:
+		if m.results == nil {
+			m.results = map[string]runner.Result{}
+		}
+		m.results[msg.StepID] = msg.Result
+		m.progress.CompletedSteps++
+		m.progress.RecentResults = appendRecentResult(m.progress.RecentResults, progressResultFromStep(m.plan, msg.StepID, installer.StatusUnchanged, msg.Result.Stdout))
+		m.progress.IncompleteStepIDs = remainingStepIDs(m.plan, m.progress.CompletedSteps)
+		m.progress.ActiveStepID = ""
+		m.progress.ActiveDescription = ""
+		return m.advanceOrFinalize(), m.nextStepCmd()
+	case runner.StepFailed:
+		if m.results == nil {
+			m.results = map[string]runner.Result{}
+		}
+		m.results[msg.StepID] = msg.Result
+		m.progress.CompletedSteps++
+		details := strings.TrimSpace(msg.Result.Stderr)
+		if details == "" && msg.Err != nil {
+			details = msg.Err.Error()
+		}
+		m.progress.RecentResults = appendRecentResult(m.progress.RecentResults, progressResultFromStep(m.plan, msg.StepID, installer.StatusFailed, details))
+		m.progress.IncompleteStepIDs = remainingStepIDs(m.plan, m.progress.CompletedSteps)
+		m.progress.ActiveStepID = ""
+		m.progress.ActiveDescription = ""
+		return m.advanceOrFinalize(), m.nextStepCmd()
+	case runner.StepSkipped:
+		m.progress.CompletedSteps++
+		status := installer.StatusSkipped
+		if msg.Status != "" {
+			status = installer.ActionStatus(msg.Status)
+		}
+		m.progress.RecentResults = appendRecentResult(m.progress.RecentResults, progressResultFromStep(m.plan, msg.StepID, status, msg.Reason))
+		m.progress.IncompleteStepIDs = remainingStepIDs(m.plan, m.progress.CompletedSteps)
+		m.progress.ActiveStepID = ""
+		m.progress.ActiveDescription = ""
+		return m.advanceOrFinalize(), m.nextStepCmd()
+	case runner.InstallCancelled:
+		m.progress.Cancelled = true
+		m.progress.CompletedSteps = msg.CompletedCount
+		m.progress.IncompleteStepIDs = remainingStepIDs(m.plan, msg.CompletedCount)
+		m.report = installer.BuildReport(m.plan, m.results)
+		m.exitCode = installer.ExitFailure
+		m.screen = ScreenReport
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.terminal.Width = msg.Width
 		m.terminal.Height = msg.Height
@@ -58,10 +114,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if m.plan.RequiresConfirmation {
 					m.screen = ScreenConfirmation
 				} else {
-					m = m.finalizeReport()
+					return m.startRunning()
 				}
 			case ScreenConfirmation:
-				m = m.finalizeReport()
+				return m.startRunning()
 			case ScreenReport:
 				m.screen = ScreenMainMenu
 			}
@@ -121,6 +177,8 @@ func (m Model) buildActionPlan(moduleIDs []installer.ModuleID) Model {
 		return m
 	}
 	m.plan = plan
+	m.progress = ProgressSession{TotalSteps: len(plan.Steps), IncompleteStepIDs: plan.PlannedStepIDs()}
+	m.results = map[string]runner.Result{}
 	m.screen = ScreenActionPlan
 	return m
 }
@@ -132,6 +190,81 @@ func (m Model) finalizeReport() Model {
 	m.report = installer.BuildReport(m.plan, m.executePlan(context.Background()))
 	m.screen = ScreenReport
 	m.exitCode = m.report.ExitCode
+	m.progress.IncompleteStepIDs = incompleteStepIDs(m.plan, m.report)
+	return m
+}
+
+func (m Model) startRunning() (tea.Model, tea.Cmd) {
+	m.screen = ScreenRunning
+	m.progress = ProgressSession{TotalSteps: len(m.plan.Steps), IncompleteStepIDs: m.plan.PlannedStepIDs()}
+	m.report = installer.NewReport(m.selectedFlow)
+	m.results = map[string]runner.Result{}
+	if len(m.plan.Steps) == 0 {
+		m = m.advanceOrFinalize()
+		return m, nil
+	}
+	return m, m.nextStepCmd()
+}
+
+func (m Model) nextStepCmd() tea.Cmd {
+	if m.progress.CompletedSteps >= len(m.plan.Steps) {
+		return nil
+	}
+	step := m.plan.Steps[m.progress.CompletedSteps]
+	index := m.progress.CompletedSteps + 1
+	return func() tea.Msg {
+		if !step.HasCommand() {
+			status := string(installer.StatusSkipped)
+			reason := "No command was needed for this planned step."
+			if step.Classification == installer.ActionManualOnly {
+				status = string(installer.StatusManual)
+				reason = "Manual action remains for this step."
+			}
+			return runner.StepSkipped{StepID: step.ID, Reason: reason, Status: status}
+		}
+		return runner.StepStarted{StepID: step.ID, ModuleID: string(step.ModuleID), Index: index, Total: len(m.plan.Steps), Description: step.Description, StartedAt: time.Now()}
+	}
+}
+
+func (m Model) executeActiveStep(stepID string) tea.Cmd {
+	step, ok := findStep(m.plan, stepID)
+	if !ok {
+		return func() tea.Msg {
+			return runner.StepFailed{StepID: stepID, Err: errors.New("planned step not found"), Result: runner.Result{ExitCode: -1, Stderr: "planned step not found"}, CompletedAt: time.Now()}
+		}
+	}
+	return func() tea.Msg {
+		repository, err := runner.NewRepositoryRoot(repositoryRoot())
+		if err != nil {
+			return runner.StepFailed{StepID: step.ID, Err: err, Result: runner.Result{Stderr: err.Error(), ExitCode: -1}, CompletedAt: time.Now()}
+		}
+		command, err := repository.Command(step.Command[0], step.Command[1:]...)
+		if err != nil {
+			return runner.StepFailed{StepID: step.ID, Err: err, Result: runner.Result{Stderr: err.Error(), ExitCode: -1}, CompletedAt: time.Now()}
+		}
+		result, err := m.runner.Run(context.Background(), command)
+		if err != nil && result.ExitCode == 0 {
+			result.ExitCode = -1
+			if result.Stderr == "" {
+				result.Stderr = err.Error()
+			}
+		}
+		if err != nil || result.ExitCode != 0 {
+			return runner.StepFailed{StepID: step.ID, Err: err, Result: result, CompletedAt: time.Now()}
+		}
+		return runner.StepCompleted{StepID: step.ID, Status: string(installer.StatusUnchanged), Result: result, CompletedAt: time.Now()}
+	}
+}
+
+func (m Model) advanceOrFinalize() Model {
+	if m.progress.CompletedSteps < len(m.plan.Steps) {
+		return m
+	}
+	m.report = installer.BuildReport(m.plan, m.results)
+	m.screen = ScreenReport
+	m.exitCode = m.report.ExitCode
+	m.progress.ActiveStepID = ""
+	m.progress.ActiveDescription = ""
 	m.progress.IncompleteStepIDs = incompleteStepIDs(m.plan, m.report)
 	return m
 }
@@ -181,6 +314,43 @@ func incompleteStepIDs(plan installer.Plan, report installer.Report) []string {
 		}
 	}
 	return ids
+}
+
+func remainingStepIDs(plan installer.Plan, completed int) []string {
+	if completed >= len(plan.Steps) {
+		return nil
+	}
+	ids := make([]string, 0, len(plan.Steps)-completed)
+	for _, step := range plan.Steps[completed:] {
+		ids = append(ids, step.ID)
+	}
+	return ids
+}
+
+func findStep(plan installer.Plan, stepID string) (installer.Action, bool) {
+	for _, step := range plan.Steps {
+		if step.ID == stepID {
+			return step, true
+		}
+	}
+	return installer.Action{}, false
+}
+
+func progressResultFromStep(plan installer.Plan, stepID string, status installer.ActionStatus, details string) ProgressResult {
+	step, ok := findStep(plan, stepID)
+	message := stepID
+	if ok {
+		message = step.Description
+	}
+	return ProgressResult{StepID: stepID, Status: status, Message: message, Details: strings.TrimSpace(details)}
+}
+
+func appendRecentResult(results []ProgressResult, result ProgressResult) []ProgressResult {
+	results = append(results, result)
+	if len(results) > 5 {
+		return results[len(results)-5:]
+	}
+	return results
 }
 
 func executionFailureResults(plan installer.Plan, err error) map[string]runner.Result {

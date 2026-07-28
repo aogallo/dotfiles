@@ -74,13 +74,13 @@ Chain strategy: feature-branch-chain
 **Goal**: Show current step, overall count, and failure/recovery status while commands run.
 **Independent Test**: Use `FakeRunner` to verify running state renders before final report and each step is accounted for.
 
-- [ ] T023 [P] [US3] Add runner progress message tests in `/Users/allan/dotfiles/installer/internal/runner/runner_test.go`
-- [ ] T024 [P] [US3] Add running-screen transition tests in `/Users/allan/dotfiles/installer/internal/tui/update_test.go`
-- [ ] T025 [US3] Add progress result message types in `/Users/allan/dotfiles/installer/internal/runner/runner.go`
-- [ ] T026 [US3] Execute plan steps sequentially via Bubble Tea commands in `/Users/allan/dotfiles/installer/internal/tui/update.go`
-- [ ] T027 [US3] Store active step and totals in `/Users/allan/dotfiles/installer/internal/tui/model.go`
-- [ ] T028 [US3] Render running progress and recent results in `/Users/allan/dotfiles/installer/internal/tui/view.go`
-- [ ] T029 [US3] Account failed and skipped step outcomes in `/Users/allan/dotfiles/installer/internal/installer/report.go`
+- [x] T023 [P] [US3] Add runner progress message tests in `/Users/allan/dotfiles/installer/internal/runner/runner_test.go`
+- [x] T024 [P] [US3] Add running-screen transition tests in `/Users/allan/dotfiles/installer/internal/tui/update_test.go`
+- [x] T025 [US3] Add progress result message types in `/Users/allan/dotfiles/installer/internal/runner/runner.go`
+- [x] T026 [US3] Execute plan steps sequentially via Bubble Tea commands in `/Users/allan/dotfiles/installer/internal/tui/update.go`
+- [x] T027 [US3] Store active step and totals in `/Users/allan/dotfiles/installer/internal/tui/model.go`
+- [x] T028 [US3] Render running progress and recent results in `/Users/allan/dotfiles/installer/internal/tui/view.go`
+- [x] T029 [US3] Account failed and skipped step outcomes in `/Users/allan/dotfiles/installer/internal/installer/report.go`
 
 ## Phase 6: User Story 4 - Use a Full-Screen Colored Terminal UI (P4)
 
