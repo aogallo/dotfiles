@@ -84,7 +84,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			m.screen = ScreenExit
 			return m, tea.Quit
+		case "?":
+			if m.screen != ScreenHelp {
+				m.helpReturn = m.screen
+				m.screen = ScreenHelp
+			}
+			return m, nil
 		case "q":
+			if m.screen == ScreenHelp {
+				m.screen = m.helpReturnScreen()
+				return m, nil
+			}
 			if m.screen != ScreenMainMenu {
 				if m.screen == ScreenConfirmation {
 					m.progress.Cancelled = true
@@ -124,6 +134,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "esc", "backspace":
 			if m.screen != ScreenMainMenu {
+				if m.screen == ScreenHelp {
+					m.screen = m.helpReturnScreen()
+					return m, nil
+				}
 				if m.screen == ScreenConfirmation {
 					m.progress.Cancelled = true
 					m.progress.IncompleteStepIDs = m.plan.PlannedStepIDs()
@@ -139,6 +153,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func isCompactTerminal(width, height int) bool {
 	return width > 0 && (width < 80 || height < 24)
+}
+
+func (m Model) helpReturnScreen() Screen {
+	if m.helpReturn == "" || m.helpReturn == ScreenHelp || m.helpReturn == ScreenExit {
+		return ScreenMainMenu
+	}
+	return m.helpReturn
 }
 
 func (m *Model) moveCursor(delta int) {
