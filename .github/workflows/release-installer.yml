@@ -1,0 +1,58 @@
+name: Release installer
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish installer
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: installer/go.mod
+          cache-dependency-path: installer/go.sum
+
+      - name: Test installer
+        working-directory: installer
+        run: go test ./...
+
+      - name: Test bootstrap
+        run: setup/bootstrap-dotfiles-installer_test.sh
+
+      - name: Check shell syntax
+        run: bash -n setup/bootstrap-dotfiles-installer.sh setup/bootstrap-dotfiles-installer_test.sh
+
+      - name: Build release assets
+        run: |
+          mkdir -p dist
+          cd installer
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -trimpath -ldflags='-s -w' -o ../dist/dotfiles-installer-darwin-arm64 ./cmd/dotfiles-installer
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -trimpath -ldflags='-s -w' -o ../dist/dotfiles-installer-darwin-amd64 ./cmd/dotfiles-installer
+
+      - name: Generate checksums
+        working-directory: dist
+        run: shasum -a 256 dotfiles-installer-darwin-* > checksums.txt
+
+      - name: Verify checksums
+        working-directory: dist
+        run: shasum -a 256 -c checksums.txt
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --verify-tag \
+            --title "Dotfiles Installer $GITHUB_REF_NAME" \
+            --generate-notes

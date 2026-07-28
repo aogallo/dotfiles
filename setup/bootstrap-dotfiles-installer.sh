@@ -7,6 +7,7 @@ DRY_RUN=0
 PREFER_BINARY=0
 ALLOW_BINARY=1
 BREW_INSTALL_URL="${BOOTSTRAP_HOMEBREW_INSTALL_URL:-https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh}"
+RELEASE_BASE_URL="${BOOTSTRAP_RELEASE_BASE_URL:-https://github.com/aogallo/dotfiles/releases/latest/download}"
 
 usage() {
   cat <<'EOF'
@@ -16,7 +17,7 @@ Prepares a clean macOS machine for the guided dotfiles installer.
 
 Options:
   --dry-run        Report prerequisite state and planned actions without installing or launching.
-  --prefer-binary Prefer a compatible prebuilt dotfiles-installer binary when available.
+  --prefer-binary Prefer a compatible prebuilt or released dotfiles-installer binary when available.
   --no-binary     Skip prebuilt binary discovery and launch from source with go run.
   -h, --help      Show this help.
 
@@ -230,8 +231,58 @@ find_binary() {
   return 1
 }
 
+release_asset_name() {
+  printf 'dotfiles-installer-darwin-%s\n' "$DETECTED_ARCH"
+}
+
+download_release_binary() {
+  local asset checksum_url asset_url tmpdir binary checksum_file
+  DOWNLOADED_RELEASE_BINARY=""
+  DOWNLOADED_RELEASE_DIR=""
+  [[ "$ALLOW_BINARY" -eq 1 && "$PREFER_BINARY" -eq 1 ]] || return 1
+
+  asset="$(release_asset_name)"
+  asset_url="$RELEASE_BASE_URL/$asset"
+  checksum_url="$RELEASE_BASE_URL/checksums.txt"
+
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    status_line "release_binary" "would download $asset_url and verify checksums.txt"
+    return 1
+  fi
+
+  if ! command -v curl >/dev/null 2>&1; then
+    status_line "release_binary" "curl missing; falling back to go run"
+    return 1
+  fi
+
+  if ! command -v shasum >/dev/null 2>&1; then
+    status_line "release_binary" "shasum missing; falling back to go run"
+    return 1
+  fi
+
+  tmpdir="$(mktemp -d "${TMPDIR:-/tmp}/dotfiles-installer-release-XXXXXX")"
+  binary="$tmpdir/$asset"
+  checksum_file="$tmpdir/checksums.txt"
+
+  if ! curl -fsSL "$asset_url" -o "$binary" || ! curl -fsSL "$checksum_url" -o "$checksum_file"; then
+    rm -rf "$tmpdir"
+    status_line "release_binary" "missing or unavailable; falling back to go run"
+    return 1
+  fi
+
+  if ! (cd "$tmpdir" && shasum -a 256 -c checksums.txt --ignore-missing >/dev/null 2>&1); then
+    rm -rf "$tmpdir"
+    status_line "release_binary" "checksum verification failed; falling back to go run"
+    return 1
+  fi
+
+  chmod +x "$binary"
+  DOWNLOADED_RELEASE_BINARY="$binary"
+  DOWNLOADED_RELEASE_DIR="$tmpdir"
+}
+
 launch_installer() {
-  local binary
+  local binary status
 
   if binary="$(find_binary)"; then
     status_line "launch" "prebuilt_binary ($binary)"
@@ -240,8 +291,22 @@ launch_installer() {
     return 0
   fi
 
+  if download_release_binary; then
+    binary="$DOWNLOADED_RELEASE_BINARY"
+    status_line "launch" "release_binary ($binary)"
+    if safe_run "$binary"; then
+      rm -rf "$DOWNLOADED_RELEASE_DIR"
+    else
+      status=$?
+      rm -rf "$DOWNLOADED_RELEASE_DIR"
+      return "$status"
+    fi
+    printf 'outcome: ready\n'
+    return 0
+  fi
+
   if [[ "$PREFER_BINARY" -eq 1 && "$ALLOW_BINARY" -eq 1 ]]; then
-    status_line "binary" "missing or incompatible; falling back to go run"
+    status_line "binary" "missing, unavailable, or unverifiable; falling back to go run"
   elif [[ "$ALLOW_BINARY" -eq 0 ]]; then
     status_line "binary" "disabled by --no-binary"
   fi
