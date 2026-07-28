@@ -58,6 +58,17 @@ Run in a small terminal, then resize.
 
 Expected result: at 80x24, title, current action/status, progress, and footer shortcuts remain readable. If emojis or color render poorly, labels still explain every state.
 
+## Visual Smoke Check
+
+Generate the stable terminal preview artifact used for PR review:
+
+```sh
+cd installer
+TUI_PREVIEW=1 go test ./internal/tui -run TestTerminalPreviewArtifact -v
+```
+
+Expected result: the test output prints an 80x24 full-screen shell with header, main content, status area, and keyboard footer. The Markdown copy is stored in `specs/002-installer-v2-ui/terminal-preview.md` with ANSI color removed for stable PR rendering.
+
 ## Documentation Validation
 
 Review `installer/README.md` and release instructions.

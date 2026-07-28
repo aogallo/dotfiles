@@ -58,6 +58,7 @@ type TerminalSession struct {
 	Interactive bool
 	Width       int
 	Height      int
+	Compact     bool
 }
 
 type ProgressSession struct {
@@ -161,4 +162,9 @@ func (m Model) Report() installer.Report {
 // StartupError returns the current startup guidance, if any.
 func (m Model) StartupError() StartupError {
 	return m.startupError
+}
+
+// Terminal returns the current terminal rendering state.
+func (m Model) Terminal() TerminalSession {
+	return m.terminal
 }

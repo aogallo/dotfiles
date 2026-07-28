@@ -78,6 +78,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.terminal.Width = msg.Width
 		m.terminal.Height = msg.Height
+		m.terminal.Compact = isCompactTerminal(msg.Width, msg.Height)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -134,6 +135,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func isCompactTerminal(width, height int) bool {
+	return width > 0 && (width < 80 || height < 24)
 }
 
 func (m *Model) moveCursor(delta int) {

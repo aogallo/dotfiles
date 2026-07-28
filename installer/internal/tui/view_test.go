@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -100,4 +101,101 @@ func TestModuleListDoesNotExposeInternalAutomationLabels(t *testing.T) {
 			t.Fatalf("module list exposes internal label %q:\n%s", internal, view)
 		}
 	}
+}
+
+func TestViewRendersViewportShellAtTerminalSize(t *testing.T) {
+	model := NewModel()
+	model.terminal = TerminalSession{Interactive: true, Width: 80, Height: 24}
+
+	view := model.View()
+	lines := strings.Split(strings.TrimRight(view, "\n"), "\n")
+	if len(lines) != 24 {
+		t.Fatalf("line count = %d, want 24:\n%s", len(lines), view)
+	}
+	for i, line := range lines {
+		if visibleLen(line) != 80 {
+			t.Fatalf("line %d visible width = %d, want 80: %q", i+1, visibleLen(line), line)
+		}
+	}
+	for _, want := range []string{"dotfiles installer", "Preview only", "j/k move", "enter select"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("viewport shell missing %q:\n%s", want, view)
+		}
+	}
+}
+
+func TestRunningViewKeepsCriticalStatusAtNarrowSize(t *testing.T) {
+	model := NewModel()
+	model.screen = ScreenRunning
+	model.terminal = TerminalSession{Interactive: true, Width: 44, Height: 12, Compact: true}
+	model.plan = installer.Plan{Steps: []installer.Action{{ID: "nvim-validate", ModuleID: installer.ModuleNeovim, Description: "Validate Neovim dependencies with a deliberately long description that must truncate."}}}
+	model.progress = ProgressSession{CurrentStepIndex: 1, TotalSteps: 1, ActiveStepID: "nvim-validate", ActiveDescription: "Validate Neovim dependencies with a deliberately long description that must truncate."}
+
+	view := model.View()
+	for _, want := range []string{"Current step", "Status: Working", "Compact layout", "ctrl+c quit"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("narrow running view missing %q:\n%s", want, view)
+		}
+	}
+	for i, line := range strings.Split(strings.TrimRight(view, "\n"), "\n") {
+		if visibleLen(line) != 44 {
+			t.Fatalf("line %d visible width = %d, want 44: %q", i+1, visibleLen(line), line)
+		}
+	}
+}
+
+func TestStatusCueIncludesTextLabelIconAndColor(t *testing.T) {
+	tests := []struct {
+		status installer.ActionStatus
+		label  string
+		icon   string
+		color  string
+	}{
+		{status: installer.StatusBackedUp, label: "Backed up", icon: "✓", color: ansiGreen},
+		{status: installer.StatusManual, label: "Manual action needed", icon: "!", color: ansiYellow},
+		{status: installer.StatusFailed, label: "Failed", icon: "!", color: ansiRed},
+		{status: installer.StatusSkipped, label: "Skipped", icon: "•", color: ansiGray},
+	}
+
+	for _, tt := range tests {
+		t.Run(string(tt.status), func(t *testing.T) {
+			cue := statusCueFor(tt.status)
+			if cue.Label != tt.label || cue.Icon != tt.icon || cue.Color != tt.color {
+				t.Fatalf("cue = %#v, want label=%q icon=%q color=%q", cue, tt.label, tt.icon, tt.color)
+			}
+			cell := statusCell(tt.status)
+			if !strings.Contains(cell, tt.label) || !strings.Contains(cell, tt.icon) || !strings.Contains(cell, tt.color) {
+				t.Fatalf("status cell should preserve text, icon, and color: %q", cell)
+			}
+		})
+	}
+}
+
+func TestTerminalPreviewArtifact(t *testing.T) {
+	if os.Getenv("TUI_PREVIEW") != "1" {
+		t.Skip("set TUI_PREVIEW=1 to print the stable terminal preview artifact")
+	}
+
+	t.Log("\n" + stripANSI(fullScreenPreview()))
+}
+
+func fullScreenPreview() string {
+	model := NewModel()
+	model.terminal = TerminalSession{Interactive: true, Width: 80, Height: 24}
+	return model.View()
+}
+
+func stripANSI(value string) string {
+	replacer := strings.NewReplacer(
+		ansiReset, "",
+		ansiDim, "",
+		ansiBold, "",
+		ansiCyan, "",
+		ansiGreen, "",
+		ansiYellow, "",
+		ansiRed, "",
+		ansiBlue, "",
+		ansiGray, "",
+	)
+	return replacer.Replace(value)
 }

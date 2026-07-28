@@ -31,7 +31,7 @@ func runWithOptions(stdin, stdout, stderr *os.File, args []string) int {
 		return 1
 	}
 
-	program := tea.NewProgram(tui.NewModel(), tea.WithInput(stdin), tea.WithOutput(stdout))
+	program := tea.NewProgram(tui.NewModel(), tea.WithInput(stdin), tea.WithOutput(stdout), tea.WithAltScreen())
 	finalModel, err := program.Run()
 	if err != nil {
 		printStartupGuidance(stderr, args, "The interactive terminal UI failed to start.", err.Error())

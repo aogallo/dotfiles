@@ -4,6 +4,8 @@ import (
 	"reflect"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/aogallo/dotfiles/installer/internal/installer"
 )
 
@@ -33,6 +35,22 @@ func TestNewModelInitialMenuAndDryRun(t *testing.T) {
 	}
 	if model.ExitCode() != int(installer.ExitSuccess) {
 		t.Fatalf("exit code = %d, want %d", model.ExitCode(), installer.ExitSuccess)
+	}
+}
+
+func TestWindowSizeMessageStoresTerminalDimensionsAndCompactMode(t *testing.T) {
+	model := NewModel()
+
+	updatedModel, _ := model.Update(tea.WindowSizeMsg{Width: 72, Height: 20})
+	model = updatedModel.(Model)
+	if got := model.Terminal(); got.Width != 72 || got.Height != 20 || !got.Compact {
+		t.Fatalf("terminal = %#v, want 72x20 compact", got)
+	}
+
+	updatedModel, _ = model.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	model = updatedModel.(Model)
+	if got := model.Terminal(); got.Width != 100 || got.Height != 30 || got.Compact {
+		t.Fatalf("terminal = %#v, want 100x30 non-compact", got)
 	}
 }
 
