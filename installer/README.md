@@ -18,6 +18,20 @@ cd installer
 go test ./...
 ```
 
+## Running a Downloaded Release Binary
+
+Release assets are terminal applications. After downloading the asset for your Mac, run it from a terminal so the installer can show prompts and keyboard guidance:
+
+```sh
+cd ~/Downloads
+chmod +x ./dotfiles-installer-darwin-arm64
+./dotfiles-installer-darwin-arm64
+```
+
+Use `dotfiles-installer-darwin-arm64` on Apple Silicon Macs and `dotfiles-installer-darwin-amd64` on Intel Macs. If you are not sure which one you need, run `uname -m`: `arm64` means Apple Silicon, and `x86_64` means Intel.
+
+Double-clicking the binary from Finder is not supported because the installer needs an interactive terminal. If it cannot start interactively, it prints the exact command to run from a terminal.
+
 ## Clean macOS Setup
 
 On a clean macOS machine, run the repository bootstrap from the repository root. It prepares the
@@ -46,11 +60,7 @@ setup/bootstrap-dotfiles-installer.sh --no-binary
 PATH="/usr/bin:/bin:/usr/sbin:/sbin" setup/bootstrap-dotfiles-installer.sh --dry-run
 ```
 
-`--prefer-binary` first uses a compatible local prebuilt installer binary when available. If none
-is available, it tries the latest GitHub Release asset for the detected macOS architecture and
-verifies it with `checksums.txt` before execution. Go is still installed when missing because it is
-required for development and Neovim tooling. `--no-binary` forces source execution with `go run`
-after prerequisites are ready.
+`--prefer-binary` is the recommended clean-machine launch path. It first uses a compatible local prebuilt installer binary when available. If none is available, it downloads the latest GitHub Release asset for the detected macOS architecture, verifies it with `checksums.txt`, makes it executable, and launches that binary directly. Go is still installed when missing because it is required for development and Neovim tooling. `--no-binary` forces source execution with `go run` after prerequisites are ready.
 
 Manual Go installation is not the preferred first-run path anymore. Use it only for recovery if
 the bootstrap cannot complete on the current machine.
@@ -61,6 +71,13 @@ After prerequisites are ready, this direct command also works:
 cd installer
 go run ./cmd/dotfiles-installer
 ```
+
+### Troubleshooting release launch
+
+- **Nothing visible happens**: open Terminal and run the binary directly from its download directory, for example `cd ~/Downloads && ./dotfiles-installer-darwin-arm64`.
+- **Permission denied**: run `chmod +x ./dotfiles-installer-darwin-arm64`, then run the binary again.
+- **Wrong architecture**: download `dotfiles-installer-darwin-arm64` for Apple Silicon or `dotfiles-installer-darwin-amd64` for Intel.
+- **macOS quarantine or security block**: prefer the bootstrap path, `setup/bootstrap-dotfiles-installer.sh --prefer-binary`, from a trusted repository checkout. Only remove quarantine from a release asset you trust.
 
 ## What It Does
 

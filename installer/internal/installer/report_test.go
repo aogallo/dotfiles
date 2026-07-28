@@ -86,6 +86,37 @@ func TestBuildUpgradeReportNormalizesToolCategories(t *testing.T) {
 	}
 }
 
+func TestBuildReportAccountsForPlannedStepsWithoutResults(t *testing.T) {
+	t.Parallel()
+
+	plan := Plan{
+		Flow: FlowInstall,
+		Steps: []Action{
+			{ID: "preview", ModuleID: ModuleNeovim, Kind: StepDryRun, Classification: ActionDryRunReportOnly, Description: "Preview changes."},
+			{ID: "install", ModuleID: ModuleNeovim, Kind: StepInstall, Classification: ActionConfirmationRequired, Command: []string{"setup/bootstrap-nvim-deps.sh", "--install"}, Description: "Install tools."},
+			{ID: "manual", ModuleID: ModuleTmux, Kind: StepManualGuidance, Classification: ActionManualOnly, Description: "Install TPM manually."},
+		},
+	}
+
+	report := BuildReport(plan, map[string]runner.Result{})
+
+	if report.Totals.Skipped != 1 {
+		t.Fatalf("skipped total = %d, want preview accounted as skipped", report.Totals.Skipped)
+	}
+	if report.Totals.Cancelled != 1 {
+		t.Fatalf("cancelled total = %d, want incomplete install accounted", report.Totals.Cancelled)
+	}
+	if report.Totals.Manual != 1 {
+		t.Fatalf("manual total = %d, want manual step accounted", report.Totals.Manual)
+	}
+	if report.ExitCode != ExitFailure {
+		t.Fatalf("ExitCode = %d, want failure when planned work is incomplete", report.ExitCode)
+	}
+	if !reportHasDetails(report, StatusCancelled, "Rerun the installer from a terminal") {
+		t.Fatalf("cancelled item should include launch guidance: %#v", report.Items)
+	}
+}
+
 func reportHasStatus(report Report, status ActionStatus) bool {
 	for _, item := range report.Items {
 		if item.Status == status {

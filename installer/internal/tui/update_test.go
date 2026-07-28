@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -230,6 +231,50 @@ func TestFinalizeReportRecordsRunnerFailure(t *testing.T) {
 	}
 	if len(model.Report().Items) != 1 || model.Report().Items[0].Status != installer.StatusFailed {
 		t.Fatalf("report items = %#v, want one failed item", model.Report().Items)
+	}
+}
+
+func TestStartupErrorMessageShowsGuidanceAndFailureExit(t *testing.T) {
+	model := NewModel()
+
+	updatedModel, cmd := model.Update(StartupError{
+		Reason:  "The installer must be run from a terminal.",
+		Details: "Open Terminal and rerun the downloaded binary.",
+		Command: "./dotfiles-installer-darwin-arm64",
+	})
+	got := updatedModel.(Model)
+
+	if got.Screen() != ScreenStartupError {
+		t.Fatalf("screen = %q, want startup error", got.Screen())
+	}
+	if got.ExitCode() != int(installer.ExitFailure) {
+		t.Fatalf("exit code = %d, want failure", got.ExitCode())
+	}
+	if got.StartupError().Command != "./dotfiles-installer-darwin-arm64" {
+		t.Fatalf("startup command = %q", got.StartupError().Command)
+	}
+	if cmd == nil {
+		t.Fatal("startup error should quit instead of entering the interactive flow")
+	}
+}
+
+func TestStartupErrorViewIncludesActionableLaunchGuidance(t *testing.T) {
+	model := NewStartupErrorModel(StartupError{
+		Reason:  "The installer must be run from a terminal.",
+		Details: "Open Terminal and rerun it from Downloads.",
+		Command: "./dotfiles-installer-darwin-arm64",
+	})
+
+	view := model.View()
+	for _, want := range []string{
+		"could not start interactively",
+		"The installer must be run from a terminal.",
+		"./dotfiles-installer-darwin-arm64",
+		"bootstrap --prefer-binary",
+	} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("view missing %q:\n%s", want, view)
+		}
 	}
 }
 

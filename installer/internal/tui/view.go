@@ -3,6 +3,8 @@ package tui
 import (
 	"fmt"
 	"strings"
+
+	"github.com/aogallo/dotfiles/installer/internal/installer"
 )
 
 // View renders the installer TUI.
@@ -13,6 +15,19 @@ func (m Model) View() string {
 	b.WriteString("Safe mode: dry-run preview only. No setup scripts run until you select and confirm an action.\n\n")
 
 	switch m.screen {
+	case ScreenStartupError:
+		b.WriteString("The installer could not start interactively.\n")
+		if m.startupError.Reason != "" {
+			b.WriteString(fmt.Sprintf("Reason: %s\n", m.startupError.Reason))
+		}
+		if m.startupError.Details != "" {
+			b.WriteString(fmt.Sprintf("Details: %s\n", m.startupError.Details))
+		}
+		if m.startupError.Command != "" {
+			b.WriteString("Run it from a terminal with:\n")
+			b.WriteString(fmt.Sprintf("  %s\n", m.startupError.Command))
+		}
+		b.WriteString("If macOS blocks the file, remove quarantine only for a trusted release asset or use the bootstrap --prefer-binary path documented in installer/README.md.\n")
 	case ScreenFlowInfo, ScreenModuleList:
 		b.WriteString(fmt.Sprintf("%s: module list\n", m.selectedFlow))
 		for i, module := range m.modules {
@@ -29,7 +44,7 @@ func (m Model) View() string {
 			b.WriteString(fmt.Sprintf("- target [%s] %s -> %s\n", target.State, target.TargetPath, target.SourcePath))
 		}
 		for _, step := range m.plan.Steps {
-			b.WriteString(fmt.Sprintf("- [%s] %s: %s\n", step.Classification, step.ModuleID, step.Description))
+			b.WriteString(fmt.Sprintf("- [%s] %s: %s\n", step.Classification.ClassificationLabel(), step.ModuleID, step.Description))
 		}
 		if m.plan.RequiresConfirmation {
 			b.WriteString("\nConfirmation is required before mutating steps. Press enter to review confirmation.\n")
@@ -45,9 +60,9 @@ func (m Model) View() string {
 		b.WriteString("running approved actions...\n")
 	case ScreenReport:
 		b.WriteString("final report\n")
-		b.WriteString(fmt.Sprintf("changed=%d unchanged=%d skipped=%d failed=%d backups=%d manual=%d\n", m.report.Totals.Changed, m.report.Totals.Unchanged, m.report.Totals.Skipped, m.report.Totals.Failed, m.report.Totals.Backup, m.report.Totals.Manual))
+		b.WriteString(fmt.Sprintf("changed=%d unchanged=%d skipped=%d failed=%d not_completed=%d backups=%d manual=%d\n", m.report.Totals.Changed, m.report.Totals.Unchanged, m.report.Totals.Skipped, m.report.Totals.Failed, m.report.Totals.Cancelled, m.report.Totals.Backup, m.report.Totals.Manual))
 		for _, item := range m.report.Items {
-			b.WriteString(fmt.Sprintf("- [%s] %s", item.Status, item.Message))
+			b.WriteString(fmt.Sprintf("- [%s] %s", statusLabel(item.Status), item.Message))
 			if item.Details != "" {
 				b.WriteString(fmt.Sprintf(" — %s", item.Details))
 			}
@@ -72,4 +87,8 @@ func (m Model) View() string {
 	}
 
 	return b.String()
+}
+
+func statusLabel(status installer.ActionStatus) string {
+	return status.StatusLabel()
 }
