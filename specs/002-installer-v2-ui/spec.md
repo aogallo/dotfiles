@@ -13,6 +13,7 @@
 ### Session 2026-07-27
 
 - Q: Should emojis be allowed as installer UI status indicators? -> A: Emojis are allowed as secondary visual cues, but every status must also have a text label and/or color indicator.
+- Q: When should installer TUI images or screenshots be added? -> A: Do not add visual mockups or screenshots now; add final screenshots only after the real TUI is implemented and approved.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -153,5 +154,6 @@ As a user running the installer, I want a full-screen terminal UI with meaningfu
 - The existing backup naming format is already defined elsewhere in the project and should be reused.
 - The visual direction should follow the provided Terminal Monolith design: dark terminal surface, monospaced typography, sharp layout, meaningful semantic colors, and keyboard-driven interaction.
 - Bubble Tea-style examples are valid inspiration for progress bars, compact status lists, color accents, and tasteful emoji usage, but emoji usage must remain supplemental.
+- TUI images/screenshots are deferred until the implemented UI is approved; draft mockup images are not required before US4 is complete.
 - Preview/dry-run behavior remains available, but must be explained in user language.
 - Manual-only actions are allowed only when automation would be unsafe or unreliable, and each manual action must explain its reason.
