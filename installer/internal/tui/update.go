@@ -29,6 +29,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "q":
 			if m.screen != ScreenMainMenu {
+				if m.screen == ScreenConfirmation {
+					m.progress.Cancelled = true
+					m.progress.IncompleteStepIDs = m.plan.PlannedStepIDs()
+				}
 				m.screen = ScreenMainMenu
 				m.selectedFlow = ""
 				return m, nil
@@ -63,6 +67,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "esc", "backspace":
 			if m.screen != ScreenMainMenu {
+				if m.screen == ScreenConfirmation {
+					m.progress.Cancelled = true
+					m.progress.IncompleteStepIDs = m.plan.PlannedStepIDs()
+				}
 				m.screen = ScreenMainMenu
 				m.selectedFlow = ""
 			}

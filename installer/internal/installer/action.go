@@ -106,13 +106,13 @@ func (s ActionStatus) StatusLabel() string {
 func (c ActionClassification) ClassificationLabel() string {
 	switch c {
 	case ActionAutomatic:
-		return "Runs automatically when safe"
+		return "Automatic when safe"
 	case ActionConfirmationRequired:
-		return "Runs only after you confirm"
+		return "Needs your confirmation"
 	case ActionDryRunReportOnly:
-		return "Preview only; no changes"
+		return "Preview only; no files changed"
 	case ActionManualOnly:
-		return "Manual action needed"
+		return "Manual action"
 	default:
 		return "Needs review"
 	}

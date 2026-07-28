@@ -104,7 +104,8 @@ func BuildReport(plan Plan, results map[string]runner.Result) Report {
 		for _, item := range normalizeResult(step, result) {
 			report.addItem(item)
 			if item.Status == StatusBackedUp {
-				report.Backups = append(report.Backups, BackupRecord{ModuleID: step.ModuleID, BackupPath: item.Details, CreatedByStepID: step.ID, RestoreGuidance: "Restore manually by copying the backup path over the original target."})
+				sourceTarget := backupSourceTarget(step.ModuleID)
+				report.Backups = append(report.Backups, BackupRecord{ModuleID: step.ModuleID, SourceTarget: sourceTarget, BackupPath: item.Details, CreatedByStepID: step.ID, RestoreGuidance: restoreGuidance(item.Details, sourceTarget)})
 			}
 			if item.Status == StatusManual {
 				report.ManualNextSteps = append(report.ManualNextSteps, ManualNextStep{ModuleID: step.ModuleID, StepID: step.ID, Message: item.Message, Details: item.Details})
@@ -115,6 +116,24 @@ func BuildReport(plan Plan, results map[string]runner.Result) Report {
 		report.ExitCode = ExitFailure
 	}
 	return report
+}
+
+func backupSourceTarget(moduleID ModuleID) string {
+	switch moduleID {
+	case ModuleNeovim:
+		return "~/.config/nvim"
+	case ModuleGhostty:
+		return "~/Library/Application Support/com.mitchellh.ghostty/config.ghostty"
+	default:
+		return "the original local config path"
+	}
+}
+
+func restoreGuidance(backupPath, sourceTarget string) string {
+	if strings.TrimSpace(backupPath) == "" {
+		return "Restore manually by moving the backup back to the original target after reviewing the current file."
+	}
+	return "To restore, review the current file, then move " + backupPath + " back to " + sourceTarget + "."
 }
 
 func normalizeResult(step Action, result runner.Result) []ReportItem {
