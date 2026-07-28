@@ -265,6 +265,26 @@ func TestPreConfirmCancelDoesNotExecutePlan(t *testing.T) {
 	}
 }
 
+func TestHelpOpensFromCurrentScreenAndReturns(t *testing.T) {
+	model := NewModel()
+	model.screen = ScreenActionPlan
+
+	updatedModel, cmd := model.Update(keyString("?"))
+	model = updatedModel.(Model)
+	if cmd != nil {
+		t.Fatal("help should not schedule a command")
+	}
+	if model.Screen() != ScreenHelp {
+		t.Fatalf("screen = %q, want help", model.Screen())
+	}
+
+	updatedModel, _ = model.Update(key(tea.KeyEsc))
+	model = updatedModel.(Model)
+	if model.Screen() != ScreenActionPlan {
+		t.Fatalf("screen = %q, want action plan", model.Screen())
+	}
+}
+
 func TestSyncAndUpgradeFlowsUseConfirmationGatesAndReports(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -414,6 +434,10 @@ func runeKey(r rune) tea.KeyMsg {
 
 func key(keyType tea.KeyType) tea.KeyMsg {
 	return tea.KeyMsg{Type: keyType}
+}
+
+func keyString(value string) tea.KeyMsg {
+	return tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(value)}
 }
 
 func drainCommands(t *testing.T, model Model, cmd tea.Cmd) Model {

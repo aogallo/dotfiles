@@ -15,6 +15,11 @@
 - Q: Should emojis be allowed as installer UI status indicators? -> A: Emojis are allowed as secondary visual cues, but every status must also have a text label and/or color indicator.
 - Q: When should installer TUI images or screenshots be added? -> A: Do not add visual mockups or screenshots now; add final screenshots only after the real TUI is implemented and approved.
 
+### Session 2026-07-28
+
+- Q: Which visual theme should the installer use? → A: Bubble Tea-inspired dark palette.
+- Q: What status concepts must installer help explain? → A: Help always includes all status concepts: preview, automatic, confirmation, manual action, skipped, failed, backed up, and completed.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Run the Downloaded Installer Successfully (Priority: P1)
@@ -81,6 +86,7 @@ As a user running the installer, I want a full-screen terminal UI with meaningfu
 2. **Given** files or tools have different states, **When** they are listed, **Then** synced, changed, skipped, failed, manual, and selected states are visually distinct through labels, color, and optional secondary emoji cues.
 3. **Given** the terminal is narrow or short, **When** the installer renders, **Then** critical actions and statuses remain visible without corrupting the layout.
 4. **Given** keyboard navigation is available, **When** the user moves through choices, **Then** the current selection is clearly highlighted and the footer explains available keys.
+5. **Given** the user opens help from any installer screen, **When** status terminology is shown, **Then** the help explains preview, automatic, confirmation, manual action, skipped, failed, backed up, and completed states.
 
 ### Edge Cases
 
@@ -103,6 +109,7 @@ As a user running the installer, I want a full-screen terminal UI with meaningfu
 - **FR-002**: If the installer cannot run interactively, it MUST display a clear reason and the exact next command or action the user should take.
 - **FR-003**: The installer MUST use a full-terminal layout with persistent header, main content, progress/status area, and keyboard-help footer.
 - **FR-004**: The installer MUST use color and labels to distinguish safe preview, pending change, active work, success, skipped, manual action, warning, and failure states.
+- **FR-004a**: The installer MUST use a Bubble Tea-inspired dark palette: dark background, bright cyan/mint primary accents, purple/magenta secondary accents, pink failure accents, and readable muted text for secondary guidance.
 - **FR-005**: The installer MUST provide readable output when color or full-screen terminal capabilities are unavailable.
 - **FR-005a**: The installer MAY use emojis as secondary visual cues, but MUST NOT rely on emojis as the only way to communicate status, progress, warnings, errors, or required user action.
 - **FR-006**: The installer MUST replace unclear internal labels such as "confirmation required", "manual only", and "report only" with plain-language user-facing explanations.
@@ -122,6 +129,7 @@ As a user running the installer, I want a full-screen terminal UI with meaningfu
 - **FR-020**: The installer MUST document the active release artifact names and expected user launch flow in release-facing instructions.
 - **FR-021**: The installer MUST clearly differentiate automatic actions from manual user actions in the UI and final report.
 - **FR-022**: Generated task artifacts for this feature MUST link each implementation phase back to the matching user-story heading in this specification.
+- **FR-023**: Installer help MUST include a complete status legend explaining preview, automatic, confirmation, manual action, skipped, failed, backed up, and completed states, regardless of the current screen.
 
 ### Key Entities
 
@@ -145,6 +153,8 @@ As a user running the installer, I want a full-screen terminal UI with meaningfu
 - **SC-007**: Confusion-related issue reports about "confirmation required", "manual only", "report only", and downloaded binary launch behavior decrease by at least 75% after release.
 - **SC-008**: The UI remains usable at common terminal sizes, including 80x24 and larger desktop full-screen sessions.
 - **SC-009**: 100% of UI states remain understandable when emojis are not rendered or are visually ambiguous.
+- **SC-010**: Visual review for UI-changing PRs includes a dark-mode preview that demonstrates the approved Bubble Tea-inspired palette across at least menu, status, warning/manual, and failure states.
+- **SC-011**: A user can find a plain-language explanation for every installer status concept from help without needing to visit the specific screen where that status appears.
 
 ## Assumptions
 
@@ -152,8 +162,8 @@ As a user running the installer, I want a full-screen terminal UI with meaningfu
 - The V2 installer should improve the existing installer experience rather than introduce a separate graphical desktop app.
 - The release artifact is expected to be launched primarily from a terminal, but failures from non-terminal launch paths must be understandable.
 - The existing backup naming format is already defined elsewhere in the project and should be reused.
-- The visual direction should follow the provided Terminal Monolith design: dark terminal surface, monospaced typography, sharp layout, meaningful semantic colors, and keyboard-driven interaction.
-- Bubble Tea-style examples are valid inspiration for progress bars, compact status lists, color accents, and tasteful emoji usage, but emoji usage must remain supplemental.
+- The visual direction should use a Bubble Tea-inspired dark theme: dark terminal surface, monospaced typography, cyan/mint primary accents, purple/magenta secondary accents, pink failure accents, meaningful semantic colors, and keyboard-driven interaction.
+- Bubble Tea-style examples are valid inspiration for progress bars, compact status lists, color accents, and tasteful emoji usage, but emoji usage must remain supplemental and never replace text labels.
 - TUI images/screenshots are deferred until the implemented UI is approved; draft mockup images are not required before US4 is complete.
 - Preview/dry-run behavior remains available, but must be explained in user language.
 - Manual-only actions are allowed only when automation would be unsafe or unreliable, and each manual action must explain its reason.

@@ -9,15 +9,22 @@ import (
 )
 
 const (
-	ansiReset  = "\x1b[0m"
-	ansiDim    = "\x1b[2m"
-	ansiBold   = "\x1b[1m"
-	ansiCyan   = "\x1b[36m"
-	ansiGreen  = "\x1b[32m"
-	ansiYellow = "\x1b[33m"
-	ansiRed    = "\x1b[31m"
-	ansiBlue   = "\x1b[34m"
-	ansiGray   = "\x1b[90m"
+	ansiReset   = "\x1b[0m"
+	ansiDim     = "\x1b[2m"
+	ansiBold    = "\x1b[1m"
+	ansiCyan    = "\x1b[38;2;81;255;234m"
+	ansiMint    = "\x1b[38;2;58;242;195m"
+	ansiPurple  = "\x1b[38;2;199;125;255m"
+	ansiPink    = "\x1b[38;2;255;92;170m"
+	ansiPeach   = "\x1b[38;2;255;197;143m"
+	ansiText    = "\x1b[38;2;220;225;255m"
+	ansiMuted   = "\x1b[38;2;143;149;188m"
+	ansiBlue    = "\x1b[38;2;116;199;255m"
+	ansiGray    = "\x1b[38;2;108;116;148m"
+	ansiBorder  = "\x1b[38;2;199;125;255m"
+	ansiSuccess = ansiMint
+	ansiWarning = ansiPeach
+	ansiFailure = ansiPink
 )
 
 const (
@@ -46,7 +53,7 @@ func (m Model) View() string {
 func (m Model) regions() viewRegions {
 	var b strings.Builder
 
-	header := styled("dotfiles installer", ansiBold+ansiCyan) + "\n" + styled("Safe mode: dry-run preview only. No setup scripts run until you select and confirm an action.", ansiDim)
+	header := styled("dotfiles installer", ansiBold+ansiCyan) + "\n" + styled("Safe mode: dry-run preview only. No setup scripts run until you select and confirm an action.", ansiMuted)
 	footer := footerForScreen(m.screen)
 	status := statusForModel(m)
 
@@ -146,13 +153,19 @@ func (m Model) regions() viewRegions {
 			b.WriteString(fmt.Sprintf("manual: %s\n", next.Message))
 		}
 		b.WriteString("Press enter to return to the main menu, or q to go back.\n")
+	case ScreenHelp:
+		renderHelp(&b)
 	default:
 		for i, item := range m.menuItems {
 			marker := " "
 			if i == m.cursor {
-				marker = ">"
+				marker = styled("›", ansiPurple+ansiBold)
 			}
-			b.WriteString(fmt.Sprintf("%s %s\n", marker, item.Label))
+			label := item.Label
+			if i == m.cursor {
+				label = styled(label, ansiBold+ansiPurple)
+			}
+			b.WriteString(fmt.Sprintf("%s %s\n", marker, label))
 		}
 	}
 
@@ -171,18 +184,41 @@ func statusCell(status installer.ActionStatus) string {
 func statusCueFor(status installer.ActionStatus) statusCue {
 	switch status {
 	case installer.StatusChanged, installer.StatusRemoved:
-		return statusCue{Label: status.StatusLabel(), Icon: "◆", Color: ansiYellow}
+		return statusCue{Label: status.StatusLabel(), Icon: "◆", Color: ansiWarning}
 	case installer.StatusUnchanged, installer.StatusManaged, installer.StatusBackedUp:
-		return statusCue{Label: status.StatusLabel(), Icon: "✓", Color: ansiGreen}
+		return statusCue{Label: status.StatusLabel(), Icon: "✓", Color: ansiSuccess}
 	case installer.StatusFailed, installer.StatusMissing, installer.StatusUnmanaged:
-		return statusCue{Label: status.StatusLabel(), Icon: "!", Color: ansiRed}
+		return statusCue{Label: status.StatusLabel(), Icon: "!", Color: ansiFailure}
 	case installer.StatusCancelled, installer.StatusManual:
-		return statusCue{Label: status.StatusLabel(), Icon: "!", Color: ansiYellow}
+		return statusCue{Label: status.StatusLabel(), Icon: "!", Color: ansiWarning}
 	case installer.StatusSkipped, installer.StatusOptional:
 		return statusCue{Label: status.StatusLabel(), Icon: "•", Color: ansiGray}
 	default:
 		return statusCue{Label: status.StatusLabel(), Icon: "?", Color: ansiBlue}
 	}
+}
+
+func renderHelp(b *strings.Builder) {
+	b.WriteString(styled("help", ansiBold+ansiPurple) + "\n")
+	b.WriteString("Every status keeps a text label. Color and icons are secondary cues.\n\n")
+	legend := []struct {
+		name        string
+		description string
+		style       string
+	}{
+		{name: "Preview", description: "Safe review; no files change before confirmation.", style: ansiBlue},
+		{name: "Automatic", description: "The installer can run this when it is safe.", style: ansiMint},
+		{name: "Confirmation", description: "A mutating action waits for explicit approval.", style: ansiPeach},
+		{name: "Manual action", description: "Automation is unsafe or unreliable; you must do the step.", style: ansiPeach},
+		{name: "Skipped", description: "The step was intentionally not executed.", style: ansiGray},
+		{name: "Failed", description: "The step did not complete and needs recovery.", style: ansiPink},
+		{name: "Backed up", description: "An existing local file was protected before changes.", style: ansiMint},
+		{name: "Completed", description: "The step finished or was already up to date.", style: ansiMint},
+	}
+	for _, item := range legend {
+		b.WriteString(fmt.Sprintf("- %s: %s\n", styled(item.name, ansiBold+item.style), item.description))
+	}
+	b.WriteString("\nPress q or esc to return.\n")
 }
 
 func renderConfirmationSummary(b *strings.Builder, plan installer.Plan) {
@@ -241,14 +277,14 @@ func renderLayout(regions viewRegions, terminal TerminalSession) string {
 	}
 
 	var b strings.Builder
-	b.WriteString("┌" + strings.Repeat("─", width-2) + "┐\n")
+	b.WriteString(styled("┌"+strings.Repeat("─", width-2)+"┐", ansiBorder) + "\n")
 	writeBoxLines(&b, splitAndFit(regions.header, innerWidth, 2), innerWidth)
-	b.WriteString("├" + strings.Repeat("─", width-2) + "┤\n")
+	b.WriteString(styled("├"+strings.Repeat("─", width-2)+"┤", ansiBorder) + "\n")
 	writeBoxLines(&b, fitLines(splitLines(regions.content), innerWidth, contentHeight), innerWidth)
-	b.WriteString("├" + strings.Repeat("─", width-2) + "┤\n")
+	b.WriteString(styled("├"+strings.Repeat("─", width-2)+"┤", ansiBorder) + "\n")
 	writeBoxLines(&b, splitAndFit(regions.status, innerWidth, 1), innerWidth)
 	writeBoxLines(&b, splitAndFit(regions.footer, innerWidth, 1), innerWidth)
-	b.WriteString("└" + strings.Repeat("─", width-2) + "┘\n")
+	b.WriteString(styled("└"+strings.Repeat("─", width-2)+"┘", ansiBorder) + "\n")
 	return b.String()
 }
 
@@ -296,13 +332,13 @@ func fitLines(lines []string, width, maxLines int) []string {
 
 func writeBoxLines(b *strings.Builder, lines []string, width int) {
 	for _, line := range lines {
-		b.WriteString("│ ")
+		b.WriteString(styled("│", ansiBorder) + " ")
 		b.WriteString(line)
 		padding := width - visibleLen(line)
 		if padding > 0 {
 			b.WriteString(strings.Repeat(" ", padding))
 		}
-		b.WriteString(" │\n")
+		b.WriteString(" " + styled("│", ansiBorder) + "\n")
 	}
 }
 
@@ -375,18 +411,20 @@ func footerForScreen(screen Screen) string {
 		return "working sequentially • ctrl+c quit • final report shows recovery guidance"
 	case ScreenReport:
 		return "enter main menu • q back/quit • ctrl+c quit"
+	case ScreenHelp:
+		return "q return • esc return • ctrl+c quit"
 	case ScreenModuleList, ScreenFlowInfo:
 		return "j/k move • enter select • q back • ctrl+c quit"
 	case ScreenStartupError:
 		return "open Terminal and rerun the command shown above"
 	default:
-		return "j/k move • enter select • q quit • ctrl+c quit"
+		return "j/k move • enter select • ? help • q quit • ctrl+c quit"
 	}
 }
 
 func statusForModel(m Model) string {
 	if m.terminal.Compact {
-		return styled("Compact layout", ansiYellow) + " · critical actions and labels remain visible"
+		return styled("Compact layout", ansiWarning) + " · critical actions and labels remain visible"
 	}
 	switch m.screen {
 	case ScreenRunning:

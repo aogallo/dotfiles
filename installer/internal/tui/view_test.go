@@ -23,7 +23,7 @@ func TestViewShowsRequiredMenuLabelsAndSafeStatus(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(view, "> start installation") {
+	if !strings.Contains(view, "›") || !strings.Contains(view, "start installation") {
 		t.Fatalf("view should style the selected item with a marker:\n%s", view)
 	}
 }
@@ -151,9 +151,9 @@ func TestStatusCueIncludesTextLabelIconAndColor(t *testing.T) {
 		icon   string
 		color  string
 	}{
-		{status: installer.StatusBackedUp, label: "Backed up", icon: "✓", color: ansiGreen},
-		{status: installer.StatusManual, label: "Manual action needed", icon: "!", color: ansiYellow},
-		{status: installer.StatusFailed, label: "Failed", icon: "!", color: ansiRed},
+		{status: installer.StatusBackedUp, label: "Backed up", icon: "✓", color: ansiSuccess},
+		{status: installer.StatusManual, label: "Manual action needed", icon: "!", color: ansiWarning},
+		{status: installer.StatusFailed, label: "Failed", icon: "!", color: ansiFailure},
 		{status: installer.StatusSkipped, label: "Skipped", icon: "•", color: ansiGray},
 	}
 
@@ -171,6 +171,36 @@ func TestStatusCueIncludesTextLabelIconAndColor(t *testing.T) {
 	}
 }
 
+func TestHelpViewExplainsEveryStatusConcept(t *testing.T) {
+	model := NewModel()
+	model.screen = ScreenHelp
+	model.terminal = TerminalSession{Interactive: true, Width: 96, Height: 28}
+
+	view := model.View()
+	for _, want := range []string{"Preview", "Automatic", "Confirmation", "Manual action", "Skipped", "Failed", "Backed up", "Completed"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("help view missing %q:\n%s", want, view)
+		}
+	}
+	for _, want := range []string{ansiBlue, ansiMint, ansiPeach, ansiPink, ansiPurple} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("help view missing approved theme color %q", want)
+		}
+	}
+}
+
+func TestMainMenuUsesBubbleTeaInspiredDarkPalette(t *testing.T) {
+	model := NewModel()
+	model.terminal = TerminalSession{Interactive: true, Width: 80, Height: 24}
+
+	view := model.View()
+	for _, want := range []string{ansiCyan, ansiPurple, ansiBlue, ansiBorder, "? help"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("main menu missing theme cue %q:\n%s", want, view)
+		}
+	}
+}
+
 func TestTerminalPreviewArtifact(t *testing.T) {
 	if os.Getenv("TUI_PREVIEW") != "1" {
 		t.Skip("set TUI_PREVIEW=1 to print the stable terminal preview artifact")
@@ -182,7 +212,10 @@ func TestTerminalPreviewArtifact(t *testing.T) {
 func fullScreenPreview() string {
 	model := NewModel()
 	model.terminal = TerminalSession{Interactive: true, Width: 80, Height: 24}
-	return model.View()
+	help := NewModel()
+	help.screen = ScreenHelp
+	help.terminal = TerminalSession{Interactive: true, Width: 96, Height: 28}
+	return model.View() + "\n" + help.View()
 }
 
 func stripANSI(value string) string {
@@ -191,11 +224,18 @@ func stripANSI(value string) string {
 		ansiDim, "",
 		ansiBold, "",
 		ansiCyan, "",
-		ansiGreen, "",
-		ansiYellow, "",
-		ansiRed, "",
+		ansiMint, "",
+		ansiPurple, "",
+		ansiPink, "",
+		ansiPeach, "",
+		ansiText, "",
+		ansiMuted, "",
 		ansiBlue, "",
 		ansiGray, "",
+		ansiBorder, "",
+		ansiSuccess, "",
+		ansiWarning, "",
+		ansiFailure, "",
 	)
 	return replacer.Replace(value)
 }
