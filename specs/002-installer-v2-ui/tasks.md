@@ -88,13 +88,13 @@ Chain strategy: feature-branch-chain
 **Goal**: Provide full-screen, color-coded, keyboard-driven layout with text fallback for emojis/color.
 **Independent Test**: Render 80x24 and larger views and verify status labels remain understandable without emojis.
 
-- [ ] T030 [P] [US4] Add viewport rendering tests in `/Users/allan/dotfiles/installer/internal/tui/view_test.go`
-- [ ] T031 [P] [US4] Add resize state tests in `/Users/allan/dotfiles/installer/internal/tui/model_test.go`
-- [ ] T032 [US4] Enable alternate screen program mode in `/Users/allan/dotfiles/installer/cmd/dotfiles-installer/main.go`
-- [ ] T033 [US4] Handle `tea.WindowSizeMsg` in `/Users/allan/dotfiles/installer/internal/tui/update.go`
-- [ ] T034 [US4] Add semantic color styles in `/Users/allan/dotfiles/installer/internal/tui/view.go`
-- [ ] T035 [US4] Add optional emoji cues with text fallback in `/Users/allan/dotfiles/installer/internal/tui/view.go`
-- [ ] T036 [US4] Verify 80x24 readability in `/Users/allan/dotfiles/installer/internal/tui/view_test.go`
+- [x] T030 [P] [US4] Add viewport rendering tests in `/Users/allan/dotfiles/installer/internal/tui/view_test.go`
+- [x] T031 [P] [US4] Add resize state tests in `/Users/allan/dotfiles/installer/internal/tui/model_test.go`
+- [x] T032 [US4] Enable alternate screen program mode in `/Users/allan/dotfiles/installer/cmd/dotfiles-installer/main.go`
+- [x] T033 [US4] Handle `tea.WindowSizeMsg` in `/Users/allan/dotfiles/installer/internal/tui/update.go`
+- [x] T034 [US4] Add semantic color styles in `/Users/allan/dotfiles/installer/internal/tui/view.go`
+- [x] T035 [US4] Add optional emoji cues with text fallback in `/Users/allan/dotfiles/installer/internal/tui/view.go`
+- [x] T036 [US4] Verify 80x24 readability in `/Users/allan/dotfiles/installer/internal/tui/view_test.go`
 
 ## Final Phase: Polish and Validation
 
