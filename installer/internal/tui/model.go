@@ -21,6 +21,7 @@ const (
 	ScreenConfirmation Screen = "confirmation"
 	ScreenRunning      Screen = "running"
 	ScreenReport       Screen = "report"
+	ScreenHelp         Screen = "help"
 	ScreenExit         Screen = "exit"
 )
 
@@ -33,6 +34,7 @@ type MenuItem struct {
 // Model is the root Bubble Tea model for the installer TUI.
 type Model struct {
 	screen       Screen
+	helpReturn   Screen
 	startupError StartupError
 	terminal     TerminalSession
 	progress     ProgressSession

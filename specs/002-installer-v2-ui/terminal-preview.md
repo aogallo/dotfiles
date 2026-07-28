@@ -15,7 +15,7 @@ Preview (ANSI color removed for stable Markdown rendering):
 │ dotfiles installer                                                           │
 │ Safe mode: dry-run preview only. No setup scripts run until you select and … │
 ├──────────────────────────────────────────────────────────────────────────────┤
-│ > start installation                                                         │
+│ › start installation                                                         │
 │   sync configs                                                               │
 │   Upgrade tools                                                              │
 │   quit                                                                       │
@@ -33,6 +33,35 @@ Preview (ANSI color removed for stable Markdown rendering):
 │                                                                              │
 ├──────────────────────────────────────────────────────────────────────────────┤
 │ Preview only · No files change before confirmation                           │
-│ j/k move • enter select • q quit • ctrl+c quit                               │
+│ j/k move • enter select • ? help • q quit • ctrl+c quit                      │
 └──────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+│ dotfiles installer                                                                           │
+│ Safe mode: dry-run preview only. No setup scripts run until you select and confirm an actio… │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ help                                                                                         │
+│ Every status keeps a text label. Color and icons are secondary cues.                         │
+│                                                                                              │
+│ - Preview: Safe review; no files change before confirmation.                                 │
+│ - Automatic: The installer can run this when it is safe.                                     │
+│ - Confirmation: A mutating action waits for explicit approval.                               │
+│ - Manual action: Automation is unsafe or unreliable; you must do the step.                   │
+│ - Skipped: The step was intentionally not executed.                                          │
+│ - Failed: The step did not complete and needs recovery.                                      │
+│ - Backed up: An existing local file was protected before changes.                            │
+│ - Completed: The step finished or was already up to date.                                    │
+│                                                                                              │
+│ Press q or esc to return.                                                                    │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+│                                                                                              │
+├──────────────────────────────────────────────────────────────────────────────────────────────┤
+│ Preview only · No files change before confirmation                                           │
+│ q return • esc return • ctrl+c quit                                                          │
+└──────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
