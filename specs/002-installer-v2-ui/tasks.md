@@ -15,12 +15,12 @@ Chain strategy: feature-branch-chain
 
 ### Suggested Work Units
 
-| Unit | Goal | Likely PR | Notes |
-|------|------|-----------|-------|
-| 1 | Downloaded binary visibly starts or gives launch guidance | PR1 | MVP, includes launch docs/tests |
-| 2 | Plain-language confirmation and automatic backup summary | PR2 | Builds on PR1 UX copy and report model |
-| 3 | Live sequential progress during command execution | PR3 | Converts blocking execution to Bubble Tea messages |
-| 4 | Full-screen colored responsive TUI with emoji fallback | PR4 | Visual polish after behavior is stable |
+| Unit | Goal                                                      | Likely PR | Notes                                              |
+| ---- | --------------------------------------------------------- | --------- | -------------------------------------------------- |
+| 1    | Downloaded binary visibly starts or gives launch guidance | PR1       | MVP, includes launch docs/tests                    |
+| 2    | Plain-language confirmation and automatic backup summary  | PR2       | Builds on PR1 UX copy and report model             |
+| 3    | Live sequential progress during command execution         | PR3       | Converts blocking execution to Bubble Tea messages |
+| 4    | Full-screen colored responsive TUI with emoji fallback    | PR4       | Visual polish after behavior is stable             |
 
 ## Phase 1: Setup
 
@@ -98,7 +98,7 @@ Chain strategy: feature-branch-chain
 
 ## Final Phase: Polish and Validation
 
-- [ ] T037 Run `go test ./...` from `/Users/allan/dotfiles/installer`
+- [x] T037 Run `go test ./...` from `/Users/allan/dotfiles/installer`
 
 ## Dependencies
 
