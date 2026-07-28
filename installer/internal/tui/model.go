@@ -45,6 +45,7 @@ type Model struct {
 	report       installer.Report
 	exitCode     installer.ExitCode
 	runner       runner.Runner
+	results      map[string]runner.Result
 }
 
 type StartupError struct {
@@ -63,8 +64,19 @@ type ProgressSession struct {
 	CurrentStepIndex  int
 	TotalSteps        int
 	ActiveStepID      string
+	ActiveModuleID    installer.ModuleID
+	ActiveDescription string
+	CompletedSteps    int
+	RecentResults     []ProgressResult
 	Cancelled         bool
 	IncompleteStepIDs []string
+}
+
+type ProgressResult struct {
+	StepID  string
+	Status  installer.ActionStatus
+	Message string
+	Details string
 }
 
 // NewModel creates the initial installer TUI model.
@@ -83,6 +95,7 @@ func NewModel() Model {
 		report:   installer.NewReport(installer.FlowInstall),
 		exitCode: installer.ExitSuccess,
 		runner:   runner.ExecRunner{},
+		results:  map[string]runner.Result{},
 	}
 }
 

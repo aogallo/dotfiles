@@ -140,6 +140,9 @@ func normalizeResult(step Action, result runner.Result) []ReportItem {
 	var items []ReportItem
 	output := strings.TrimSpace(result.Stdout + "\n" + result.Stderr)
 	if result.ExitCode != 0 {
+		if output == "" {
+			output = "Command failed without output. Review the failed step and rerun the installer from a terminal after resolving the issue."
+		}
 		items = append(items, ReportItem{ModuleID: step.ModuleID, StepID: step.ID, Status: StatusFailed, Message: step.Description, Details: output})
 	}
 	for _, line := range strings.Split(output, "\n") {

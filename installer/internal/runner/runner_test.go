@@ -7,7 +7,36 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
+
+func TestStepProgressMessagesCarryRequiredFields(t *testing.T) {
+	t.Parallel()
+
+	startedAt := time.Date(2026, 7, 27, 12, 0, 0, 0, time.UTC)
+	completedAt := startedAt.Add(time.Second)
+	started := StepStarted{StepID: "nvim-bootstrap-install", ModuleID: "nvim", Index: 2, Total: 4, Description: "Install tools", StartedAt: startedAt}
+	completed := StepCompleted{StepID: started.StepID, Status: "changed", Result: Result{Stdout: "ok", ExitCode: 0}, CompletedAt: completedAt}
+	failed := StepFailed{StepID: "ghostty-link", Err: errors.New("boom"), Result: Result{Stderr: "boom", ExitCode: 7}, CompletedAt: completedAt}
+	skipped := StepSkipped{StepID: "tmux-manual-guidance", Reason: "manual action remains", Status: "manual"}
+	cancelled := InstallCancelled{CompletedCount: 1, RemainingCount: 3}
+
+	if started.StepID == "" || started.ModuleID == "" || started.Index != 2 || started.Total != 4 || started.Description == "" || started.StartedAt.IsZero() {
+		t.Fatalf("started message missing required fields: %#v", started)
+	}
+	if completed.StepID != started.StepID || completed.Result.Stdout != "ok" || completed.CompletedAt.IsZero() {
+		t.Fatalf("completed message missing result fields: %#v", completed)
+	}
+	if failed.StepID == "" || failed.Err == nil || failed.Result.ExitCode != 7 || failed.CompletedAt.IsZero() {
+		t.Fatalf("failed message missing failure fields: %#v", failed)
+	}
+	if skipped.StepID == "" || skipped.Reason == "" || skipped.Status != "manual" {
+		t.Fatalf("skipped message missing accounting fields: %#v", skipped)
+	}
+	if cancelled.CompletedCount != 1 || cancelled.RemainingCount != 3 {
+		t.Fatalf("cancelled message = %#v, want completed/remaining counts", cancelled)
+	}
+}
 
 func TestFakeRunnerRecordsCallsAndReturnsQueuedResults(t *testing.T) {
 	t.Parallel()

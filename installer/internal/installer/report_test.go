@@ -120,6 +120,34 @@ func TestBuildReportAccountsForPlannedStepsWithoutResults(t *testing.T) {
 	}
 }
 
+func TestBuildReportAccountsFailedAndSkippedCommandOutcomes(t *testing.T) {
+	t.Parallel()
+
+	plan := Plan{Flow: FlowInstall, Steps: []Action{
+		{ID: "failed", ModuleID: ModuleNeovim, Kind: StepInstall, Classification: ActionConfirmationRequired, Description: "Install tools."},
+		{ID: "skipped", ModuleID: ModuleGhostty, Kind: StepSync, Classification: ActionConfirmationRequired, Description: "Link Ghostty."},
+	}}
+	results := map[string]runner.Result{
+		"failed":  {ExitCode: 7},
+		"skipped": {Stdout: "skip     already managed", ExitCode: 0},
+	}
+
+	report := BuildReport(plan, results)
+
+	if report.Totals.Failed != 1 || report.Totals.Skipped != 1 {
+		t.Fatalf("totals = %#v, want one failed and one skipped", report.Totals)
+	}
+	if !reportHasDetails(report, StatusFailed, "rerun the installer from a terminal") {
+		t.Fatalf("failed item missing recovery detail: %#v", report.Items)
+	}
+	if !reportHasDetails(report, StatusSkipped, "already managed") {
+		t.Fatalf("skipped item missing command detail: %#v", report.Items)
+	}
+	if report.ExitCode != ExitFailure {
+		t.Fatalf("ExitCode = %d, want failure", report.ExitCode)
+	}
+}
+
 func reportHasStatus(report Report, status ActionStatus) bool {
 	for _, item := range report.Items {
 		if item.Status == status {
