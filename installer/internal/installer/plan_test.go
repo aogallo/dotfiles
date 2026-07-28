@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestInventoryModulesReadsManifestsAndDocs(t *testing.T) {
@@ -64,12 +65,73 @@ func TestBuildInstallPlanSeparatesAutomaticConfirmedReportAndManual(t *testing.T
 		}
 	}
 
-	assertStepOrder(t, plan, "nvim-link-dry-run", "nvim-link-apply")
-	assertStepOrder(t, plan, "ghostty-link-dry-run", "ghostty-link-apply")
+	assertStepOrder(t, plan, "nvim-link-dry-run", "nvim-link-backup-apply")
+	assertStepOrder(t, plan, "ghostty-link-dry-run", "ghostty-link-backup-apply")
+	assertPlanLacksStep(t, plan, "nvim-link-apply")
+	assertPlanLacksStep(t, plan, "ghostty-link-apply")
 	assertStep(t, plan, "zsh-validate", ActionAutomatic, StepValidate)
 	assertStep(t, plan, "tmux-manual-guidance", ActionManualOnly, StepManualGuidance)
 	assertStep(t, plan, "keyboard-manual-guidance", ActionManualOnly, StepManualGuidance)
 	assertStep(t, plan, "macos-manual-guidance", ActionManualOnly, StepManualGuidance)
+}
+
+func TestInstallPlanUsesAutomaticBackupStepsForConfigLinks(t *testing.T) {
+	t.Parallel()
+
+	plan, err := BuildPlan(FlowInstall, []ModuleID{ModuleNeovim, ModuleGhostty}, "../../..")
+	if err != nil {
+		t.Fatalf("BuildPlan() error = %v", err)
+	}
+
+	for _, id := range []string{"nvim-link-backup-apply", "ghostty-link-backup-apply"} {
+		step := findStep(t, plan, id)
+		if step.Kind != StepBackup {
+			t.Fatalf("step %q kind = %q, want backup", id, step.Kind)
+		}
+		if !contains(step.Command, "--backup") {
+			t.Fatalf("step %q command = %v, want --backup", id, step.Command)
+		}
+	}
+}
+
+func TestNextAvailableBackupPathDoesNotOverwriteExistingBackups(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	candidate := filepath.Join(dir, "nvim-20260727-120000")
+	mustWriteFile(t, candidate, "first backup")
+	mustWriteFile(t, candidate+"-1", "second backup")
+
+	got := nextAvailableBackupPath(candidate, pathExists)
+	want := candidate + "-2"
+	if got != want {
+		t.Fatalf("nextAvailableBackupPath() = %q, want %q", got, want)
+	}
+}
+
+func TestPlannedBackupPathUsesEstablishedBackupDirectories(t *testing.T) {
+	t.Parallel()
+
+	home := t.TempDir()
+	at := time.Date(2026, 7, 27, 12, 0, 0, 0, time.UTC)
+
+	tests := []struct {
+		name     string
+		moduleID ModuleID
+		want     string
+	}{
+		{name: "neovim", moduleID: ModuleNeovim, want: filepath.Join(home, ".dotfiles_backup", "nvim-20260727-120000")},
+		{name: "ghostty", moduleID: ModuleGhostty, want: filepath.Join(home, ".dotfiles_backup", "ghostty", "config.ghostty-20260727-120000")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := plannedBackupPath(tt.moduleID, home, at, func(string) bool { return false })
+			if got != tt.want {
+				t.Fatalf("plannedBackupPath() = %q, want %q", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestBuildPerModulePlanLimitsModules(t *testing.T) {
@@ -240,6 +302,17 @@ func assertStep(t *testing.T, plan Plan, id string, classification ActionClassif
 		}
 	}
 	t.Fatalf("missing step %q", id)
+}
+
+func findStep(t *testing.T, plan Plan, id string) Action {
+	t.Helper()
+	for _, step := range plan.Steps {
+		if step.ID == id {
+			return step
+		}
+	}
+	t.Fatalf("missing step %q in %#v", id, plan.Steps)
+	return Action{}
 }
 
 func assertPlanHasStep(t *testing.T, plan Plan, id string) {

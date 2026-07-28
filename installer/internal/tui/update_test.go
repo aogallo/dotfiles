@@ -147,6 +147,38 @@ func TestInstallFlowTransitionsThroughPlanConfirmationAndReport(t *testing.T) {
 	}
 }
 
+func TestPreConfirmCancelDoesNotExecutePlan(t *testing.T) {
+	fake := &runner.FakeRunner{}
+	model := NewModel()
+	model.runner = fake
+
+	updatedModel, _ := model.Update(key(tea.KeyEnter))
+	model = updatedModel.(Model)
+	updatedModel, _ = model.Update(key(tea.KeyEnter))
+	model = updatedModel.(Model)
+	updatedModel, _ = model.Update(key(tea.KeyEnter))
+	model = updatedModel.(Model)
+	if model.Screen() != ScreenConfirmation {
+		t.Fatalf("screen = %q, want confirmation", model.Screen())
+	}
+
+	updatedModel, cmd := model.Update(runeKey('q'))
+	model = updatedModel.(Model)
+
+	if model.Screen() != ScreenMainMenu {
+		t.Fatalf("screen = %q, want main menu after cancellation", model.Screen())
+	}
+	if len(fake.Calls) != 0 {
+		t.Fatalf("runner calls = %d, want none before confirmation", len(fake.Calls))
+	}
+	if cmd != nil {
+		t.Fatal("pre-confirm cancellation should not quit or run commands")
+	}
+	if !model.progress.Cancelled || len(model.progress.IncompleteStepIDs) == 0 {
+		t.Fatalf("progress cancellation = %#v, want planned steps marked incomplete", model.progress)
+	}
+}
+
 func TestSyncAndUpgradeFlowsUseConfirmationGatesAndReports(t *testing.T) {
 	tests := []struct {
 		name       string
