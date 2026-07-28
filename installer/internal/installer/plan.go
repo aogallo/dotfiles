@@ -53,12 +53,13 @@ type ModulePlan struct {
 
 // PlanBuilder builds a plan while enforcing foundational safety invariants.
 type PlanBuilder struct {
-	plan Plan
+	plan    Plan
+	stepIDs map[string]struct{}
 }
 
 // NewPlanBuilder creates a builder for a flow.
 func NewPlanBuilder(flow Flow) *PlanBuilder {
-	return &PlanBuilder{plan: Plan{Flow: flow}}
+	return &PlanBuilder{plan: Plan{Flow: flow}, stepIDs: map[string]struct{}{}}
 }
 
 // AddInventorySource records a repository-relative source consulted for the plan.
@@ -73,6 +74,12 @@ func (b *PlanBuilder) AddConfigTarget(target ManagedConfigTarget) {
 
 // AddStep appends an action step after validating command and ordering rules.
 func (b *PlanBuilder) AddStep(step Action) error {
+	if step.ID == "" {
+		return fmt.Errorf("planned step ID must not be empty")
+	}
+	if _, exists := b.stepIDs[step.ID]; exists {
+		return fmt.Errorf("planned step ID %q must be unique", step.ID)
+	}
 	if err := step.Validate(); err != nil {
 		return err
 	}
@@ -82,6 +89,7 @@ func (b *PlanBuilder) AddStep(step Action) error {
 	}
 
 	b.plan.Steps = append(b.plan.Steps, step)
+	b.stepIDs[step.ID] = struct{}{}
 	if step.RequiresConfirmation() {
 		b.plan.RequiresConfirmation = true
 	}
@@ -94,6 +102,15 @@ func (b *PlanBuilder) AddStep(step Action) error {
 	}
 
 	return nil
+}
+
+// PlannedStepIDs returns stable step identifiers in execution order.
+func (p Plan) PlannedStepIDs() []string {
+	ids := make([]string, 0, len(p.Steps))
+	for _, step := range p.Steps {
+		ids = append(ids, step.ID)
+	}
+	return ids
 }
 
 // Build returns the completed plan with per-module step groups populated.

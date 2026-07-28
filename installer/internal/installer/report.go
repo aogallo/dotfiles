@@ -41,6 +41,7 @@ type ReportTotals struct {
 	Unchanged int
 	Skipped   int
 	Failed    int
+	Cancelled int
 	Backup    int
 	Manual    int
 }
@@ -91,7 +92,11 @@ func BuildReport(plan Plan, results map[string]runner.Result) Report {
 
 		if !hasResult {
 			if step.Classification == ActionDryRunReportOnly {
-				report.addItem(ReportItem{ModuleID: step.ModuleID, StepID: step.ID, Status: StatusSkipped, Message: step.Description, Details: "Dry-run/report step not executed in this report."})
+				report.addItem(ReportItem{ModuleID: step.ModuleID, StepID: step.ID, Status: StatusSkipped, Message: step.Description, Details: "Preview/report step was not executed in this report."})
+				continue
+			}
+			if step.HasCommand() || step.RequiresConfirmation() {
+				report.addItem(ReportItem{ModuleID: step.ModuleID, StepID: step.ID, Status: StatusCancelled, Message: step.Description, Details: "Planned step did not complete. Rerun the installer from a terminal to continue."})
 			}
 			continue
 		}
@@ -106,7 +111,7 @@ func BuildReport(plan Plan, results map[string]runner.Result) Report {
 			}
 		}
 	}
-	if report.Totals.Failed > 0 {
+	if report.Totals.Failed > 0 || report.Totals.Cancelled > 0 {
 		report.ExitCode = ExitFailure
 	}
 	return report
@@ -162,6 +167,8 @@ func (r *Report) addItem(item ReportItem) {
 		r.Totals.Skipped++
 	case StatusFailed, StatusMissing, StatusUnmanaged:
 		r.Totals.Failed++
+	case StatusCancelled:
+		r.Totals.Cancelled++
 	case StatusBackedUp:
 		r.Totals.Backup++
 	case StatusManual:

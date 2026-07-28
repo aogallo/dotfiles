@@ -49,6 +49,7 @@ const (
 	StatusUnchanged ActionStatus = "unchanged"
 	StatusSkipped   ActionStatus = "skipped"
 	StatusFailed    ActionStatus = "failed"
+	StatusCancelled ActionStatus = "cancelled"
 	StatusOptional  ActionStatus = "optional"
 	StatusManual    ActionStatus = "manual"
 	StatusManaged   ActionStatus = "managed"
@@ -67,6 +68,54 @@ type Action struct {
 	Command          []string
 	Description      string
 	ExpectedStatuses []ActionStatus
+}
+
+// StatusLabel returns a plain-language label safe for user-facing UI and reports.
+func (s ActionStatus) StatusLabel() string {
+	switch s {
+	case StatusChanged:
+		return "Changed"
+	case StatusUnchanged:
+		return "Already up to date"
+	case StatusSkipped:
+		return "Skipped"
+	case StatusFailed:
+		return "Failed"
+	case StatusCancelled:
+		return "Not completed"
+	case StatusOptional:
+		return "Optional"
+	case StatusManual:
+		return "Manual action needed"
+	case StatusManaged:
+		return "Managed by this repo"
+	case StatusUnmanaged:
+		return "Needs review"
+	case StatusMissing:
+		return "Missing required item"
+	case StatusBackedUp:
+		return "Backed up"
+	case StatusRemoved:
+		return "Removed"
+	default:
+		return "Unknown status"
+	}
+}
+
+// ClassificationLabel returns a plain-language explanation for action safety classification.
+func (c ActionClassification) ClassificationLabel() string {
+	switch c {
+	case ActionAutomatic:
+		return "Runs automatically when safe"
+	case ActionConfirmationRequired:
+		return "Runs only after you confirm"
+	case ActionDryRunReportOnly:
+		return "Preview only; no changes"
+	case ActionManualOnly:
+		return "Manual action needed"
+	default:
+		return "Needs review"
+	}
 }
 
 // RequiresConfirmation reports whether the action needs an explicit user confirmation.

@@ -14,6 +14,14 @@ import (
 // Update handles Bubble Tea messages for the installer model.
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case StartupError:
+		m.screen = ScreenStartupError
+		m.startupError = msg
+		m.exitCode = installer.ExitFailure
+		return m, tea.Quit
+	case tea.WindowSizeMsg:
+		m.terminal.Width = msg.Width
+		m.terminal.Height = msg.Height
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -111,9 +119,12 @@ func (m Model) buildActionPlan(moduleIDs []installer.ModuleID) Model {
 
 func (m Model) finalizeReport() Model {
 	m.screen = ScreenRunning
+	m.progress.TotalSteps = len(m.plan.Steps)
+	m.progress.IncompleteStepIDs = m.plan.PlannedStepIDs()
 	m.report = installer.BuildReport(m.plan, m.executePlan(context.Background()))
 	m.screen = ScreenReport
 	m.exitCode = m.report.ExitCode
+	m.progress.IncompleteStepIDs = incompleteStepIDs(m.plan, m.report)
 	return m
 }
 
@@ -146,6 +157,22 @@ func (m Model) executePlan(ctx context.Context) map[string]runner.Result {
 	}
 
 	return results
+}
+
+func incompleteStepIDs(plan installer.Plan, report installer.Report) []string {
+	incomplete := map[string]struct{}{}
+	for _, item := range report.Items {
+		if item.Status == installer.StatusCancelled || item.Status == installer.StatusFailed || item.Status == installer.StatusMissing || item.Status == installer.StatusUnmanaged {
+			incomplete[item.StepID] = struct{}{}
+		}
+	}
+	ids := make([]string, 0, len(incomplete))
+	for _, step := range plan.Steps {
+		if _, ok := incomplete[step.ID]; ok {
+			ids = append(ids, step.ID)
+		}
+	}
+	return ids
 }
 
 func executionFailureResults(plan installer.Plan, err error) map[string]runner.Result {

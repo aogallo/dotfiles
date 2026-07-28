@@ -17,7 +17,7 @@ Prepares a clean macOS machine for the guided dotfiles installer.
 
 Options:
   --dry-run        Report prerequisite state and planned actions without installing or launching.
-  --prefer-binary Prefer a compatible prebuilt or released dotfiles-installer binary when available.
+  --prefer-binary Prefer a compatible local or released dotfiles-installer binary and launch it directly when available.
   --no-binary     Skip prebuilt binary discovery and launch from source with go run.
   -h, --help      Show this help.
 
@@ -294,6 +294,7 @@ launch_installer() {
   if download_release_binary; then
     binary="$DOWNLOADED_RELEASE_BINARY"
     status_line "launch" "release_binary ($binary)"
+    status_line "guidance" "starting downloaded release artifact from this terminal"
     if safe_run "$binary"; then
       rm -rf "$DOWNLOADED_RELEASE_DIR"
     else
