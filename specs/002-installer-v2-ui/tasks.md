@@ -59,14 +59,14 @@ Chain strategy: feature-branch-chain
 **Goal**: Replace internal safety terms with clear confirmation, backup, skipped, and manual-action language.
 **Independent Test**: Build a plan with unmanaged config targets and verify confirmation explains changes/backups before mutation.
 
-- [ ] T015 [P] [US2] Add confirmation copy tests in `/Users/allan/dotfiles/installer/internal/tui/view_test.go`
-- [ ] T016 [P] [US2] Add backup uniqueness tests in `/Users/allan/dotfiles/installer/internal/installer/plan_test.go`
-- [ ] T017 [US2] Replace internal classification display labels in `/Users/allan/dotfiles/installer/internal/installer/action.go`
-- [ ] T018 [US2] Render confirmation summary sections in `/Users/allan/dotfiles/installer/internal/tui/view.go`
-- [ ] T019 [US2] Keep pre-confirm cancellation non-mutating in `/Users/allan/dotfiles/installer/internal/tui/update.go`
-- [ ] T020 [US2] Plan automatic backup steps after install confirmation in `/Users/allan/dotfiles/installer/internal/installer/plan.go`
-- [ ] T021 [US2] Add backup restore guidance to reports in `/Users/allan/dotfiles/installer/internal/installer/report.go`
-- [ ] T022 [US2] Add pre-confirm cancel regression test in `/Users/allan/dotfiles/installer/internal/tui/update_test.go`
+- [x] T015 [P] [US2] Add confirmation copy tests in `/Users/allan/dotfiles/installer/internal/tui/view_test.go`
+- [x] T016 [P] [US2] Add backup uniqueness tests in `/Users/allan/dotfiles/installer/internal/installer/plan_test.go`
+- [x] T017 [US2] Replace internal classification display labels in `/Users/allan/dotfiles/installer/internal/installer/action.go`
+- [x] T018 [US2] Render confirmation summary sections in `/Users/allan/dotfiles/installer/internal/tui/view.go`
+- [x] T019 [US2] Keep pre-confirm cancellation non-mutating in `/Users/allan/dotfiles/installer/internal/tui/update.go`
+- [x] T020 [US2] Plan automatic backup steps after install confirmation in `/Users/allan/dotfiles/installer/internal/installer/plan.go`
+- [x] T021 [US2] Add backup restore guidance to reports in `/Users/allan/dotfiles/installer/internal/installer/report.go`
+- [x] T022 [US2] Add pre-confirm cancel regression test in `/Users/allan/dotfiles/installer/internal/tui/update_test.go`
 
 ## Phase 5: User Story 3 - Track Install Progress by Tool and File (P3)
 

@@ -16,10 +16,10 @@ func TestBuildReportNormalizesStatusesBackupsLogsAndExitCode(t *testing.T) {
 	}
 
 	results := map[string]runner.Result{
-		"nvim-validate":          {Stdout: "missing  TypeScript native preview (tsgo) [required]\noptional AWS SAM CLI (sam) [missing, non-blocking]\n", ExitCode: 1},
-		"nvim-bootstrap-dry-run": {Stdout: "manual   JSON language server: install via Mason\nmanual   AWS CloudFormation language server: Download bundle\n", ExitCode: 0},
-		"ghostty-link-dry-run":   {Stdout: "State: unmanaged\nskip     backup required before apply\n", ExitCode: 0},
-		"ghostty-link-apply":     {Stdout: "backup   /tmp/config.ghostty-1\nSummary: 1 changed, 0 skipped, 0 failed\n", ExitCode: 0},
+		"nvim-validate":             {Stdout: "missing  TypeScript native preview (tsgo) [required]\noptional AWS SAM CLI (sam) [missing, non-blocking]\n", ExitCode: 1},
+		"nvim-bootstrap-dry-run":    {Stdout: "manual   JSON language server: install via Mason\nmanual   AWS CloudFormation language server: Download bundle\n", ExitCode: 0},
+		"ghostty-link-dry-run":      {Stdout: "State: unmanaged\nskip     backup required before apply\n", ExitCode: 0},
+		"ghostty-link-backup-apply": {Stdout: "backup   /tmp/config.ghostty-1\nSummary: 1 changed, 0 skipped, 0 failed\n", ExitCode: 0},
 	}
 
 	report := BuildReport(plan, results)
@@ -34,6 +34,9 @@ func TestBuildReportNormalizesStatusesBackupsLogsAndExitCode(t *testing.T) {
 	}
 	if len(report.Backups) != 1 || report.Backups[0].BackupPath != "/tmp/config.ghostty-1" {
 		t.Fatalf("Backups = %#v, want parsed backup path", report.Backups)
+	}
+	if report.Backups[0].SourceTarget == "" || !strings.Contains(report.Backups[0].RestoreGuidance, "To restore") || !strings.Contains(report.Backups[0].RestoreGuidance, report.Backups[0].BackupPath) {
+		t.Fatalf("backup restore guidance = %#v, want source target and actionable restore text", report.Backups[0])
 	}
 	if len(report.ManualNextSteps) == 0 {
 		t.Fatal("ManualNextSteps should include manual-only and report-only guidance")
