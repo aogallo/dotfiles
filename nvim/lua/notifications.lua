@@ -275,8 +275,28 @@ function M.open_history()
         end)
         :totable()
 
-    vim.fn.setqflist({}, ' ', { title = 'Notifications', lines = lines })
-    vim.cmd.copen()
+    local bufnr = vim.api.nvim_create_buf(false, true)
+    vim.bo[bufnr].filetype = 'snacks_notif_history'
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+    vim.bo[bufnr].modifiable = false
+
+    local width = math.floor(vim.o.columns * 0.7)
+    local height = math.min(math.floor(vim.o.lines * 0.6), math.max(#lines, 8))
+    local win = vim.api.nvim_open_win(bufnr, true, {
+        relative = 'editor',
+        row = math.floor((vim.o.lines - height) / 2),
+        col = math.floor((vim.o.columns - width) / 2),
+        width = width,
+        height = height,
+        style = 'minimal',
+        border = 'rounded',
+        title = ' Notification History ',
+        title_pos = 'center',
+    })
+
+    vim.keymap.set('n', 'q', function()
+        pcall(vim.api.nvim_win_close, win, true)
+    end, { buffer = bufnr, silent = true })
 end
 
 function M.history()

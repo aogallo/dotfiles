@@ -110,25 +110,5 @@ vim.api.nvim_create_autocmd('CmdlineLeave', {
 })
 
 vim.api.nvim_create_user_command('PackClean', function()
-    local notifications = require 'notifications'
-    local inactive = vim.iter(vim.pack.get())
-        :filter(function(x)
-            return not x.active
-        end)
-        :map(function(x)
-            return x.spec.name
-        end)
-        :totable()
-
-    if #inactive == 0 then
-        notifications.notify('No inactive plugins to remove', 'info', { title = 'PackClean', source = 'Packages' })
-        return
-    end
-
-    vim.pack.del(inactive)
-    notifications.notify(
-        'Removed: ' .. table.concat(inactive, ', '),
-        'info',
-        { title = 'PackClean', source = 'Packages' }
-    )
+    require('pack-clean').open()
 end, { desc = 'Remove plugins not in vim.pack.add() specs' })

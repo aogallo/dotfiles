@@ -37,6 +37,47 @@ environment or ignored local overrides, not from committed Lua files.
    setup/link-nvim-config.sh --dry-run
    ```
 
+## Plugin Cleanup
+
+Use `:PackClean` to review stale Neovim plugin state before deleting anything. The command opens
+the Snacks picker when Snacks is loaded; use `<Tab>` to select individual candidates, `<C-a>` to
+select all candidates, and `<CR>` to continue to the confirmation prompt. No plugin directory or
+lockfile entry is removed until the prompt is confirmed with `yes`.
+
+The review surface shows each candidate's name, path, active state, lockfile state, and cleanup
+reason:
+
+- `inactive-managed`: known to `vim.pack`, installed on disk, but inactive in the current session.
+- `disk-only`: installed under a managed package root but absent from active `vim.pack` state.
+- `lockfile-only`: present in `nvim/nvim-pack-lock.json` but absent from active plugin state.
+- `missing`: known to `vim.pack`, but the local plugin directory is already gone.
+
+Safety boundaries are resolved at runtime from Neovim's package roots. `:PackClean` blocks paths
+outside those roots, excludes active plugins, and reports every processed item as removed, skipped,
+blocked, not found, or errored. Lockfile cleanup is explicit: stale entries are removed only for
+confirmed candidates and the lockfile is rewritten as valid JSON.
+
+If Snacks picker is unavailable during startup timing or a minimal/headless session, `:PackClean`
+falls back to a `vim.ui.input` report path. The fallback intentionally keeps the same confirmation
+gate and safety validation, but it cleans all listed candidates after confirmation because there is
+no multi-select picker available.
+
+Validate the command with:
+
+```sh
+stylua --check nvim
+nvim --headless -u nvim/init.lua '+quitall'
+nvim --headless -u nvim/init.lua '+command PackClean' '+quitall'
+```
+
+Interactive validation still needs a real Neovim UI: run `:PackClean`, confirm the picker or
+fallback report opens, inspect disk-only/orphan, lockfile-only, active-exclusion, missing-path, and
+unsafe-path cases in a controlled runtime, and repeat the cleanup to confirm idempotent reporting.
+
+Rollback is a normal repository revert for config and lockfile changes. Removed plugin directories
+can be restored by re-adding/restoring the plugin spec or lockfile entry, then starting Neovim so
+`vim.pack` installs the plugin again.
+
 ## Dependency Strategy
 
 `nvim/dependencies.tsv` is the reviewable source of truth for Neovim language servers,
@@ -96,6 +137,69 @@ installing or updating plugins, use these Neovim commands when parser work is ne
 :TSInstallConfigured
 :TSUpdateConfigured
 ```
+
+### Treesitter Textobjects
+
+The config adds `nvim-treesitter-textobjects` as a semantic editing layer on top of native
+Vim textobjects. It does not override delimiter textobjects: keep using `a(`, `i(`, `ca(`,
+and `va(` for parenthesis-oriented edits such as changing the contents of a Go `const (...)`
+block. Use Treesitter textobjects when the target is semantic code structure instead of
+punctuation.
+
+Semantic selection mappings are available in visual and operator-pending mode:
+
+| Mapping | Behavior |
+|---------|----------|
+| `af` | outer function |
+| `if` | inner function |
+| `ac` | outer class, type, or equivalent structure where the parser supports it |
+| `ic` | inner class, type, or equivalent structure where the parser supports it |
+| `ao` | outer comment where textobject queries support comments |
+| `as` | local scope where locals queries support scopes |
+
+Incremental structural selection uses repository-local mappings to avoid conflicting with
+native `gn` selection behavior:
+
+| Mapping | Mode | Behavior |
+|---------|------|----------|
+| `<leader>vs` | normal, visual | start selection at the nearest Treesitter node |
+| `<leader>ve` | normal, visual | expand to the parent syntax node |
+| `<leader>vr` | visual | shrink back to the previous node |
+
+Structural movement is enabled only for conflict-free function/type navigation. Parameter swap
+mappings are intentionally deferred until fixture validation proves them syntax-safe across the
+supported languages.
+
+| Mapping | Mode | Behavior |
+|---------|------|----------|
+| `]f` | normal, visual, operator-pending | next function start |
+| `[f` | normal, visual, operator-pending | previous function start |
+| `]t` | normal, visual, operator-pending | next class/type start |
+| `[t` | normal, visual, operator-pending | previous class/type start |
+
+Unsupported captures fail safely when a language parser or query does not expose the requested
+structure. In that case, use the closest native textobject or a supported semantic mapping and
+check parser/query health with:
+
+```sh
+nvim --headless -u nvim/init.lua '+checkhealth nvim-treesitter' '+quitall'
+```
+
+Validate textobjects with the fixtures in
+`specs/002-nvim-treesitter-textobjects/fixtures/`:
+
+```sh
+stylua --check nvim
+nvim --headless -u nvim/init.lua '+quitall'
+nvim --headless -u nvim/init.lua '+checkhealth nvim-treesitter' '+quitall'
+nvim --headless -u nvim/init.lua '+command TSInstallConfigured' '+command TSUpdateConfigured' '+quitall'
+```
+
+Manual validation should cover semantic selections, three levels of incremental selection,
+native `a(`/`i(`/`ca(`/`va(` behavior in `sample.go`, and the enabled `]f`/`[f`/`]t`/`[t`
+movement mappings. Roll back by removing the textobjects plugin entry and mapping setup from
+`nvim/plugin/treesitter.lua`, syncing `nvim/nvim-pack-lock.json`, and re-running the validation
+commands above.
 
 ## AWS YAML, CloudFormation, and SAM Editing
 
@@ -275,17 +379,62 @@ That repair is machine-local setup. Do not commit the copied `.node` file or any
 
 ## Notifications and Message History
 
-Notifications, captured editor messages, command/keymap failures, and LSP progress use the
-shared helper in `lua/notifications.lua`. The helper keeps visible messages concise, stores
-full details in session history where available, and falls back safely when Snacks UI pieces
-are not loaded.
+Snacks owns visible notifications and `lua/notifications.lua` keeps the repository-local
+notification history. Noice was evaluated twice, including a LazyVim-like `UIEnter` experiment,
+and was rejected because it still duplicated the native bottom command line in the real UI.
 
-Use `<leader>un` to open notification/message history. The mapping prefers Snacks native
-notifier history when available, falls back to the helper's custom Snacks picker for
-internal-only captured entries, and finally opens a quickfix-backed session history if
-Snacks is unavailable.
+Provider ownership:
 
-Manual validation for notification changes is documented in
+| Surface | Owner | Notes |
+|---------|-------|-------|
+| Command entry | Native Neovim | Floating command-line UI is deferred until a provider can avoid duplicate cmdline rendering. |
+| Command options | Native Neovim | Keep native completion behavior until a replacement passes manual validation. |
+| Editor messages and `:messages` | Native Neovim + custom capture | `CmdlineLeave` captures recent status/warning/error messages into notification history. |
+| Visible notifications | Snacks notifier | `lua/notifications.lua` sends visible helper notifications through `vim.notify`, which Snacks displays. |
+| Notification/message history | `<leader>un` | Opens Snacks/custom floating history from `lua/notifications.lua`; it must not fall back to quickfix. |
+| LSP progress | Existing LSP/client behavior | Do not add another progress provider without disabling overlapping output. |
+
+Use `<leader>un` to inspect recent notification and message history. For manual validation,
+trigger notifications with:
+
+```vim
+:lua require('notifications').notify('UI validation info', 'info', { title = 'Validation' })
+:lua require('notifications').notify('UI validation warning', 'warn', { title = 'Validation' })
+:lua require('notifications').notify('UI validation error', 'error', { title = 'Validation' })
+```
+
+Expected result: notifications appear outside the bottom command-line area, are not duplicated,
+warnings/errors remain noticeable, and `<leader>un` shows recent history in a floating window.
+Command-line behavior remains native until a replacement passes manual validation at 80, 120,
+and 160 columns.
+
+Troubleshooting:
+
+- If command entry uses the bottom command line, that is expected for the current native fallback.
+- If notifications duplicate, check that only Snacks is wrapping visible `vim.notify` output.
+- If `<leader>un` opens no history, trigger a helper notification first, for example by running a
+  command that uses `lua/notifications.lua`. The fallback should still use a floating window, not
+  quickfix.
+- If LSP progress is noisy or stale, fix the active LSP/progress source before adding another
+  provider such as Fidget.
+
+Validate command-line UI changes with:
+
+```sh
+stylua --check nvim
+nvim --headless -u nvim/init.lua '+quitall'
+setup/validate-nvim-deps.sh
+```
+
+Rollback:
+
+1. Restore the previous notification block from version control if this custom history is broken.
+2. Refresh `nvim/nvim-pack-lock.json` through normal `vim-pack` sync/startup behavior if plugin
+   ownership changes.
+3. Re-run `stylua --check nvim`, `nvim --headless -u nvim/init.lua '+quitall'`, and any relevant
+   interactive notification/history checks.
+
+Manual validation for the older notification helper remains documented in
 `specs/002-unify-notifications/quickstart.md`. Diagnostics UI is intentionally out of scope
 for the notification flow and should only be checked for no-regression behavior.
 
