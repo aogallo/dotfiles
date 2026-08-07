@@ -10,6 +10,7 @@ add {
             input = { enabled = true },
             explorer = { enabled = true },
             lazygit = { enabled = true },
+            picker = { enabled = true },
             notifier = {
                 enabled = true,
                 timeout = 3000,
@@ -80,12 +81,12 @@ add {
                     'warn',
                     { title = 'Notifications' }
                 )
-            else
-                vim.keymap.set('n', '<leader>un', notifications.open_history, {
-                    desc = 'Notification history',
-                    silent = true,
-                })
             end
+
+            vim.keymap.set('n', '<leader>un', notifications.open_history, {
+                desc = 'Notification history',
+                silent = true,
+            })
 
             vim.keymap.set('n', '<leader>fe', Snacks.explorer.open, { desc = 'Explorer', silent = true })
             vim.keymap.set('n', '<leader>bo', Snacks.bufdelete.other, { desc = 'Delete other buffers', silent = true })
