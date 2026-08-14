@@ -8,7 +8,6 @@ vim.loader.enable()
 require 'config.options'
 require 'config.keymaps'
 require 'config.autocmds'
-require 'statusline'
 require 'lsp'
 
 vim.lsp.config('*', {
