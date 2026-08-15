@@ -93,7 +93,7 @@ stylua --check nvim
 nvim --headless -u nvim/init.lua '+quitall'
 ```
 
-Full manual validation steps live in `specs/001-install-statusline-bufferline/quickstart.md`.
+Full manual validation steps live in `specs/archive/2026-08-14-001-install-statusline-bufferline/quickstart.md`.
 
 ## Dependency Strategy
 
