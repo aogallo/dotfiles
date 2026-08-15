@@ -7,6 +7,14 @@ add {
     {
         src = 'folke/snacks.nvim',
         opts = {
+            dashboard = {
+                enabled = true,
+                sections = {
+                    { section = 'header' },
+                    { icon = ' ', title = 'Keymaps', section = 'keys', gap = 1, padding = 1, indent = 2 },
+                    { icon = '󰈙 ', title = 'Recent Files', section = 'recent_files', indent = 2, padding = 2 },
+                },
+            },
             input = { enabled = true },
             explorer = { enabled = true },
             lazygit = { enabled = true },
@@ -148,10 +156,59 @@ add {
                 { '<leader>s', group = 'search' },
                 { '<leader>u', group = 'ui' },
                 { '<leader>w', group = 'windows' },
+                { '<S-h>', desc = 'Next buffer', hidden = true },
+                { '<S-l>', desc = 'Previous buffer', hidden = true },
             }
         end,
     },
 
+    {
+        src = 'nvim-lualine/lualine.nvim',
+        opts = {
+            options = {
+                globalstatus = true,
+                theme = 'auto',
+                component_separators = { left = '', right = '' },
+                section_separators = { left = '', right = '' },
+                disabled_filetypes = { statusline = { 'dashboard' } },
+            },
+            sections = {
+                lualine_a = { 'mode' },
+                lualine_b = { 'branch' },
+                lualine_c = { { 'filename', file_status = true, path = 1 } },
+                lualine_x = {
+                    { 'diagnostics', sources = { 'nvim_diagnostic' } },
+                    'encoding',
+                    'filetype',
+                },
+                lualine_y = {},
+                lualine_z = { 'location' },
+            },
+            inactive_sections = {
+                lualine_a = {},
+                lualine_b = {},
+                lualine_c = { { 'filename', file_status = true, path = 1 } },
+                lualine_x = { 'location' },
+                lualine_y = {},
+                lualine_z = {},
+            },
+        },
+    },
+    {
+        src = 'akinsho/bufferline.nvim',
+        opts = {
+            options = {
+                mode = 'buffers',
+                diagnostics = 'nvim_lsp',
+                diagnostics_update_on_event = true,
+                show_buffer_close_icons = true,
+                show_close_icon = true,
+                modified_icon = '●',
+                auto_toggle_bufferline = true,
+                separator_style = 'slant',
+            },
+        },
+    },
     {
         src = 'christoomey/vim-tmux-navigator',
         setup = false,

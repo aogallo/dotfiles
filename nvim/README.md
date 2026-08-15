@@ -78,6 +78,23 @@ Rollback is a normal repository revert for config and lockfile changes. Removed 
 can be restored by re-adding/restoring the plugin spec or lockfile entry, then starting Neovim so
 `vim.pack` installs the plugin again.
 
+## Statusline and Bufferline
+
+The statusline is provided by `lualine.nvim` and renders mode, branch, filename, diagnostics, encoding, filetype, and cursor location in a single global statusline. The buffer list is provided by `bufferline.nvim` in `buffers` mode with LSP diagnostics and per-buffer close icons; it auto-hides when only one buffer is open.
+
+Buffer navigation uses `<S-h>` (next) and `<S-l>` (previous). These mappings are muted from which-key. Closing and buffer-list actions stay under the `<leader>b` domain (`<leader>bx`, `<leader>bo`, `<leader>bb`).
+
+When Neovim starts without a file argument, the Snacks dashboard shows a header, quick keymaps, and recent files.
+
+Validate with:
+
+```sh
+stylua --check nvim
+nvim --headless -u nvim/init.lua '+quitall'
+```
+
+Full manual validation steps live in `specs/001-install-statusline-bufferline/quickstart.md`.
+
 ## Dependency Strategy
 
 `nvim/dependencies.tsv` is the reviewable source of truth for Neovim language servers,

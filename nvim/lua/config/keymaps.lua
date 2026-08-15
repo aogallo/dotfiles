@@ -29,8 +29,8 @@ vim.keymap.set('v', 'J', ":m '>+1<CR>gv=gv", { desc = 'Move selection down', sil
 vim.keymap.set('v', 'K', ":m '<-2<CR>gv=gv", { desc = 'Move selection up', silent = true })
 
 --buffers
-vim.keymap.set('n', '<leader>bn', ':bnext<CR>', { desc = 'Next buffer', silent = true })
-vim.keymap.set('n', '<leader>bp', ':bprev<CR>', { desc = 'Previous buffer', silent = true })
+vim.keymap.set('n', '<S-h>', ':bnext<CR>', { desc = 'Next buffer', silent = true })
+vim.keymap.set('n', '<S-l>', ':bprev<CR>', { desc = 'Previous buffer', silent = true })
 vim.keymap.set('n', '<leader>bx', '<cmd>bdelete<cr>', { desc = 'Close buffer', silent = true })
 
 -- Formatting.
