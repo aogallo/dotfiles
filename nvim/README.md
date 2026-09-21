@@ -476,6 +476,107 @@ dependency and link work first, reports required, optional, Mason-backed, and ma
 requires confirmation before running install or apply steps. Manual AWS language server bundle
 repair remains report-only guidance.
 
+## Database Client (Sybase ASE, SQL Server, MongoDB)
+
+A full database client built on vim-dadbod + vim-dadbod-ui + vim-dadbod-completion, driven by a
+single user-owned connection registry. A custom `sybase://` adapter shells out to `sqsh` on
+macOS and the SAP ASE `isql` client on Windows so large stored procedures and multi-result-set
+batches run without truncation.
+
+### Source of truth
+
+| File | Purpose |
+|------|---------|
+| `nvim/autoload/db/adapter/sybase.vim` | Sybase adapter: `interactive`, `input` (with the sqsh `go`→`\go` transform), `input_extension`, `output_extension`, `tables`, `objects`, `source`, `complete_database` |
+| `nvim/lua/config/db_connections.lua` | Registry loader → `g:dbs`; reloads on `BufEnter` of a `dbui` window (`R` in `:DBUI` picks up edits) |
+| `nvim/db-connections.example.lua` | Committed, secret-free registry template |
+| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) |
+| `nvim/dependencies.tsv` | `sqsh`, `sqlcmd`/`go-sqlcmd`, `mongosh` rows (all optional) |
+| `nvim/plugin/database.lua` | dadbod stack wiring, Sybase "List" table helper, `:DBObjects` command |
+
+### Connection registry
+
+Connections live in one Lua file returning `{ name = 'url', ... }`:
+
+- Default path: `~/.config/nvim/db-connections.lua` (gitignored).
+- Override: set `NVIM_DB_CONNECTIONS` to any path (e.g. machine-specific or a location outside
+  this repo).
+- Seeding: copy `nvim/db-connections.example.lua` and fill in URLs; prefer `$VAR` placeholders
+  for passwords (dadbod resolves them from the environment).
+
+Example:
+
+```lua
+return {
+    ase = 'sybase://apps:$ASE_PASSWORD@ase-dev:5000/master?charset=iso_1',
+    sqlsrv = 'sqlserver://sa:$SA_PASSWORD@sql-prod:1433/AdventureWorks',
+    mongo = 'mongodb://app:$MONGO_TOKEN@mongo-prod:27017/orders',
+}
+```
+
+Browse connections with `:DBUI`; press `R` over a connection to reload after editing the file.
+Execute the current buffer against a URL with `:%DB`. Open an interactive client with `:DB <url>`
+(macOS submissions use `\go` as the batch terminator; `go` lines in files are transformed
+automatically).
+
+Schema completion inside `*.sql` buffers comes from the dadbod blink provider
+(`nvim/plugin/blink.lua`, enabled for the `sql` filetype). Table names complete after `.` or `_`.
+Column completion is provided natively for SQL Server but not for Sybase or MongoDB; those
+schemes degrade gracefully to tables only.
+
+### `:DBObjects`
+
+SSMS-like object search. `:DBObjects [name]` (tab-completes over registry names) resolves the
+connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua picker over
+`g:dbs`. Rows are `kind  name`; fuzzy-filter by name as you type.
+
+- Table/view selection opens a new `sql` buffer with the ASE-safe List query
+  `select top 200 * from <name>` (no `LIMIT`) ready to run via the `:%DB` flow.
+- Procedure/function selection (Sybase only) loads the full source via `sp_helptext` into a new
+  editable `sql` buffer for edit-and-re-run.
+- On SQL Server/MongoDB the picker uses dadbod's native `tables()` (tables/collections; no
+  procedure source action). Missing client or missing objects shows a clear notice, never a crash.
+
+### Client prerequisites
+
+- macOS: `brew install sqsh` (Sybase). Optional: `sqlcmd` for SQL Server
+  (`brew tap microsoft/mssql-release && brew install sqlcmd`, or
+  `go install github.com/microsoft/go-sqlcmd@latest`) and `brew install mongosh` (MongoDB).
+- Windows: SAP ASE client (`isql.exe`), SQL Server ODBC + `sqlcmd`, `mongosh`, on `PATH`. The
+  adapter selects `isql` automatically on Windows. Neovim-on-Windows install is covered in
+  `docs/windows-tooling-audit.md`.
+- A missing client surfaces one actionable error naming the binary (e.g.
+  `DB: 'sqsh' executable not found`); browsing and completion return empty lists instead of
+  crashing.
+
+### Customization boundaries
+
+- `g:db_sybase_client` overrides the client per-machine: a string (binary name) or an argv list
+  (e.g. `vim.g.db_sybase_client = { '/opt/sqsh/bin/sqsh' }`).
+- `NVIM_DB_CONNECTIONS` overrides the registry path. Secrets live only in the ignored registry
+  or environment variables; nothing in this repo carries credentials.
+
+### Validation
+
+```sh
+stylua --check nvim
+nvim --headless -u nvim/init.lua '+quitall'
+nvim --headless -u NORC -c 'so nvim/autoload/db/adapter/sybase.vim' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.sybase_adapter_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.sybase_objects_smoke")' -c 'qa!'
+```
+
+Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
+are manual-only; see `specs/001-sybase-nvim-client/quickstart.md`.
+
+### Rollback / recovery
+
+Revert the `nvim/` files and the `.gitignore` line for `nvim/db-connections.lua`. Deleting the
+registry file (or unsetting `NVIM_DB_CONNECTIONS`) restores the previous empty state; saved
+dadbod-ui connections under `db_ui_save_location` are never written by this feature. Removing the
+gitignored registry removes your local credentials — keep them in the environment and re-seed
+from `nvim/db-connections.example.lua`.
+
 ## Local Overrides
 
 Use environment variables for private or machine-specific settings:
