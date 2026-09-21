@@ -22,3 +22,6 @@ lazy-lock*
 zsh/.zshrc.local
 zsh/.zshenv.local
 *.local.zsh
+
+# User-owned database connection registry (credential-bearing). The .example template stays committed.
+nvim/db-connections.lua

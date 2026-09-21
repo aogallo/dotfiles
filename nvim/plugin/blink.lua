@@ -99,20 +99,19 @@ add {
                 -- Disable some sources in comments and strings.
                 default = function()
                     local sources = { 'lsp', 'path', 'snippets', 'buffer' }
-                    -- local ok, node = pcall(vim.treesitter.get_node)
-                    --
-                    -- if ok and node then
-                    --     if not vim.tbl_contains({ 'comment', 'line_comment', 'block_comment' }, node:type()) then
-                    --         table.insert(sources, 'path')
-                    --     end
-                    --     if node:type() ~= 'string' then
-                    --         table.insert(sources, 'snippets')
-                    --     end
-                    -- end
-
                     return sources
                 end,
+                per_filetype = {
+                    -- Dadbod table completion only for SQL buffers. Other sources
+                    -- keep working when no database connection is active.
+                    sql = { 'vim_dadbod_completion', 'lsp', 'path', 'snippets', 'buffer' },
+                },
                 providers = {
+                    vim_dadbod_completion = {
+                        module = 'vim_dadbod_completion.blink',
+                        name = 'vim_dadbod_completion',
+                        opts = { trigger_characters = { '.', '_' } },
+                    },
                     snippets = {
                         opts = {
                             friendly_snippets = true,
