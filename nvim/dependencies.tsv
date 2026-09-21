@@ -24,3 +24,6 @@ Prettier|prettier|yes|mason/npm|Mason prettier or pnpm add -g prettier|nvim/plug
 StyLua|stylua|yes|homebrew|brew install stylua|nvim/plugin/conform.lua,nvim/stylua.toml
 shfmt|shfmt|no|homebrew|brew install shfmt|nvim/plugin/conform.lua
 ShellCheck|shellcheck|no|homebrew|brew install shellcheck|nvim/lsp/bashls.lua
+Sybase sqsh client|sqsh|no|homebrew|brew install sqsh|nvim/autoload/db/adapter/sybase.vim
+SQL Server sqlcmd|sqlcmd|no|homebrew/go|brew tap microsoft/mssql-release && brew install sqlcmd, or go install github.com/microsoft/go-sqlcmd@latest|nvim/README.md
+MongoDB mongosh|mongosh|no|homebrew|brew install mongosh|nvim/README.md
