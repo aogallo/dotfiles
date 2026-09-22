@@ -47,28 +47,40 @@ else
 end
 
 vim.g.db_sybase_client = 'isql'
-local isql_base = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db' }
+local isql_base = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p' }
 local got_isql = interactive(url)
-fail(vim.deep_equal(got_isql, isql_base), 'isql interactive argv', got_isql, isql_base)
+fail(vim.deep_equal(got_isql, isql_base), 'isql interactive argv (no -D)', got_isql, isql_base)
 
 local infile = vim.fn.tempname() .. '.sql'
 local batch = { 'select 1', 'go', ' GO ', 'print 2', 'go' }
 vim.fn.writefile(batch, infile)
 
 local got_isql_input = input(url, infile)
-local want_isql_input = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db', '-i', infile }
-fail(vim.deep_equal(got_isql_input, want_isql_input), 'isql input argv (no transform)', got_isql_input, want_isql_input)
+local want_isql_prefix = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-i' }
+fail(
+    vim.deep_equal(vim.list_slice(got_isql_input, 1, 8), want_isql_prefix),
+    'isql input argv prefix (no -D)',
+    got_isql_input,
+    want_isql_prefix
+)
+local isql_copy = got_isql_input[#got_isql_input]
+fail(
+    vim.deep_equal(vim.fn.readfile(isql_copy), { 'use db', 'select 1', 'go', ' GO ', 'print 2', 'go' }),
+    'isql input copy prepends use db',
+    vim.fn.readfile(isql_copy),
+    { 'use db', 'select 1', 'go', ' GO ', 'print 2', 'go' }
+)
+vim.fn.delete(isql_copy)
 
 vim.g.db_sybase_client = 'sqsh'
-local sqsh_base = { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db', '-L', 'semicolon_hack=false' }
+local sqsh_base = { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-L', 'semicolon_hack=false' }
 local got_sqsh = interactive(url)
-fail(vim.deep_equal(got_sqsh, sqsh_base), 'sqsh interactive argv', got_sqsh, sqsh_base)
+fail(vim.deep_equal(got_sqsh, sqsh_base), 'sqsh interactive argv (no -D)', got_sqsh, sqsh_base)
 
 local got_sqsh_input = input(url, infile)
-local want_sqsh_prefix =
-    { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db', '-L', 'semicolon_hack=false', '-i' }
+local want_sqsh_prefix = { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-L', 'semicolon_hack=false', '-i' }
 fail(
-    vim.deep_equal(vim.list_slice(got_sqsh_input, 1, 12), want_sqsh_prefix),
+    vim.deep_equal(vim.list_slice(got_sqsh_input, 1, 10), want_sqsh_prefix),
     'sqsh input argv prefix',
     got_sqsh_input,
     want_sqsh_prefix
@@ -77,10 +89,10 @@ fail(
 local copy = got_sqsh_input[#got_sqsh_input]
 local copy_lines = vim.fn.readfile(copy)
 fail(
-    vim.deep_equal(copy_lines, { 'select 1', '\\go', '\\go', 'print 2', '\\go' }),
-    'sqsh input transformed copy (go -> \\go)',
+    vim.deep_equal(copy_lines, { 'use db', 'select 1', '\\go', '\\go', 'print 2', '\\go' }),
+    'sqsh input transformed copy (use db + go -> \\go)',
     copy_lines,
-    { 'select 1', '\\go', '\\go', 'print 2', '\\go' }
+    { 'use db', 'select 1', '\\go', '\\go', 'print 2', '\\go' }
 )
 fail(
     vim.deep_equal(vim.fn.readfile(infile), batch),
@@ -94,9 +106,14 @@ fail(
 -- missing-client error instead of an E484 inside the transform.
 local missing_probe = vim.fn.tempname() .. '.nope.sql'
 local got_probe = input(url, missing_probe)
-local want_probe =
-    { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db', '-L', 'semicolon_hack=false', '-i', missing_probe }
+local want_probe = { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-L', 'semicolon_hack=false', '-i', missing_probe }
 fail(vim.deep_equal(got_probe, want_probe), 'sqsh input probe passes missing temp through', got_probe, want_probe)
+
+-- A URL without a database must not emit any DB-selection lines (no -D, no use).
+local no_db_url = { scheme = 'sybase', user = 'u', password = 'p', host = 'h', port = '5000', path = '/', params = {} }
+local want_no_db = { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-L', 'semicolon_hack=false' }
+local got_no_db = interactive(no_db_url)
+fail(vim.deep_equal(got_no_db, want_no_db), 'no-db URL omits -D and use lines', got_no_db, want_no_db)
 
 vim.fn.delete(copy)
 vim.fn.delete(infile)

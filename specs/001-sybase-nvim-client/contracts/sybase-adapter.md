@@ -48,15 +48,21 @@ Functions marked optional may be omitted; dadbod only calls those it can dispatc
 2. **macOS/sqsh only**: write a transformed copy to a new OS temp file where each line matching
    `^\s*go\s*$` (case-insensitive) becomes `\go`. Never modify the user's original file.
 3. Build argv:
-   - sqsh: `sqsh -S <host[:port]> -U <user> [-P <password>] [-D <db>] [-L semicolon_hack=false] [-J <charset>] -i <copy>`
-   - isql: `isql -S <host[:port]> -U <user> [-P <password>] [-D <db>] -i <infile>` (no transform; isql
+   - sqsh: `sqsh -S <host[:port]> -U <user> [-P <password>] [-L semicolon_hack=false] [-J <charset>] -i <copy>`
+   - isql: `isql -S <host[:port]> -U <user> [-P <password>] -i <infile>` (no transform; isql
      understands `go` natively)
-4. stdout and stderr are merged by dadbod into the result buffer, so `print`/`raiserror`
+4. Database selection is **portable and does not use a `-D` flag**: SAP ASE's `isql` accepts `-D`,
+   but FreeTDS/portable `isql` builds reject it with `unknown option D`. Instead, a `use <db>`
+   line is prepended to every batch (in both `input`'s transformed copy and the `run_query` batch
+   used by `tables`/`objects`/`source`/`complete_database`) whenever the URL carries a database
+   path. A URL without a database route ("`/`" or no path) emits no `use` line.
+5. stdout and stderr are merged by dadbod into the result buffer, so `print`/`raiserror`
    messages and ASE diagnostics are visible (FR-002).
-5. Exit status: nonzero → dadbod reports "Query aborted" (FR-003 contract).
+6. Exit status: nonzero → dadbod reports "Query aborted" (FR-003 contract).
 
-Interactive console (`interactive`): same client/credentials without `-i`; macOS users submit
-batches with `\go` (documented in the module README).
+Interactive console (`interactive`): same client/credentials without the `-i` flag; macOS users
+submit batches with `\go` (documented in the module README). Interactive consoles start from the
+login default database; session-level `use <db>` remains available for manual selection.
 
 ## Output Integrity
 
