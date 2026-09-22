@@ -52,7 +52,9 @@ the path from `NVIM_DB_CONNECTIONS` (works on macOS and Windows), defaulting to
 `stdpath('config')/db-connections.lua` (i.e. `~/.config/nvim/db-connections.lua`, which is
 repo-linked, so it MUST be gitignored). dadbod expands `$VAR` inside URLs at connection time
 (verified in `db#resolve`/`s:expand_all`), so users can keep secrets in environment variables
-(e.g. `sybase://user:$DB_PASS@host:5000/db`). A committed `db-connections.example.lua` documents
+(e.g. `sybase://user:$DB_PASS@server-name/db`, where `server-name` is the registered server
+name — no `:port`, which lives in the client's server definition; see clarifications 2026-09-22).
+A committed `db-connections.example.lua` documents
 the format with no real secrets.
 
 **Alternatives considered**: TOML registry (needs a parser dependency); dotenv.vim (extra plugin,

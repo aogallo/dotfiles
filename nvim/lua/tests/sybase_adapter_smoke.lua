@@ -47,19 +47,30 @@ else
 end
 
 vim.g.db_sybase_client = 'isql'
-local isql_base = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p' }
+local isql_base = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-n', '-w', '32000' }
 local got_isql = interactive(url)
-fail(vim.deep_equal(got_isql, isql_base), 'isql interactive argv (no -D)', got_isql, isql_base)
+fail(vim.deep_equal(got_isql, isql_base), 'isql interactive argv (no -D, table flags)', got_isql, isql_base)
+
+-- The registry convention is the registered server name WITHOUT a port (-S <name>
+-- resolves the port from the client configuration). Lock that in.
+local named_url = { scheme = 'sybase', user = 'u', password = 'p', host = 'dev', path = '/db', params = {} }
+local got_named = interactive(named_url)
+fail(
+    vim.deep_equal(got_named, { 'isql', '-S', 'dev', '-U', 'u', '-P', 'p', '-n', '-w', '32000' }),
+    'isql interactive argv honors server name without port',
+    got_named,
+    { 'isql', '-S', 'dev', '-U', 'u', '-P', 'p', '-n', '-w', '32000' }
+)
 
 local infile = vim.fn.tempname() .. '.sql'
 local batch = { 'select 1', 'go', ' GO ', 'print 2', 'go' }
 vim.fn.writefile(batch, infile)
 
 local got_isql_input = input(url, infile)
-local want_isql_prefix = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-i' }
+local want_isql_prefix = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-n', '-w', '32000', '-i' }
 fail(
-    vim.deep_equal(vim.list_slice(got_isql_input, 1, 8), want_isql_prefix),
-    'isql input argv prefix (no -D)',
+    vim.deep_equal(vim.list_slice(got_isql_input, 1, 11), want_isql_prefix),
+    'isql input argv prefix (no -D, table flags)',
     got_isql_input,
     want_isql_prefix
 )

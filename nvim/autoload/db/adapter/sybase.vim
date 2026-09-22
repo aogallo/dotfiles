@@ -64,11 +64,17 @@ endfunction
 
 function! s:batch_flags() abort
   if !s:uses_sqsh()
-    return []
+    " isql: `-n` suppresses the n> input prompts polluting the result buffer,
+    " `-w <width>` widens the 80-column default so wide rows stop wrapping.
+    return ['-n', '-w', s:display_width()]
   endif
   " sqsh's batch separator is \go and a bare `go` line would otherwise be sent to
   " the server; force isql-style batched input handling (see s:transform()).
   return ['-L', 'semicolon_hack=false']
+endfunction
+
+function! s:display_width() abort
+  return get(g:, 'db_sybase_width', '32000')
 endfunction
 
 function! s:transform(url, in) abort

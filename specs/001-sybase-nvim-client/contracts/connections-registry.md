@@ -22,7 +22,7 @@ A Lua module returning a name → URL map:
 
 ```lua
 return {
-  sybase_prod = 'sybase://user:$SYBASE_PASS@ase-host:5000/app_db?charset=iso_1',
+  sybase_prod = 'sybase://user:$SYBASE_PASS@ase-host/app_db?charset=iso_1',
   sqlserver_dev = 'sqlserver://dev-user:sqlsrv@sql-dev:1433/AppDb',
   mongo_local = 'mongodb://localhost:27017/app_db',
 }
