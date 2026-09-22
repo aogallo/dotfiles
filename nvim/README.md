@@ -487,7 +487,7 @@ batches run without truncation.
 
 | File | Purpose |
 |------|---------|
-| `nvim/autoload/db/adapter/sybase.vim` | Sybase adapter: `interactive`, `input` (with the sqsh `go`→`\go` transform), `input_extension`, `output_extension`, `tables`, `objects`, `source`, `complete_database` |
+| `nvim/autoload/db/adapter/sybase.vim` | Sybase adapter: `interactive`, `input` (with the sqsh `go`→`\go` transform), `input_extension`, `output_extension`, `tables`, `objects`, `source`, `complete_database`. The URL database is selected with a `use <db>` batch line (portable across `isql` variants and `sqsh`; no `-D` flag dependency) |
 | `nvim/lua/config/db_connections.lua` | Registry loader → `g:dbs`; reloads on `BufEnter` of a `dbui` window (`R` in `:DBUI` picks up edits) |
 | `nvim/db-connections.example.lua` | Committed, secret-free registry template |
 | `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) |
@@ -517,7 +517,9 @@ return {
 Browse connections with `:DBUI`; press `R` over a connection to reload after editing the file.
 Execute the current buffer against a URL with `:%DB`. Open an interactive client with `:DB <url>`
 (macOS submissions use `\go` as the batch terminator; `go` lines in files are transformed
-automatically).
+automatically). Database selection uses a `use <db>` batch line instead of a client `-D` flag, so
+the adapter works with any ASE client — including portable `isql` builds that reject `-D` with
+`unknown option D`.
 
 Schema completion inside `*.sql` buffers comes from the dadbod blink provider
 (`nvim/plugin/blink.lua`, enabled for the `sql` filetype). Table names complete after `.` or `_`.

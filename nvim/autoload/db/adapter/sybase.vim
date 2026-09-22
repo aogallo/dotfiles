@@ -4,6 +4,11 @@
 "
 " Client selection: sqsh on macOS (default), SAP ASE isql on Windows
 " (has('win32')). Override with g:db_sybase_client (string or argv list).
+"
+" Database selection is portable: instead of relying on the client-specific -D
+" argument (SAP ASE isql accepts it, but FreeTDS/portable isql builds reject it
+" with `unknown option D`), the URL database is selected with a `use <db>` line
+" at the start of every batch. That works with any ASE client.
 
 function! s:client() abort
   if exists('g:db_sybase_client')
@@ -26,6 +31,11 @@ function! s:server(url) abort
   return get(url, 'host', '') . (has_key(url, 'port') ? ':' . url.port : '')
 endfunction
 
+function! s:database(url) abort
+  let url = s:parsed(a:url)
+  return get(url, 'path', '') =~# '^/\=$' ? '' : substitute(url.path, '^/', '', '')
+endfunction
+
 function! s:connect_args(url) abort
   let url = s:parsed(a:url)
   let args = ['-S', s:server(a:url)]
@@ -35,14 +45,21 @@ function! s:connect_args(url) abort
   if has_key(url, 'password')
     let args += ['-P', url.password]
   endif
-  if get(url, 'path', '') !~# '^/\=$'
-    let args += ['-D', substitute(url.path, '^/', '', '')]
-  endif
   let charset = get(get(url, 'params', {}), 'charset', '')
   if !empty(charset)
     let args += ['-J', charset]
   endif
   return args
+endfunction
+
+function! s:use_lines(url, batch) abort
+  " First commands sent to the client: select the URL database so DB selection
+  " never depends on a -D flag that some isql variants do not implement.
+  let db = s:database(a:url)
+  if empty(db)
+    return a:batch
+  endif
+  return ['use ' . db, s:batch_sep(), ''] + a:batch
 endfunction
 
 function! s:batch_flags() abort
@@ -54,23 +71,30 @@ function! s:batch_flags() abort
   return ['-L', 'semicolon_hack=false']
 endfunction
 
-function! s:transform(in) abort
-  if !s:uses_sqsh()
-    return a:in
-  endif
+function! s:transform(url, in) abort
   if !filereadable(a:in)
     " dadbod probes the client in db#connect() before the input temp file
     " exists; leave argv untouched so its executable() check raises the
     " standard actionable missing-client error instead of an E484 here.
     return a:in
   endif
+  let db = s:database(a:url)
+  if !s:uses_sqsh() && empty(db)
+    return a:in
+  endif
   let copy = tempname()
   let lines = readfile(a:in, 'b')
-  for i in range(len(lines))
-    if lines[i] =~? '^\s*go\s*$'
-      let lines[i] = '\go'
-    endif
-  endfor
+  if !empty(db)
+    " Select the URL database from inside the script (no -D dependency).
+    call insert(lines, 'use ' . db)
+  endif
+  if s:uses_sqsh()
+    for i in range(len(lines))
+      if lines[i] =~? '^\s*go\s*$'
+        let lines[i] = '\go'
+      endif
+    endfor
+  endif
   call writefile(lines, copy, 'b')
   return copy
 endfunction
@@ -84,7 +108,7 @@ function! db#adapter#sybase#interactive(url) abort
 endfunction
 
 function! db#adapter#sybase#input(url, in) abort
-  return s:client() + s:connect_args(a:url) + s:batch_flags() + ['-i', s:transform(a:in)]
+  return s:client() + s:connect_args(a:url) + s:batch_flags() + ['-i', s:transform(a:url, a:in)]
 endfunction
 
 function! s:script_flags() abort
@@ -102,7 +126,7 @@ endfunction
 function! s:run_query(url, sql) abort
   let cmd = s:client() + s:connect_args(a:url) + s:batch_flags() + s:script_flags()
   " `set nocount on` suppresses "(N rows affected)" messages on both clients.
-  let batch = ['set nocount on', '']
+  let batch = s:use_lines(a:url, ['set nocount on', ''])
   let batch += split(a:sql, "\n", 1)
   call add(batch, s:batch_sep())
   return db#systemlist(cmd, batch)

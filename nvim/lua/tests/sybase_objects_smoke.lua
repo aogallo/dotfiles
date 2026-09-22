@@ -95,8 +95,7 @@ fail(rows[3].kind == 'procedure', 'objects kind procedure', rows[3], { name = 'u
 fail(rows[4].kind == 'function', 'objects kind function (F)', rows[4], { name = 'fn_avg', kind = 'function' })
 fail(rows[5].kind == 'function', 'objects kind function (X)', rows[5], { name = 'x_custom', kind = 'function' })
 
-local want_obj_cmd_sqsh =
-    { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db', '-L', 'semicolon_hack=false', '-h' }
+local want_obj_cmd_sqsh = { 'sqsh', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-L', 'semicolon_hack=false', '-h' }
 fail(vim.deep_equal(captured_cmd(), want_obj_cmd_sqsh), 'objects sqsh argv', captured_cmd(), want_obj_cmd_sqsh)
 fail(
     captured_lines()[#captured_lines()] == '\\go',
@@ -153,7 +152,7 @@ fail(not vim.tbl_contains(captured_cmd(), '-D'), 'complete_database connects wit
 vim.g.db_sybase_client = 'isql'
 set_canned { 'orders          U' }
 objects(url)
-local want_obj_cmd_isql = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-D', 'db', '-b' }
+local want_obj_cmd_isql = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-b' }
 fail(vim.deep_equal(captured_cmd(), want_obj_cmd_isql), 'objects isql argv', captured_cmd(), want_obj_cmd_isql)
 fail(
     captured_lines()[#captured_lines()] == 'go',
