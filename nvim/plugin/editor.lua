@@ -16,7 +16,7 @@ add {
                 },
             },
             input = { enabled = true },
-            explorer = { enabled = true },
+            explorer = { enabled = true, include = { '.env', '.env.*' } },
             lazygit = { enabled = true },
             picker = { enabled = true },
             notifier = {
