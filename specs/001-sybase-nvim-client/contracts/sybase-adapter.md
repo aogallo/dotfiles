@@ -14,7 +14,11 @@ sybase://[user[:password]@]host[:port]/[database][?params]
 - Scheme: `sybase`. Credentials and path follow dadbod URL rules (`db#url#parse`).
 - `password` may be a `$ENV_VAR` placeholder (resolved by dadbod at connect time).
 - Supported query params: `charset` (client charset, e.g. `iso_1`) — optional.
-- `host:port` is required at connect time; missing host errors from dadbod's URL resolution.
+- `host` is the **registered server name** (as configured in `sql.ini`/interfaces on Windows or
+  `interfaces` on macOS); the adapter passes it verbatim to `-S <host>` and resolves the port from
+  the client configuration. A `:port` must NOT be appended: adding one breaks clients such as the
+  portable MS `isql` (DB-Library error 53 `specified sql server not found`).
+- Missing host errors from dadbod's URL resolution.
 
 ## Adapter Functions (dadbod dispatch interface)
 
@@ -49,8 +53,11 @@ Functions marked optional may be omitted; dadbod only calls those it can dispatc
    `^\s*go\s*$` (case-insensitive) becomes `\go`. Never modify the user's original file.
 3. Build argv:
    - sqsh: `sqsh -S <host[:port]> -U <user> [-P <password>] [-L semicolon_hack=false] [-J <charset>] -i <copy>`
-   - isql: `isql -S <host[:port]> -U <user> [-P <password>] -i <infile>` (no transform; isql
-     understands `go` natively)
+   - isql: `isql -S <host> -U <user> [-P <password>] -n -w <width> [-J <charset>] -i <infile>` (no
+     transform; isql understands `go` natively). `-n` suppresses the `n>` input prompts that
+     would pollute the result buffer; `-w <width>` widens the 80-column default (configurable via
+     `g:db_sybase_width`, default `32000`). `-w` applies only to `isql`; it is not passed to
+     `sqsh`.
 4. Database selection is **portable and does not use a `-D` flag**: SAP ASE's `isql` accepts `-D`,
    but FreeTDS/portable `isql` builds reject it with `unknown option D`. Instead, a `use <db>`
    line is prepended to every batch (in both `input`'s transformed copy and the `run_query` batch
@@ -67,8 +74,12 @@ login default database; session-level `use <db>` remains available for manual se
 ## Output Integrity
 
 - No truncation: dadbod streams all output to the result file/buffer (SC-002).
-- Result-set text formatting is the client's default; cleanup flags may be tuned during
-  implementation and documented in the README.
+- `isql` runs with `-n -w` so the `n>` prompts never appear in output and wide rows do not wrap at
+  80 columns. The dash separator lines between result sets are preserved: vim-dadbod-ui's
+  `foldexpr` uses them to fold per-query blocks. Header suppression on the scripted paths
+  (`tables`/`objects`/`complete_database`/`source`) uses `-h` (sqsh) or `-b` (SAP ASE `isql`);
+  the portable MS `isql` variant may not implement `-b` and should be verified with `isql -?`
+  (documented limitation).
 
 ## Completion Semantics (`tables`, `complete_database`)
 

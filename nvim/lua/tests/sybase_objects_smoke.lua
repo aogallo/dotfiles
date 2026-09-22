@@ -152,7 +152,7 @@ fail(not vim.tbl_contains(captured_cmd(), '-D'), 'complete_database connects wit
 vim.g.db_sybase_client = 'isql'
 set_canned { 'orders          U' }
 objects(url)
-local want_obj_cmd_isql = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-b' }
+local want_obj_cmd_isql = { 'isql', '-S', 'h:5000', '-U', 'u', '-P', 'p', '-n', '-w', '32000', '-b' }
 fail(vim.deep_equal(captured_cmd(), want_obj_cmd_isql), 'objects isql argv', captured_cmd(), want_obj_cmd_isql)
 fail(
     captured_lines()[#captured_lines()] == 'go',

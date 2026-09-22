@@ -19,6 +19,12 @@
 
 - Q: Schema browser object search → A: Add SSMS-like name search/filter across all supported databases and an action that loads a stored procedure's source into a Neovim buffer for editing, so locating and modifying an object no longer requires browsing one at a time.
 
+### Session 2026-09-22
+
+- Q: Sybase connection URL host → A: Use the **registered server name** (as configured in `sql.ini`/interfaces) with **no port**. The adapter passes it verbatim to `-S <host>`; the port lives in the client's server definition. Appending `:port` breaks portable MS `isql` (DB-Library error 53 `specified sql server not found`).
+- Q: Query result formatting → A: isql runs with `-n -w` so the `n>` input prompts never pollute the result buffer and wide columns stop wrapping at the default 80. `g:db_sybase_width` tunes the width (default `32000`). The dash rows isql emits are what enable vim-dadbod-ui folding.
+- Q: Adapter implementation language → A: Keep the adapter in Vimscript (`sybase.vim`). The planned port to Lua is SUSPENDED; no restructuring.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Execute large stored procedures against Sybase ASE from Neovim (Priority: P1)
@@ -201,7 +207,7 @@ running a query plus a schema listing for each. Delivers: consistent multi-datab
 - **Scope**: Sybase ASE, SQL Server, and MongoDB are in scope (named by the user); other databases (MySQL, PostgreSQL, Oracle) are out of scope for v1.
 - **Platform**: macOS (Apple Silicon or Intel) is the primary development platform; the same configuration also runs on Windows, and every Windows-specific client installation is documented so the developer can set up a Windows machine following only the documentation. The team's Windows-only GUI tools (isqlw, Crimson) are replaced by Neovim, not replicated.
 - **Tooling**: the dadbod family (vim-dadbod, vim-dadbod-ui, vim-dadbod-completion) with blink.cmp are the chosen stack, managed through this repository's native plugin manager — the blink snippet the user referenced comes from LazyVim documentation and will be adapted to this repository's plugin configuration style.
-- **Sybase support gap**: vim-dadbod has no built-in Sybase adapter; SQL Server and MongoDB are natively supported. A Sybase connection therefore uses a small adapter that shells out to a local client: `sqsh` on macOS (installed via Homebrew) and the SAP ASE `isql` client on Windows, with the client selected automatically by operating system. Windows installation steps for `isql` are documented. This adapter path was explicitly chosen over a Crimson-style wrapper script (`isql -S … -U … -P … -i %1`) around the isql binary. jTDS/Aqua connection strings (`jdbc:sybase:Tds:host:port/master`) are not valid dadbod URLs — pasting one verbatim yields an "adapter error" — so the registry uses native `sybase://user@host:port/db` URLs and the module README documents the mapping.
+- **Sybase support gap**: vim-dadbod has no built-in Sybase adapter; SQL Server and MongoDB are natively supported. A Sybase connection therefore uses a small adapter that shells out to a local client: `sqsh` on macOS (installed via Homebrew) and the SAP ASE `isql` client on Windows, with the client selected automatically by operating system. Windows installation steps for `isql` are documented. This adapter path was explicitly chosen over a Crimson-style wrapper script (`isql -S … -U … -P … -i %1`) around the isql binary. jTDS/Aqua connection strings (`jdbc:sybase:Tds:host:port/master`) are not valid dadbod URLs — pasting one verbatim yields an "adapter error" — so the registry uses native `sybase://user@server-name/db` URLs (`server-name` = the registered server name, no port; see clarifications) and the module README documents the mapping.
 - **Registry hygiene**: the connection registry defaults to a location outside the git-tracked tree and is gitignored when it carries credentials; example files contain no real secrets.
 - **Base configuration**: the existing dadbod and dadbod-ui configuration in the Neovim module is the base; previously saved connections are preserved, not discarded.
 - **Scale**: large stored procedures (hundreds to thousands of lines) and multi-result-set output must work; silent truncation is unacceptable, and interactive work must not require leaving Neovim.

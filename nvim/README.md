@@ -508,11 +508,16 @@ Example:
 
 ```lua
 return {
-    ase = 'sybase://apps:$ASE_PASSWORD@ase-dev:5000/master?charset=iso_1',
+    ase = 'sybase://apps:$ASE_PASSWORD@ase-prod/master?charset=iso_1',
     sqlsrv = 'sqlserver://sa:$SA_PASSWORD@sql-prod:1433/AdventureWorks',
     mongo = 'mongodb://app:$MONGO_TOKEN@mongo-prod:27017/orders',
 }
 ```
+
+The `sybase://` host is the **registered server name** (as configured in `sql.ini`/interfaces on
+Windows or `interfaces` on macOS) — do **not** append `:port`, since the port already lives in the
+server definition (`-S <name>` resolves it). Using an explicit `host:port` with clients like the
+portable MS `isql` fails with DB-Library error 53 (`specified sql server not found`).
 
 Browse connections with `:DBUI`; press `R` over a connection to reload after editing the file.
 Execute the current buffer against a URL with `:%DB`. Open an interactive client with `:DB <url>`
@@ -520,6 +525,11 @@ Execute the current buffer against a URL with `:%DB`. Open an interactive client
 automatically). Database selection uses a `use <db>` batch line instead of a client `-D` flag, so
 the adapter works with any ASE client — including portable `isql` builds that reject `-D` with
 `unknown option D`.
+
+Result output is table-friendly: `isql` runs with `-n -w` so the `n>` input prompts never pollute
+the result buffer and wide columns stop wrapping at the 80-column default. `g:db_sybase_width`
+tunes the column width (default `32000`). The dash separator lines isql emits are what let
+vim-dadbod-ui fold and navigate result sets.
 
 Schema completion inside `*.sql` buffers comes from the dadbod blink provider
 (`nvim/plugin/blink.lua`, enabled for the `sql` filetype). Table names complete after `.` or `_`.
@@ -555,6 +565,8 @@ connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua p
 
 - `g:db_sybase_client` overrides the client per-machine: a string (binary name) or an argv list
   (e.g. `vim.g.db_sybase_client = { '/opt/sqsh/bin/sqsh' }`).
+- `g:db_sybase_width` tunes the isql column width passed to `-w` (default `32000`). Not used by
+  the sqsh client.
 - `NVIM_DB_CONNECTIONS` overrides the registry path. Secrets live only in the ignored registry
   or environment variables; nothing in this repo carries credentials.
 

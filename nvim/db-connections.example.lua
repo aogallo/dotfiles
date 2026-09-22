@@ -12,9 +12,9 @@
 -- Values may be strings or functions returning a URL string (lazily resolved secrets).
 
 return {
-    -- sybase_prod = 'sybase://app_user:$SYBASE_PROD_PASS@ase-prod:5000/app_db?charset=iso_1',
+    -- sybase_prod = 'sybase://app_user:$SYBASE_PROD_PASS@prod_server/app_db?charset=iso_1',
     -- sybase_dev = function()
-    --     return 'sybase://' .. vim.env.SYBASE_DEV_USER .. ':' .. vim.env.SYBASE_DEV_PASS .. '@ase-dev:5000/app_db'
+    --     return 'sybase://' .. vim.env.SYBASE_DEV_USER .. ':' .. vim.env.SYBASE_DEV_PASS .. '@dev_server/app_db'
     -- end,
     -- sqlserver_dev = 'sqlserver://dev_user:$SQLSRV_PASS@sql-dev:1433/AppDb',
     -- mongo_local = 'mongodb://localhost:27017/app_db',
