@@ -16,7 +16,7 @@ add {
             -- Sybase ASE has no LIMIT; dadbod-ui's default helper uses "limit 200".
             -- Merge + re-assign the whole table: nested vim.g writes do not persist.
             local helpers = vim.deepcopy(vim.g.db_ui_table_helpers or {})
-            helpers.sybase = 'select top 200 * from {table}'
+            helpers.sybase = { List = 'select top 200 * from {table}' }
             vim.g.db_ui_table_helpers = helpers
         end,
     },
