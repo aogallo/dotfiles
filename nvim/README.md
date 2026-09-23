@@ -490,10 +490,10 @@ batches run without truncation.
 | `nvim/autoload/db/adapter/sybase.vim` | Sybase adapter: `interactive`, `input` (with the sqsh `go`→`\go` transform), `input_extension`, `output_extension`, `tables`, `objects`, `source`, `complete_database`. The URL database is selected with a `use <db>` batch line (portable across `isql` variants and `sqsh`; no `-D` flag dependency) |
 | `nvim/lua/config/db_connections.lua` | Registry loader → `g:dbs`; reloads on `BufEnter` of a `dbui` window (`R` in `:DBUI` picks up edits) |
 | `nvim/db-connections.example.lua` | Committed, secret-free registry template |
-| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) |
+| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) + procedure save dialog (startup-root default, always-ask, database-qualified names) |
 | `nvim/lua/config/db_jump.lua` | Toggle between the code buffer and the DB workspace (`<leader>q`) |
 | `nvim/dependencies.tsv` | `sqsh`, `sqlcmd`/`go-sqlcmd`, `mongosh` rows (all optional) |
-| `nvim/plugin/database.lua` | dadbod stack wiring, Sybase "List" table helper, `:DBObjects` command |
+| `nvim/plugin/database.lua` | dadbod stack wiring, Sybase "List" table helper, `:DBObjects` command, launch-cwd capture for the save dialog |
 
 ### Connection registry
 
@@ -564,6 +564,14 @@ connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua p
   `select top 200 * from <name>` (no `LIMIT`) ready to run via the `:%DB` flow.
 - Procedure/function selection (Sybase only) loads the full source via `sp_helptext` into a new
   editable `sql` buffer for edit-and-re-run.
+- After a procedure/function source opens, a **save dialog** always asks where to save the text to
+  disk. The default is the directory where Neovim was started (`getcwd()` captured at plugin load,
+  before any `:cd`); browse subdirectories or type a path on each save — a previously chosen folder
+  is never remembered. Confirmed saves write one file named `<owning-database>.<object>.sql`
+  (database-qualified so same-named procedures from different databases never collide; the
+  single-DB listing falls back to `<object>.sql`). If the file already exists, the user must
+  explicitly choose overwrite or cancel; cancelling writes nothing and changes nothing (see
+  `specs/002-procedure-save-dialog/` for the full contract).
 - On SQL Server/MongoDB the picker uses dadbod's native `tables()` (tables/collections; no
   procedure source action). Missing client or missing objects shows a clear notice, never a crash.
 
@@ -585,6 +593,8 @@ connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua p
   (e.g. `vim.g.db_sybase_client = { '/opt/sqsh/bin/sqsh' }`).
 - `g:db_sybase_width` tunes the isql column width passed to `-w` (default `32000`). Not used by
   the sqsh client.
+- The procedure save dialog has **no configuration surface** by design: it always asks, defaults to
+  the launch directory, and writes database-qualified names (spec `002-procedure-save-dialog`).
 - `NVIM_DB_CONNECTIONS` overrides the registry path. Secrets live only in the ignored registry
   or environment variables; nothing in this repo carries credentials.
 
@@ -598,6 +608,7 @@ nvim --headless -u NORC -c 'lua require("tests.sybase_adapter_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.sybase_objects_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_connections_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_jump_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_objects_save_smoke")' -c 'qa!'
 ```
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
@@ -610,6 +621,10 @@ registry file (or unsetting `NVIM_DB_CONNECTIONS`) restores the previous empty s
 dadbod-ui connections under `db_ui_save_location` are never written by this feature. Removing the
 gitignored registry removes your local credentials — keep them in the environment and re-seed
 from `nvim/db-connections.example.lua`.
+
+The procedure save dialog writes **user-owned files in user-chosen directories** (never inside the
+repo); reverting the module just removes the dialog, and deleting any previously saved
+`<database>.<object>.sql` files is manual/user-managed.
 
 ## Local Overrides
 
