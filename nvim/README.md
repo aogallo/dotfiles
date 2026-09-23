@@ -491,6 +491,7 @@ batches run without truncation.
 | `nvim/lua/config/db_connections.lua` | Registry loader → `g:dbs`; reloads on `BufEnter` of a `dbui` window (`R` in `:DBUI` picks up edits) |
 | `nvim/db-connections.example.lua` | Committed, secret-free registry template |
 | `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) |
+| `nvim/lua/config/db_jump.lua` | Toggle between the code buffer and the DB workspace (`<leader>q`) |
 | `nvim/dependencies.tsv` | `sqsh`, `sqlcmd`/`go-sqlcmd`, `mongosh` rows (all optional) |
 | `nvim/plugin/database.lua` | dadbod stack wiring, Sybase "List" table helper, `:DBObjects` command |
 
@@ -525,6 +526,23 @@ Execute the current buffer against a URL with `:%DB`. Open an interactive client
 automatically). Database selection uses a `use <db>` batch line instead of a client `-D` flag, so
 the adapter works with any ASE client — including portable `isql` builds that reject `-D` with
 `unknown option D`.
+
+### Database window navigation
+
+Neovim buffers are global: tabs only split the window layout, so a dadbod query buffer opened in
+another tab shares the buffer cycle used by `<S-h>`/`<S-l>` (`:bnext`/`:bprev`). For an explicit
+one-key route to the database workspace instead of relying on that cycle:
+
+- `<leader>qj` — toggle the database window: from any code buffer jumps to the database window
+  (drawer first, then any dadbod query/result buffer carrying `b:db`); from the DB workspace
+  returns to the code window you were in before. If no DB window is open it opens `:DBUI` and
+  focuses the drawer.
+- `<leader>qu` — `:DBUIToggle`: open/close the database drawer.
+- `<leader>qo` — `:DBObjects` schema-object search.
+- Pressing `<leader>q` alone shows the `database` group (j/u/o) instead of firing an action.
+- From the DB workspace, return to code with `<leader>qj`, the `L`/`H` buffer cycle, or `<C-o>`
+  (walk back through the jumplist; `<C-i>` moves forward). `<C-6>` also toggles between the last
+  two buffers.
 
 Result output is table-friendly: `isql` runs with `-n -w` so the `n>` input prompts never pollute
 the result buffer and wide columns stop wrapping at the 80-column default. `g:db_sybase_width`
@@ -578,6 +596,8 @@ nvim --headless -u nvim/init.lua '+quitall'
 nvim --headless -u NORC -c 'so nvim/autoload/db/adapter/sybase.vim' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.sybase_adapter_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.sybase_objects_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_connections_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_jump_smoke")' -c 'qa!'
 ```
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
