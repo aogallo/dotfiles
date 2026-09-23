@@ -33,6 +33,11 @@ vim.keymap.set('n', '<S-h>', ':bnext<CR>', { desc = 'Next buffer', silent = true
 vim.keymap.set('n', '<S-l>', ':bprev<CR>', { desc = 'Previous buffer', silent = true })
 vim.keymap.set('n', '<leader>bx', '<cmd>bdelete<cr>', { desc = 'Close buffer', silent = true })
 
+--database
+vim.keymap.set('n', '<leader>qj', require('config.db_jump').jump, { desc = 'Database window', silent = true })
+vim.keymap.set('n', '<leader>qu', '<cmd>DBUIToggle<cr>', { desc = 'Database UI', silent = true })
+vim.keymap.set('n', '<leader>qo', '<cmd>DBObjects<cr>', { desc = 'Database objects', silent = true })
+
 -- Formatting.
 vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })
 

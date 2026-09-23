@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-14
 
-**Status**: Draft
+**Status**: Closed (archived 2026-09-23; see `verify-report.md`)
 
 **Input**: User description: "necesito conectarme a una base de datos sql llamada SYBASE actualmente el equipo que entre utiliza isqlw y crimson para ejecutar stored procedure muy grandes, pero para mi es muy tedioso utilizar ese tipo de herramientas que ni tiene colores o la experiencia de usuario no es buena. Por lo tanto, quiero utilizar database en neovim te voy a dar un listado de plugins el que mantiene la conexion creo que no puede conectarse a SYBASE por lo que no se si sea lo mejor. adicional me gustaria tener las conexiones en un archivo por ejemplo en la config de neovim o que yo diga de donde puede ir a tomarla porque tambien podria conectarme a una sql server o mongo db. [vim-dadbod, vim-dadbod-completion, vim-dadbod-ui, blink.cmp dadbod provider]"
 
@@ -24,6 +24,10 @@
 - Q: Sybase connection URL host → A: Use the **registered server name** (as configured in `sql.ini`/interfaces) with **no port**. The adapter passes it verbatim to `-S <host>`; the port lives in the client's server definition. Appending `:port` breaks portable MS `isql` (DB-Library error 53 `specified sql server not found`).
 - Q: Query result formatting → A: isql runs with `-n -w` so the `n>` input prompts never pollute the result buffer and wide columns stop wrapping at the default 80. `g:db_sybase_width` tunes the width (default `32000`). The dash rows isql emits are what enable vim-dadbod-ui folding.
 - Q: Adapter implementation language → A: Keep the adapter in Vimscript (`sybase.vim`). The planned port to Lua is SUSPENDED; no restructuring.
+
+### Session 2026-09-23
+
+- Q: Database window navigation keymaps → A: Group everything under `<leader>q` with a second letter per action so `<leader>q` stays a pure which-key prefix (no action+group collision): `<leader>qj` toggles/jumps to the database window (`lua/config/db_jump.lua`), `<leader>qu` runs `:DBUIToggle`, `<leader>qo` runs `:DBObjects`. Return to code via `<leader>qj`, the `L`/`H` buffer cycle, or `<C-o>`/`<C-6>`. Evaluated and rejected on this date: `<leader>d` prefix (reserved for debug) and `<leader>D` (LazyVim builtin conflict + Shift on the 60% keyboard).
 
 ## User Scenarios & Testing *(mandatory)*
 
