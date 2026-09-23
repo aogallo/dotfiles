@@ -1,5 +1,7 @@
 require 'config.db_connections'
 
+local db_objects = require 'config.db_objects'
+
 local add = require('vim-pack').add
 
 -- Database exploration and SQL query execution.
@@ -26,8 +28,12 @@ add {
 -- Schema object search (FR-022): :DBObjects [name] with completion over the
 -- registry connection names. Resolution: explicit name > current buffer's
 -- dadbod URL (b:db) > picker over g:dbs > warn.
+-- The procedure save dialog's default target (specs/002-procedure-save-dialog,
+-- FR-002) is the directory where Neovim was started: captured here at plugin
+-- source time, before any :cd, and handed to db_objects.setup().
+db_objects.setup(vim.fn.getcwd())
+
 vim.api.nvim_create_user_command('DBObjects', function(args)
-    local db_objects = require 'config.db_objects'
     db_objects.open(args.fargs[1])
 end, {
     nargs = '?',
