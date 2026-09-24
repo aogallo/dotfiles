@@ -120,7 +120,7 @@ local conform_plugins = {
             end,
             formatters = {
                 markdown_prettier = { inherit = 'prettier', require_cwd = false },
-                prettier = { require_cwd = true },
+                prettier = { require_cwd = false },
             },
         },
     },
