@@ -172,16 +172,44 @@ function! db#adapter#sybase#complete_database(url) abort
   return s:first_tokens(s:run_query(server, 'select name from sysdatabases order by name'))
 endfunction
 
+function! db#adapter#sybase#with_database(url, database) abort
+  " Contract (specs/005-database-scope, contracts/sybase-db-scope.md §1.1).
+  " Return a connection URL whose path is /<database>, preserving scheme, user,
+  " password, host, port, and query params. Only the Sybase-safe identifier
+  " charset is accepted: anything else (including `%`, so the cross-database
+  " scan stays out of scope) returns '' for the caller to surface an error.
+  if a:database !~# '^[A-Za-z0-9_$#]\+$'
+    return ''
+  endif
+  let url = s:parsed(a:url)
+  let auth = ''
+  if has_key(url, 'user')
+    let auth .= url.user
+    if has_key(url, 'password')
+      let auth .= ':' . url.password
+    endif
+    let auth .= '@'
+  endif
+  let server = get(url, 'host', '') . (has_key(url, 'port') ? ':' . url.port : '')
+  let qs = ''
+  if !empty(get(url, 'params', {}))
+    let pairs = map(items(url.params), 'v:val[0] . "=" . v:val[1]')
+    let qs = '?' . join(pairs, '&')
+  endif
+  return 'sybase://' . auth . server . '/' . a:database . qs
+endfunction
+
 function! db#adapter#sybase#objects(url) abort
   if !executable(s:client()[0])
     return []
   endif
+  let db = s:database(a:url)
   let rows = []
   for line in s:run_query(a:url, "select name, type from sysobjects where type in ('U','V','P','F','X') order by name")
     let name = matchstr(line, '^\s*\zs\S\+\ze\s')
     let letter = matchstr(line, '^\s*\S\+\s\+\zs\S\+\ze')
     if name !=# '' && letter =~# '^[UVPFX]$'
-      call add(rows, {'name': name, 'kind': s:object_kind(letter)})
+      call add(rows, {'name': name, 'kind': s:object_kind(letter), 'database': db})
     endif
   endfor
   return rows

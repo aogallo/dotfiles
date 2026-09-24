@@ -6,6 +6,15 @@
 -- schemes fall back to dadbod's native `tables()` (tables/collections only, no
 -- procedure source action).
 --
+-- Database-scope control (specs/005-database-scope): for `sybase://` URLs the
+-- picker leads with a `Database: <current> — change…` entry. Choosing it opens a
+-- chooser of the databases the login can read (seeded with the connection's
+-- current database) plus a typed-name path; picking one rebuilds the URL with
+-- the chosen database as its path (`db#adapter#sybase#with_database()`) and
+-- re-runs the listing inside that database. The scoped URL is threaded into
+-- source loading, buffer binding (b:db), and save naming so everything executes
+-- in the owning database. Default behavior (no scope choice) is unchanged.
+--
 -- Procedure save dialog (specs/002-procedure-save-dialog): after a
 -- procedure/function source opens, the user is always asked where to save its
 -- text to disk. Default target is the directory where Neovim was started
@@ -37,6 +46,28 @@ end
 
 local function registry_urls()
     return vim.g.dbs or {}
+end
+
+local function is_sybase(url)
+    return (url:match '^([^:]+)://' or '') == 'sybase'
+end
+
+-- Owning database implied by a URL: the path segment after host[:port] ('' when
+-- absent, nil for non-Sybase URLs). Mirrors the adapter's s:database() so the
+-- scope label and the row data always agree.
+local function url_database(url)
+    if not is_sybase(url) then
+        return nil
+    end
+    local rest = url:match '^sybase://[^/]*/(.*)$'
+    if not rest then
+        return nil
+    end
+    local db = rest:match '^([^?]*)'
+    if db == '' then
+        return nil
+    end
+    return db
 end
 
 local function url_from_buffer(buf)
@@ -72,19 +103,20 @@ local function fetch_objects(url)
     return rows
 end
 
-local function open_buffer(url, name, lines)
+local function open_buffer(url, name, lines, database)
     local buf = vim.api.nvim_create_buf(true, false)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    vim.api.nvim_buf_set_name(buf, name .. '.sql')
+    local display = database and database ~= '' and (database .. '.' .. name .. '.sql') or (name .. '.sql')
+    vim.api.nvim_buf_set_name(buf, display)
     vim.api.nvim_buf_set_option(buf, 'bufhidden', 'hide')
     vim.api.nvim_buf_set_option(buf, 'filetype', 'sql')
     vim.b[buf].db = url
     vim.cmd('buffer ' .. buf)
 end
 
-local function open_list_query(url, name)
+local function open_list_query(url, row)
     -- ASE-safe default list query (no LIMIT), matching the dadbod-ui table helper.
-    open_buffer(url, name, { 'select top 200 * from ' .. name })
+    open_buffer(url, row.name, { 'select top 200 * from ' .. row.name }, row.database)
 end
 
 -- File name (FR-006): `<owning-database>.<object>.sql`, falling back to
@@ -237,28 +269,109 @@ local function open_procedure_source(url, row)
         )
         return
     end
-    open_buffer(url, row.name, lines)
+    open_buffer(url, row.name, lines, row.database)
     -- After the source opens, always ask where to save it (FR-001/FR-003).
     M.run_save_flow(row, lines)
 end
 
 local function open_row(url, row)
     if row.kind == 'table' or row.kind == 'view' then
-        open_list_query(url, row.name)
+        open_list_query(url, row)
     else
         open_procedure_source(url, row)
     end
 end
 
-local function pick(rows, url)
-    vim.ui.select(rows, {
+-- Apply a chosen database: rebuild the URL with it as the path and re-run the
+-- listing inside it (FR-002). Invalid/inaccessible or empty results surface
+-- exactly one actionable message and never an empty picker (FR-007/FR-008).
+local pick -- forward declaration: pick <-> choose_database form a cycle
+
+local function apply_database_scope(url, rows, database)
+    local scoped = vim.fn['db#adapter#sybase#with_database'](url, database)
+    if scoped == '' then
+        vim.notify(
+            'DBObjects: cannot access database ' .. database .. ' (name must match [A-Za-z0-9_$#])',
+            vim.log.levels.ERROR
+        )
+        pick(rows, url)
+        return
+    end
+    local scoped_rows = fetch_objects(scoped)
+    if vim.tbl_isempty(scoped_rows) then
+        vim.notify('DBObjects: no objects returned for ' .. scoped, vim.log.levels.ERROR)
+        return
+    end
+    pick(scoped_rows, scoped)
+end
+
+-- Database chooser (FR-001): the databases the login can read (seeded with the
+-- connected database) plus a typed-name path. Cancelling returns to the previous
+-- picker with no state change (FR-009).
+local function choose_database(url, rows, current_db)
+    local choices = {}
+    if current_db and current_db ~= '' then
+        table.insert(choices, { label = '[use current: ' .. current_db .. ']', database = current_db })
+    end
+    for _, d in ipairs(vim.fn['db#adapter#sybase#complete_database'](url)) do
+        if d ~= current_db then
+            table.insert(choices, { label = d, database = d })
+        end
+    end
+    table.insert(choices, { label = '[type a database name…]', typed = true })
+    vim.ui.select(choices, {
+        prompt = 'Database scope for object search',
+        format_item = function(c)
+            return c.label
+        end,
+    }, function(choice)
+        if not choice then
+            pick(rows, url)
+            return
+        end
+        if choice.typed then
+            vim.ui.input({ prompt = 'Database name: ' }, function(typed)
+                if typed == nil or typed == '' then
+                    pick(rows, url)
+                    return
+                end
+                local db = vim.trim(typed)
+                if db == '' or db == current_db then
+                    pick(rows, url)
+                    return
+                end
+                apply_database_scope(url, rows, db)
+            end)
+            return
+        end
+        apply_database_scope(url, rows, choice.database)
+    end)
+end
+
+pick = function(rows, url)
+    local current_db = url_database(url)
+    local items = rows
+    if is_sybase(url) then
+        items = { { scope = true, database = current_db } }
+        vim.list_extend(items, rows)
+    end
+    vim.ui.select(items, {
         prompt = 'DB objects (' .. url .. ')',
         format_item = function(row)
-            return row.kind .. '\t' .. row.name
+            if row.scope then
+                local scope = row.database and row.database ~= '' and row.database or 'login default'
+                return 'Database: ' .. scope .. ' — change…'
+            end
+            local db = row.database and row.database ~= '' and (row.database .. ' ') or ''
+            return row.kind .. '\t' .. db .. row.name
         end,
     }, function(row)
         if row then
-            open_row(url, row)
+            if row.scope then
+                choose_database(url, rows, current_db)
+            else
+                open_row(url, row)
+            end
         end
     end)
 end

@@ -490,7 +490,7 @@ batches run without truncation.
 | `nvim/autoload/db/adapter/sybase.vim` | Sybase adapter: `interactive`, `input` (with the sqsh `go`→`\go` transform), `input_extension`, `output_extension`, `tables`, `objects`, `source`, `complete_database`. The URL database is selected with a `use <db>` batch line (portable across `isql` variants and `sqsh`; no `-D` flag dependency) |
 | `nvim/lua/config/db_connections.lua` | Registry loader → `g:dbs`; reloads on `BufEnter` of a `dbui` window (`R` in `:DBUI` picks up edits) |
 | `nvim/db-connections.example.lua` | Committed, secret-free registry template |
-| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) + procedure save dialog (startup-root default, always-ask, database-qualified names) |
+| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) + database-scope control (chooser over the readable databases, typed-name path) + procedure save dialog (startup-root default, always-ask, database-qualified names) |
 | `nvim/lua/config/db_jump.lua` | Toggle between the code buffer and the DB workspace (`<leader>q`) |
 | `nvim/dependencies.tsv` | `sqsh`, `sqlcmd`/`go-sqlcmd`, `mongosh` rows (all optional) |
 | `nvim/plugin/database.lua` | dadbod stack wiring, Sybase "List" table helper, `:DBObjects` command, launch-cwd capture for the save dialog |
@@ -558,7 +558,25 @@ schemes degrade gracefully to tables only.
 
 SSMS-like object search. `:DBObjects [name]` (tab-completes over registry names) resolves the
 connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua picker over
-`g:dbs`. Rows are `kind  name`; fuzzy-filter by name as you type.
+`g:dbs`. On Sybase, every row is `kind  database  name` (prototype: `kind  name`); fuzzy-filter
+by name as you type.
+
+**Database scope (Sybase only)** — `specs/005-database-scope/`:
+
+- The picker leads with a `Database: <current> — change…` entry showing the connected database
+  (or `login default` when the URL carries no database). Selecting it opens the database chooser:
+  the databases the login can read (seeded with `[use current: <db>]`), or a typed database name.
+- Picking a database rebuilds the connection URL with that database as its path
+  (`db#adapter#sybase#with_database()`, preserving user/host/port/charset) and re-runs the listing
+  inside it. The **default on every invocation is the connected database** — behavior with no
+  scope choice is unchanged.
+- The scoped URL flows into source loading, buffer binding (`b:db`), and saved file names, so a
+  procedure found in another database shows that database's source, **executes in that database**
+  (never the connected one), and saves as `<owning-database>.<object>.sql`.
+- Safe failures: an invalid database name (anything not `[A-Za-z0-9_$#]`, including `%`) or an
+  empty/inaccessible listing surfaces exactly one actionable message and never an empty picker or
+  buffer; cancelling the chooser is a pure no-op. The cross-database search across all databases
+  (`%`) is explicitly out of scope (owned by the multi-DB spec).
 
 - Table/view selection opens a new `sql` buffer with the ASE-safe List query
   `select top 200 * from <name>` (no `LIMIT`) ready to run via the `:%DB` flow.
@@ -609,6 +627,7 @@ nvim --headless -u NORC -c 'lua require("tests.sybase_objects_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_connections_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_jump_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_save_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_objects_scope_smoke")' -c 'qa!'
 ```
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
