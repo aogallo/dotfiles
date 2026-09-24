@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-24
 
-**Status**: Draft
+**Status**: Closed (archived 2026-09-24; see `verify-report.md`)
 
 **Input**: User description: "ejecuto <leader>qo me levanta una serie de opciones 1. database: login default - change selecciono ese valor presionando enter y me da otro prompt donde ingreso el nombre de la base de datos y presiono enter y se vuelve al listado inicial y busco el sp y no aparece. escenario 2: selecciono el store procedure por default se va directo al root donde se abrio nvim. en este caso escogi la opcion 6 [type a path...] y lo guarda pero siempre me deja el inicial en el root"
 

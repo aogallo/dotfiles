@@ -1,4 +1,4 @@
--- Which-key database group smoke test (specs/007-fix-dbobjects-scope-save-dir,
+-- Which-key database group smoke test (specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir,
 -- quickstart automated check). Asserts the `<leader>q` → `database` group is
 -- declared in the which-key prefix registry in nvim/plugin/editor.lua and the
 -- four database action maps remain registered in nvim/lua/config/keymaps.lua

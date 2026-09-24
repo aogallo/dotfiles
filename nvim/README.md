@@ -587,7 +587,7 @@ by name as you type.
 - The scoped URL flows into source loading, buffer binding (`b:db`), and saved file names, so a
   procedure found in another database shows that database's source, **executes in that database**
   (never the connected one), and saves as `<owning-database>.<object>.sql`.
-- Safe failures (specs/007-fix-dbobjects-scope-save-dir/): a failed scope — invalid database name
+- Safe failures (specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/): a failed scope — invalid database name
   (anything not `[A-Za-z0-9_$#]`, including `%`), a name equal to the current scope, or an
   empty/inaccessible listing — surfaces **exactly one** actionable message and the picker reopens on
   the previous (last-good) list with the active scope unchanged; the scope never silently reverts
@@ -605,7 +605,7 @@ by name as you type.
   is never remembered. Confirmed saves write one file named `<owning-database>.<object>.sql`
   (database-qualified so same-named procedures from different databases never collide; the
   single-DB listing falls back to `<object>.sql`). After every confirmed save a notification shows
-  the full path of the written file (specs/007-fix-dbobjects-scope-save-dir/). If the file already
+  the full path of the written file (specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/). If the file already
   exists, the user must explicitly choose overwrite or cancel; cancelling writes nothing and
   changes nothing (see `specs/002-procedure-save-dialog/` for the full contract).
 - On SQL Server/MongoDB the picker uses dadbod's native `tables()` (tables/collections; no
