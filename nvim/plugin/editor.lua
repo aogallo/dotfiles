@@ -153,6 +153,7 @@ add {
                 { '<leader>g', group = 'git' },
                 { '<leader>n', group = 'notes' },
                 { '<leader>p', group = 'packages' },
+                { '<leader>q', group = 'database' },
                 { '<leader>s', group = 'search' },
                 { '<leader>u', group = 'ui' },
                 { '<leader>w', group = 'windows' },
