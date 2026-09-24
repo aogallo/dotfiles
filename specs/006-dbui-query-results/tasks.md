@@ -19,7 +19,7 @@ description: "Task list for DBUI Query Result Reopen and Notification Routing"
 
 **Purpose**: Feature branch and active-feature tracking before any code changes
 
-- [ ] T001 Create and switch to feature branch `006-dbui-query-results` from `main` (never commit to `main`; see `specs/006-dbui-query-results/plan.md`)
+- [x] T001 Create and switch to feature branch `006-dbui-query-results` from `origin/main` (never commit to `main`; see `specs/006-dbui-query-results/plan.md`)
 - [x] T002 [P] Verify `.specify/feature.json` still points to `specs/006-dbui-query-results` (Spec Kit active-feature tracking)
 
 ---
@@ -80,7 +80,7 @@ description: "Task list for DBUI Query Result Reopen and Notification Routing"
 - [x] T011 [P] Update `nvim/README.md` (FR-015, Module README gate XIV): document `<leader>qr` behavior (DB results group), the notification routing via `g:db_ui_use_nvim_notify`, the native dadbod echo limitation, and rollback (`git revert` of the Neovim-module changes; in-memory slot vanishes with the process, no state left behind)
 - [x] T012 Run full verification gates (FR-014, Verification gate VIII): `nvim --headless -u nvim/init.lua '+quitall'`; `stylua --check nvim`; all db smokes — `tests.sybase_adapter_smoke`, `tests.sybase_objects_smoke`, `tests.db_objects_save_smoke`, `tests.db_jump_smoke`, `tests.db_results_smoke` via `nvim --headless -u NORC -c 'lua require("tests.<name>")' -c 'qa!'`
 - [x] T013 Verify idempotency / non-destructive / recovery (gates II/III/X): repeated `<leader>qr` presses converge on the same buffer/window — no duplicates accumulate; summon paths never create files or mutate query state; rollback documented in `nvim/README.md` (T011) matches actual `git revert` behavior
-- [ ] T014 Feature-branch/PR discipline (gate XIII): commit conventionally on `006-dbui-query-results` (never `main`); submit PR linking the approved issue; before PR creation verify the active spec relationship (this spec = completed solution) and ask whether `specs/006-dbui-query-results` should be closed
+- [x] T014 Feature-branch/PR discipline (gate XIII): commit conventionally on `006-dbui-query-results` (never `main`); submit PR linking the approved issue; before PR creation verify the active spec relationship (this spec = completed solution) and ask whether `specs/006-dbui-query-results` should be closed
 
 **Checkpoint**: All user stories independently functional; all constitution gates pass.
 
