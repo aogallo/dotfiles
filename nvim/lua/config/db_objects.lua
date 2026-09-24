@@ -70,6 +70,14 @@ local function url_database(url)
     return db
 end
 
+-- Readable scope label (FR-001): the database name read from the URL, or
+-- 'login default' when the connection has none. Used by the picker header and
+-- the scope row so both always show the same label (contract §1).
+local function scope_label(url)
+    local db = url_database(url)
+    return (db and db ~= '') and db or 'login default'
+end
+
 local function url_from_buffer(buf)
     local bdb = vim.b[buf].db
     if type(bdb) == 'string' then
@@ -246,7 +254,9 @@ function M.run_save_flow(row, lines)
             local result = M.write_source(lines, dir, filename)
             if not result.ok then
                 vim.notify('DBObjects: ' .. result.error, vim.log.levels.ERROR)
+                return
             end
+            vim.notify('DBObjects: saved ' .. result.path, vim.log.levels.INFO)
         end
         if M.needs_confirmation(dir, filename) then
             confirm_overwrite(vim.fs.joinpath(dir, filename), function(verdict)
@@ -284,7 +294,8 @@ end
 
 -- Apply a chosen database: rebuild the URL with it as the path and re-run the
 -- listing inside it (FR-002). Invalid/inaccessible or empty results surface
--- exactly one actionable message and never an empty picker (FR-007/FR-008).
+-- exactly one actionable message and never an empty picker: the picker re-opens
+-- on the last-good listing with the previous scope (FR-003, contract §2).
 local pick -- forward declaration: pick <-> choose_database form a cycle
 
 local function apply_database_scope(url, rows, database)
@@ -299,7 +310,8 @@ local function apply_database_scope(url, rows, database)
     end
     local scoped_rows = fetch_objects(scoped)
     if vim.tbl_isempty(scoped_rows) then
-        vim.notify('DBObjects: no objects returned for ' .. scoped, vim.log.levels.ERROR)
+        vim.notify('DBObjects: no objects returned for ' .. database, vim.log.levels.ERROR)
+        pick(rows, url)
         return
     end
     pick(scoped_rows, scoped)
@@ -331,12 +343,17 @@ local function choose_database(url, rows, current_db)
         end
         if choice.typed then
             vim.ui.input({ prompt = 'Database name: ' }, function(typed)
-                if typed == nil or typed == '' then
+                if typed == nil then
                     pick(rows, url)
                     return
                 end
                 local db = vim.trim(typed)
-                if db == '' or db == current_db then
+                if db == '' then
+                    pick(rows, url)
+                    return
+                end
+                if db == current_db then
+                    vim.notify('DBObjects: ' .. db .. ' is already the active database scope', vim.log.levels.WARN)
                     pick(rows, url)
                     return
                 end
@@ -356,11 +373,10 @@ pick = function(rows, url)
         vim.list_extend(items, rows)
     end
     vim.ui.select(items, {
-        prompt = 'DB objects (' .. url .. ')',
+        prompt = 'DB objects (' .. scope_label(url) .. ')',
         format_item = function(row)
             if row.scope then
-                local scope = row.database and row.database ~= '' and row.database or 'login default'
-                return 'Database: ' .. scope .. ' — change…'
+                return 'Database: ' .. scope_label(url) .. ' — change…'
             end
             local db = row.database and row.database ~= '' and (row.database .. ' ') or ''
             return row.kind .. '\t' .. db .. row.name

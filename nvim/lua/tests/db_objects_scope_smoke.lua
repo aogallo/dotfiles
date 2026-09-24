@@ -98,10 +98,15 @@ local OBJECTS = {
     other_db = {
         { name = 'usp_two', kind = 'procedure', database = 'other_db' },
     },
+    my_schema_db = {
+        { name = 'usp_three', kind = 'procedure', database = 'my_schema_db' },
+    },
     empty_db = {},
 }
 
+local objects_calls = 0
 vim.fn['db#adapter#sybase#objects'] = function(url)
+    objects_calls = objects_calls + 1
     local db = url:match '^sybase://[^/]*/([^?]*)'
     return OBJECTS[db] or {}
 end
@@ -320,15 +325,17 @@ fail(
     '<main_db usp_one>'
 )
 
--- empty scoped listing: one actionable message, no picker/buffer (FR-007)
+-- empty scoped listing: one actionable message and picker re-opens on the
+-- last-good listing (FR-003, contract §2)
 M.open()
 local pick_empty = next_select()
+local notices_before = #notices
 pick_empty.cb(pick_empty.items[1])
 local chooser_empty = next_select()
 chooser_empty.cb(pick_matching(chooser_empty.items, function(c)
     return c.database == 'empty_db'
 end))
-fail(#select_calls == 0, 'empty scoped listing opens no picker', #select_calls, 0)
+fail(#notices == notices_before + 1, 'empty listing raises exactly one notification', #notices, notices_before + 1)
 local empty_notice = notices[#notices]
 fail(
     empty_notice ~= nil
@@ -338,6 +345,19 @@ fail(
     'empty listing surfaces exactly one actionable message naming the database',
     empty_notice,
     '<no objects returned ... empty_db>'
+)
+local back_empty = next_select()
+fail(
+    back_empty.items[1].database == 'main_db',
+    'empty scoped listing re-opens the last-good picker with the previous scope',
+    back_empty.items[1].database,
+    'main_db'
+)
+fail(
+    #back_empty.items == 1 + #OBJECTS.main_db,
+    're-opened picker still lists the last-good database objects',
+    #back_empty.items,
+    3
 )
 
 -- invalid typed database name: canonical error, flow stays alive (FR-007/FR-008)
@@ -385,6 +405,89 @@ fail(
     'scope cycles create no buffers (idempotent)',
     #vim.api.nvim_list_bufs(),
     buffers_before
+)
+
+-- --- US1 feedback (007): readable header label ----------------------------
+
+fail(
+    pick1.opts.prompt:find('sybase://', 1, true) == nil and pick1.opts.prompt:find('main_db', 1, true) ~= nil,
+    'object picker header shows the readable active scope, not the raw URL',
+    pick1.opts.prompt,
+    '<DB objects (main_db)>'
+)
+
+-- --- US1 feedback (007): typed underscore name scopes successfully (FR-004)
+M.open()
+local pick_typed = next_select()
+pick_typed.cb(pick_typed.items[1])
+local chooser_typed = next_select()
+chooser_typed.cb(pick_matching(chooser_typed.items, function(c)
+    return c.typed == true
+end))
+local fetch_before = objects_calls
+next_input().cb 'my_schema_db'
+local scoped_pick = next_select()
+fail(
+    scoped_pick.opts.prompt:find('my_schema_db', 1, true) ~= nil,
+    'typed underscore database name reopens the header scoped to it',
+    scoped_pick.opts.prompt,
+    '<contains my_schema_db>'
+)
+fail(
+    scoped_pick.items[1].database == 'my_schema_db',
+    'typed scope row shows the typed database',
+    scoped_pick.items[1].database,
+    'my_schema_db'
+)
+fail(
+    scoped_pick.items[2].name == 'usp_three',
+    'listing came from the typed database',
+    scoped_pick.items[2].name,
+    'usp_three'
+)
+fail(
+    objects_calls == fetch_before + 1,
+    'scoping to a typed database re-fetches its objects exactly once',
+    objects_calls,
+    fetch_before + 1
+)
+
+-- --- US1 feedback (007): typed name equal to current scope (FR-003) -------
+M.open()
+local pick_equal = next_select()
+local notices_eq_before = #notices
+local objects_eq_before = objects_calls
+pick_equal.cb(pick_equal.items[1])
+local chooser_equal = next_select()
+chooser_equal.cb(pick_matching(chooser_equal.items, function(c)
+    return c.typed == true
+end))
+next_input().cb 'main_db'
+fail(
+    #notices == notices_eq_before + 1,
+    'equal-to-current scope raises exactly one message',
+    #notices,
+    notices_eq_before + 1
+)
+local equal_notice = notices[#notices]
+fail(
+    equal_notice ~= nil and equal_notice.msg:find('main_db', 1, true) ~= nil,
+    'equal-to-current scope message names the database',
+    equal_notice,
+    '<main_db>'
+)
+local back_equal = next_select()
+fail(
+    back_equal.items[1].database == 'main_db',
+    'equal-to-current scope keeps the picker on the same listing',
+    back_equal.items[1].database,
+    'main_db'
+)
+fail(
+    objects_calls == objects_eq_before,
+    'equal-to-current scope does not refresh the listing',
+    objects_calls,
+    objects_eq_before
 )
 
 vim.print 'All db_objects scope smoke assertions passed'
