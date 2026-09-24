@@ -37,6 +37,7 @@ vim.keymap.set('n', '<leader>bx', '<cmd>bdelete<cr>', { desc = 'Close buffer', s
 vim.keymap.set('n', '<leader>qj', require('config.db_jump').jump, { desc = 'Database window', silent = true })
 vim.keymap.set('n', '<leader>qu', '<cmd>DBUIToggle<cr>', { desc = 'Database UI', silent = true })
 vim.keymap.set('n', '<leader>qo', '<cmd>DBObjects<cr>', { desc = 'Database objects', silent = true })
+vim.keymap.set('n', '<leader>qr', require('config.db_results').show, { desc = 'Database results', silent = true })
 
 -- Formatting.
 vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })

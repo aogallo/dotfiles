@@ -113,8 +113,8 @@
 
 - [X] T015 [P] Documentar en `nvim/README.md` (sección DB): flujo del diálogo de guardado, default = startup root, siempre pregunta, naming `<db>.<name>.sql`, validación (comandos del quickstart), boundary de personalización (ninguno), rollback (eliminar archivos guardados es manual del usuario) — constitution XIV.
 - [X] T016 [P] Correr la validación automatizada de `specs/002-procedure-save-dialog/quickstart.md` en el branch `002-procedure-save-dialog`: headless startup, `stylua --check nvim`, smokes existentes (`sybase_adapter_smoke`, `sybase_objects_smoke`) y el nuevo `db_objects_save_smoke`; todos exit 0.
-- [ ] T017 Verificar que los commits estén en el feature branch `002-procedure-save-dialog` con mensajes convencionales y que la PR enlace el issue aprobado requerido.
-- [ ] T018 Antes de crear la PR, revisar la relación del active spec: confirmar si la PR es related/unrelated al active spec (`002-procedure-save-dialog`) y **preguntar si la spec predecesora `001-multidb-object-search` (related, completada por esta cadena) debe cerrarse** — constitution XIII.
+- [X] T017 Verificar que los commits estén en el feature branch `002-procedure-save-dialog` con mensajes convencionales y que la PR enlace el issue aprobado requerido.
+- [X] T018 Antes de crear la PR, revisar la relación del active spec: confirmar si la PR es related/unrelated al active spec (`002-procedure-save-dialog`) y **preguntar si la spec predecesora `001-multidb-object-search` (related, completada por esta cadena) debe cerrarse** — constitution XIII.
 - [X] T019 Confirmar que los Story Links de este `tasks.md` coinciden con los headings de `spec.md` (US1/US2/US3) y que el legend `[P]/[US#]/T###` está visible — constitution XV.
 
 ---
