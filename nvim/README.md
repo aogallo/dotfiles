@@ -492,6 +492,7 @@ batches run without truncation.
 | `nvim/db-connections.example.lua` | Committed, secret-free registry template |
 | `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) + procedure save dialog (startup-root default, always-ask, database-qualified names) |
 | `nvim/lua/config/db_jump.lua` | Toggle between the code buffer and the DB workspace (`<leader>q`) |
+| `nvim/lua/config/db_results.lua` | Last query-result summon (`<leader>qr`): records dadbod `User */DBExecutePre|Post` into a per-session slot and focuses/reopens the result window |
 | `nvim/dependencies.tsv` | `sqsh`, `sqlcmd`/`go-sqlcmd`, `mongosh` rows (all optional) |
 | `nvim/plugin/database.lua` | dadbod stack wiring, Sybase "List" table helper, `:DBObjects` command, launch-cwd capture for the save dialog |
 
@@ -539,7 +540,12 @@ one-key route to the database workspace instead of relying on that cycle:
   focuses the drawer.
 - `<leader>qu` — `:DBUIToggle`: open/close the database drawer.
 - `<leader>qo` — `:DBObjects` schema-object search.
-- Pressing `<leader>q` alone shows the `database` group (j/u/o) instead of firing an action.
+- `<leader>qr` — summon the last finished query result: if the result window is still
+  open it is focused (from any tab, current tab preferred); if the preview window was
+  closed it is reopened from the recorded `.dbout` file. One clear informational notice
+  appears when nothing has finished yet or a query is still running, and a warning names
+  the file when the output temp file no longer exists on disk.
+- Pressing `<leader>q` alone shows the `database` group (j/u/o/r) instead of firing an action.
 - From the DB workspace, return to code with `<leader>qj`, the `L`/`H` buffer cycle, or `<C-o>`
   (walk back through the jumplist; `<C-i>` moves forward). `<C-6>` also toggles between the last
   two buffers.
@@ -548,6 +554,13 @@ Result output is table-friendly: `isql` runs with `-n -w` so the `n>` input prom
 the result buffer and wide columns stop wrapping at the 80-column default. `g:db_sybase_width`
 tunes the column width (default `32000`). The dash separator lines isql emits are what let
 vim-dadbod-ui fold and navigate result sets.
+
+dadbod-ui notices ("Executing query...", completion and error notices) are routed through the
+native Neovim notification system (`vim.notify`, displayed by Snacks) via
+`g:db_ui_use_nvim_notify`, so the running query and code stay visible instead of an overlay at
+the bottom-left. dadbod's own `DB: Query finished in …` echo on the native command line and the
+query progress float are upstream vim-dadbod behavior and are not configurable from this repo
+(see `specs/006-dbui-query-results/`).
 
 Schema completion inside `*.sql` buffers comes from the dadbod blink provider
 (`nvim/plugin/blink.lua`, enabled for the `sql` filetype). Table names complete after `.` or `_`.
@@ -595,6 +608,9 @@ connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua p
   the sqsh client.
 - The procedure save dialog has **no configuration surface** by design: it always asks, defaults to
   the launch directory, and writes database-qualified names (spec `002-procedure-save-dialog`).
+- dadbod-ui notification routing is handled by `g:db_ui_use_nvim_notify` (enabled here);
+  setting `g:db_ui_disable_info_notifications` still silences the routine "Executing query..."
+  info notices while errors/warnings keep their severity through `vim.notify`.
 - `NVIM_DB_CONNECTIONS` overrides the registry path. Secrets live only in the ignored registry
   or environment variables; nothing in this repo carries credentials.
 
@@ -609,6 +625,8 @@ nvim --headless -u NORC -c 'lua require("tests.sybase_objects_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_connections_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_jump_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_save_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_results_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua assert(vim.g.db_ui_use_nvim_notify, "db_ui_use_nvim_notify not set"); vim.print("PASS notify-routing")' -c 'qa!'
 ```
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
@@ -625,6 +643,10 @@ from `nvim/db-connections.example.lua`.
 The procedure save dialog writes **user-owned files in user-chosen directories** (never inside the
 repo); reverting the module just removes the dialog, and deleting any previously saved
 `<database>.<object>.sql` files is manual/user-managed.
+
+The `<leader>qr` summon and the dadbod-ui notification routing hold no state outside the Neovim
+process and write nothing; reverting the config restores the previous overlay behavior and no
+buffers, files, or saved state are left behind.
 
 ## Local Overrides
 
