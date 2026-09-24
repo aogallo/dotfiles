@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-23
 
-**Status**: Draft
+**Status**: Closed (archived 2026-09-23; see `verify-report.md`)
 
 **Input**: User description: "quiero que me muestres una ventana donde me indique donde quiero guardar el procedimiento que seleccione despues de darle :dbobjects, por default dejar el root donde inicie nvim pero si quiero guardarlo en otro lugar me interesa hacerlo de nueva vez, porque si no estare con todos los sp en un solo lado"
 

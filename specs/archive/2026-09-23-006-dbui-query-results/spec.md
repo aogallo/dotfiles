@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-23
 
-**Status**: Draft
+**Status**: Closed (archived 2026-09-23; see `verify-report.md`)
 
 **Input**: User description: "si ejecuto otro query ya no veo el buffer de salida y no se como volverle a decir a dbui que muestre el buffer de salida" (clarificado: se mantiene el comportamiento actual del popup al cerrar buffers de codigo; el pedido es un atajo para convocar la ultima salida + llevarse las notificaciones de dadbod-ui a las notificaciones nativas de Neovim).
 
