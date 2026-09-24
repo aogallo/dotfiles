@@ -490,7 +490,7 @@ batches run without truncation.
 | `nvim/autoload/db/adapter/sybase.vim` | Sybase adapter: `interactive`, `input` (with the sqsh `go`→`\go` transform), `input_extension`, `output_extension`, `tables`, `objects`, `source`, `complete_database`. The URL database is selected with a `use <db>` batch line (portable across `isql` variants and `sqsh`; no `-D` flag dependency) |
 | `nvim/lua/config/db_connections.lua` | Registry loader → `g:dbs`; reloads on `BufEnter` of a `dbui` window (`R` in `:DBUI` picks up edits) |
 | `nvim/db-connections.example.lua` | Committed, secret-free registry template |
-| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) + database-scope control (chooser over the readable databases, typed-name path) + procedure save dialog (startup-root default, always-ask, database-qualified names) |
+| `nvim/lua/config/db_objects.lua` | `:DBObjects` schema-object search (fzf-lua picker over `vim.ui.select`) + database-scope control (chooser over the readable databases, typed-name path, visible active-scope header, non-silent failure feedback when a scope cannot be applied) + procedure save dialog (startup-root default, always-ask, database-qualified names, save-path confirmation notification) |
 | `nvim/lua/config/db_jump.lua` | Toggle between the code buffer and the DB workspace (`<leader>q`) |
 | `nvim/lua/config/db_results.lua` | Last query-result summon (`<leader>qr`): records dadbod `User */DBExecutePre|Post` into a per-session slot and focuses/reopens the result window |
 | `nvim/dependencies.tsv` | `sqsh`, `sqlcmd`/`go-sqlcmd`, `mongosh` rows (all optional) |
@@ -546,7 +546,6 @@ one-key route to the database workspace instead of relying on that cycle:
   appears when nothing has finished yet or a query is still running, and a warning names
   the file when the output temp file no longer exists on disk.
 - Pressing `<leader>q` alone shows the `database` group (j/u/o/r) instead of firing an action.
-- Pressing `<leader>q` alone shows the `database` group (j/u/o) instead of firing an action.
 - From the DB workspace, return to code with `<leader>qj`, the `L`/`H` buffer cycle, or `<C-o>`
   (walk back through the jumplist; `<C-i>` moves forward). `<C-6>` also toggles between the last
   two buffers.
@@ -577,20 +576,24 @@ by name as you type.
 
 **Database scope (Sybase only)** — `specs/005-database-scope/`:
 
-- The picker leads with a `Database: <current> — change…` entry showing the connected database
-  (or `login default` when the URL carries no database). Selecting it opens the database chooser:
-  the databases the login can read (seeded with `[use current: <db>]`), or a typed database name.
+- The picker header always shows the active scope: the connected database, or `login default` when
+  the URL carries none; the picker leads with a `Database: <scope> — change…` entry using the same
+  label. Selecting it opens the database chooser: the databases the login can read (seeded with
+  `[use current: <db>]`), or a typed database name.
 - Picking a database rebuilds the connection URL with that database as its path
   (`db#adapter#sybase#with_database()`, preserving user/host/port/charset) and re-runs the listing
-  inside it. The **default on every invocation is the connected database** — behavior with no
-  scope choice is unchanged.
+  inside it; the picker reopens with the header showing the chosen database. The **default on every
+  invocation is the connected database** — behavior with no scope choice is unchanged.
 - The scoped URL flows into source loading, buffer binding (`b:db`), and saved file names, so a
   procedure found in another database shows that database's source, **executes in that database**
   (never the connected one), and saves as `<owning-database>.<object>.sql`.
-- Safe failures: an invalid database name (anything not `[A-Za-z0-9_$#]`, including `%`) or an
-  empty/inaccessible listing surfaces exactly one actionable message and never an empty picker or
-  buffer; cancelling the chooser is a pure no-op. The cross-database search across all databases
-  (`%`) is explicitly out of scope (owned by the multi-DB spec).
+- Safe failures (specs/007-fix-dbobjects-scope-save-dir/): a failed scope — invalid database name
+  (anything not `[A-Za-z0-9_$#]`, including `%`), a name equal to the current scope, or an
+  empty/inaccessible listing — surfaces **exactly one** actionable message and the picker reopens on
+  the previous (last-good) list with the active scope unchanged; the scope never silently reverts
+  and the picker never vanishes. Cancelling the chooser or the typed-name prompt is a pure no-op.
+  The cross-database search across all databases (`%`) is explicitly out of scope (owned by the
+  multi-DB spec).
 
 - Table/view selection opens a new `sql` buffer with the ASE-safe List query
   `select top 200 * from <name>` (no `LIMIT`) ready to run via the `:%DB` flow.
@@ -601,9 +604,10 @@ by name as you type.
   before any `:cd`); browse subdirectories or type a path on each save — a previously chosen folder
   is never remembered. Confirmed saves write one file named `<owning-database>.<object>.sql`
   (database-qualified so same-named procedures from different databases never collide; the
-  single-DB listing falls back to `<object>.sql`). If the file already exists, the user must
-  explicitly choose overwrite or cancel; cancelling writes nothing and changes nothing (see
-  `specs/002-procedure-save-dialog/` for the full contract).
+  single-DB listing falls back to `<object>.sql`). After every confirmed save a notification shows
+  the full path of the written file (specs/007-fix-dbobjects-scope-save-dir/). If the file already
+  exists, the user must explicitly choose overwrite or cancel; cancelling writes nothing and
+  changes nothing (see `specs/002-procedure-save-dialog/` for the full contract).
 - On SQL Server/MongoDB the picker uses dadbod's native `tables()` (tables/collections; no
   procedure source action). Missing client or missing objects shows a clear notice, never a crash.
 
@@ -646,6 +650,7 @@ nvim --headless -u NORC -c 'lua require("tests.db_jump_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_save_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_scope_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_results_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.keymap_groups_smoke")' -c 'qa!'
 nvim --headless -u nvim/init.lua -c 'lua assert(vim.g.db_ui_use_nvim_notify, "db_ui_use_nvim_notify not set"); vim.print("PASS notify-routing")' -c 'qa!'
 ```
 
