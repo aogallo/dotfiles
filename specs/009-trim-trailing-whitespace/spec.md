@@ -20,19 +20,24 @@ decides the scope:
 | --- | --- |
 | Is a formatter available? | Yes. The editor resolves a working formatter install and uses it for markdown on save. |
 | Does it run? | Yes. Reproduced headlessly: a markdown file with stray trailing spaces is cleaned on save. |
-| Why did some lines keep their spaces? | Every markdown line in the repository that still ends in spaces ends in **exactly two** spaces inside prose. Those are intentional hard line breaks, which the formatter preserves on purpose because they are semantically meaningful in Markdown. Lines that merely *accidentally* carried extra spaces (3 spaces, or 2 spaces on a heading) were already removed. |
+| Why did some lines keep their spaces? | Every markdown line in the repository that still ends in spaces ends in **exactly two** spaces inside prose, and every one of them is mid-paragraph — the pattern of an intentional hard line break. |
+| Does the formatter remove accidental extra spaces? | **Not always.** Verified against the formatter directly: three or more trailing spaces in prose are *normalized to exactly two*, not removed, because two or more spaces is a hard break in Markdown. Only spaces on a heading or a table row are dropped. This corrects an earlier draft of this spec that claimed 3-space lines were already removed. |
+| Is a two-space break always preserved? | **No.** It is preserved when more text follows in the same paragraph. On the last line of a paragraph the formatter removes it, because a break with nothing after it renders identically either way. This corrects an earlier draft that promised unconditional preservation. |
+| Are fenced code blocks left exactly as written? | **No.** Trailing whitespace inside a fence is stripped, and tables get re-aligned. Only the structure survives. An earlier draft promised fences were left untouched, which is not true of this formatter. |
 | If the main formatter is missing, is the trimming lost? | **No.** The formatter chain is resolved by availability: unavailable formatters are skipped, and only the *first available* one stops the chain. With the main formatter gone, the whitespace-only steps are selected and run, so the cleanup still happens. This was verified in the formatter's own resolution code, and it corrects an earlier draft of this spec that claimed the opposite. |
 | So is anything actually broken? | Two narrow cases, not the wholesale silent no-op the first draft described. (1) A document that a project configuration routes to a *different* formatter is given a chain that contains no whitespace-only step at all, so it gets no trimming when that formatter is unavailable. (2) The "formatters unavailable" message is emitted once per file type per session, so a failure that persists across many saves is silent from the second save onward. |
 | Is a second, parallel mechanism justified? | No. The user confirmed the formatter path is acceptable ("si el formateado lo hace está bien"). A competing auto command would duplicate behavior and race the formatter on the same save event. |
 
 **Scope decision**: no auto command is added. The work is to *guarantee* the behavior that
 already exists (regression coverage), close the two narrow gaps listed above, and document the
-hard-break exception so it is not "fixed" into broken rendering later.
+formatter's real rules for prose, headings, tables and fences so they are not "fixed" into broken
+rendering later.
 
-**Correction note (2026-09-25)**: this summary originally claimed that a missing main formatter
-left markdown completely untrimmed and silent. That was wrong: the fallback to the whitespace-only
-steps works. Any later session that revisits this spec must read the table above rather than the
-original wording.
+**Correction note (2026-09-25)**: this summary originally claimed that a missing main formatter left
+markdown completely untrimmed and silent, that 3-space lines were already removed, that a two-space
+hard break was always preserved, and that fenced blocks were left untouched. All four claims were
+wrong, and each was corrected above after verifying the formatter's actual output. Any later session
+that revisits this spec must read this table rather than the original wording.
 
 ## Clarifications
 
@@ -102,16 +107,20 @@ As someone who uses two trailing spaces in prose to force a line break, I want t
 rendering as a line break and not be "cleaned up" into a single run-on paragraph.
 
 **Why this priority**: A cleanup that is too aggressive is a data-loss bug in a document. This
-story exists to protect the exception, and to record why it exists.
+story exists to protect the exception, and to record why it exists. It also records the cases where
+the exception does not apply, so nobody "fixes" them later in the wrong direction.
 
-**Independent Test**: Write two prose lines that end with two spaces, save, and confirm the
-rendered output still shows two lines.
+**Independent Test**: Write two prose lines that end in two spaces, save, and confirm the rendered
+output still shows two lines.
 
 **Acceptance Scenarios**:
 
-1. **Given** a prose line ending in exactly two spaces inside a paragraph, **When** the user saves, **Then** the two spaces are preserved and the rendered document still shows a line break.
-2. **Given** a heading or table line ending in two spaces, **When** the user saves, **Then** those spaces are removed, because they carry no meaning there.
-3. **Given** a fenced code block containing trailing spaces in an example, **When** the user saves, **Then** the content inside the fence is left as the user wrote it.
+1. **Given** a prose line ending in exactly two spaces with more text following in the same paragraph, **When** the user saves, **Then** the two spaces are preserved and the rendered document still shows a line break.
+2. **Given** the last line of a paragraph ending in two spaces, **When** the user saves, **Then** the spaces are removed, because a break with nothing after it renders identically and the trailing space is not a line break the author can observe.
+3. **Given** a prose line ending in three or more spaces, **When** the user saves, **Then** the spaces are reduced to exactly two rather than removed, because two or more spaces is a hard break and the reduction changes nothing about the rendering.
+4. **Given** a heading or table row ending in two spaces, **When** the user saves, **Then** the spaces are removed, because they carry no meaning there.
+5. **Given** a fenced code block containing trailing spaces in an example, **When** the user saves, **Then** the trailing spaces inside the fence are stripped like anywhere else, because the formatter normalizes block content and the spaces are not significant to the example.
+
 
 ---
 
@@ -149,8 +158,16 @@ other one — with no database server involved.
   whitespace steps, not to nothing.
 - **A directory containing its own formatter configuration** (for example a JavaScript project
   with its own settings file): that directory's rules win, and the cleanup must still apply there.
-- **Whitespace inside fenced code blocks and indented examples**: never touched; the user may
-  be documenting trailing spaces on purpose.
+- **Whitespace inside fenced code blocks and indented examples**: cleaned like any other trailing
+  whitespace, because the formatter normalizes block content. The structure and the code itself are
+  preserved; only the trailing spaces go.
+- **Three or more trailing spaces in prose**: reduced to exactly two, not removed, because two or
+  more spaces is a hard break. This is the case that made the original request look unfixed: the
+  spaces are gone, but the line still ends in two.
+- **A two-space break on the last line of a paragraph**: removed, because nothing follows it and
+  the rendering is identical either way.
+- **A table in the document**: the formatter may re-align the columns, which changes bytes far from
+  any trailing space. That is the formatter's own behavior and is not a whitespace change.
 - **Whitespace-only lines** between paragraphs: a line of only spaces must become an empty line,
   never be deleted (deleting it would merge paragraphs).
 - **Files with CRLF line endings**: the carriage return must not be mistaken for content, and
@@ -192,8 +209,8 @@ other one — with no database server involved.
 - **FR-001**: Saving any supported document type MUST remove trailing whitespace from the end of each line, without the user running a separate command.
 - **FR-002**: The cleanup MUST apply to Markdown, plain text, source code, and configuration file types supported by the editor.
 - **FR-003**: A line consisting only of whitespace MUST become an empty line; it MUST NOT be removed, and paragraph separation MUST be preserved.
-- **FR-004**: Trailing whitespace that carries meaning in the document format — a two-space hard line break inside Markdown prose — MUST be preserved, and the rendered document MUST be unchanged.
-- **FR-005**: Whitespace inside fenced code blocks and indented code examples MUST be left exactly as written.
+- **FR-004**: Trailing whitespace that carries meaning in the document format MUST be preserved, and the rendered document MUST be unchanged. Concretely: a two-space hard line break followed by more text in the same paragraph is preserved; three or more trailing spaces in prose are reduced to exactly two; a two-space break on the last line of a paragraph is removed, because it renders identically; two spaces on a heading or table row are removed.
+- **FR-005**: Whitespace inside fenced code blocks and indented code examples MUST be cleaned like any other trailing whitespace, because it is not significant to the example. The block's structure and content MUST be preserved; the formatter is allowed to normalize whitespace and table alignment inside a document.
 - **FR-006**: Content inside the line MUST be preserved byte for byte, including leading indentation and tabs.
 - **FR-007**: When the primary formatter for a document is unavailable, the trailing-whitespace cleanup MUST still be applied — both for documents the editor formats with its own chain, and for documents a project configuration routes to a different formatter.
 - **FR-008**: When no formatter at all can run for a file type, the editor MUST show a message naming the file type, and it MUST NOT go silent on subsequent saves of that file type in the same session while the failure persists.
@@ -229,7 +246,7 @@ other one — with no database server involved.
 ### Measurable Outcomes
 
 - **SC-001**: After saving any file type, 100% of lines have no accidental trailing whitespace, verified by reopening the saved file.
-- **SC-002**: A saved file's two-space prose line breaks render identically to before the change: 0 documents change their rendered layout as a result of this feature.
+- **SC-002**: A saved file's rendered layout is identical to before the change: 0 documents change their rendered output as a result of this feature, even where the bytes do change (three spaces reduced to two, a meaningless end-of-paragraph break removed, table columns re-aligned).
 - **SC-003**: With the primary formatter made unavailable, 100% of saved documents still have no accidental trailing whitespace, including documents inside a directory that carries its own formatter configuration; and 0 saves of a file type with no available formatter pass without a message naming that file type.
 - **SC-004**: The automated checks for this behavior pass with 0 failures, run without a live editor session.
 - **SC-005**: Exactly one cleanup mechanism runs per save; no save triggers both a dedicated auto command and the formatting path.
