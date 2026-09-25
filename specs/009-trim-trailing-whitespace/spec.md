@@ -53,6 +53,17 @@ that revisits this spec must read this table rather than the original wording.
   instante en que se ejecuta un query se emite un aviso único si el texto cambia de contexto.
 - Q: ¿En qué buffers aparece? → A: en todo buffer SQL. Con conexión muestra la base; sin conexión
   muestra un marcador visible de ausencia, para que se distinga de un indicador roto.
+- Q: El pedido original era un auto command justamente para cuando no hay formateador. ¿Se agrega
+  al final? → A: **no**, y la razón es que el caso ya está cubierto: la cadena resuelve por
+  disponibilidad, así que sin formateador corren los pasos de solo-espacios y los espacios se van.
+  Lo que se acepta es que, en esa máquina y solo en ella, esos pasos también aplanan los hard breaks
+  de dos espacios, porque no distinguen un hard break de basura. El usuario delegó la decisión
+  ("haz lo que sea correcto") y se eligió no agregar el auto command: un segundo mecanismo
+  contradice FR-009 y el comportamiento actual ya cumple el pedido.
+- Q: El usuario agregó `folke/todo-comments.nvim` al branch a mitad de esta sesión. ¿Entra en este
+  trabajo? → A: sí, entra en este PR por decisión explícita del usuario, sin ser parte de ninguna
+  historia de esta spec. Solo se le quita el comentario de relleno de su configuración y se documenta
+  en el README del módulo. El usuario asume el riesgo de mezclar alcances en un mismo PR.
 
 ## User Scenarios & Testing *(mandatory)*
 
