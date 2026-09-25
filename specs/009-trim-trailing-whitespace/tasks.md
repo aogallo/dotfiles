@@ -60,7 +60,7 @@ this spec (constitution XII).
 - [X] T021 Assert in `formatter_chains_smoke.lua` that both chains carry the whitespace fallback and stop after the first available formatter, so a missing main formatter degrades to trimming rather than to nothing (FR-007, SC-003)
 - [X] T022 [P] Assert in `formatter_chains_smoke.lua` that the main formatter is still first in both chains, that a second call returns an equal chain, and that a buffer in a temp directory without any marker takes the other branch (FR-009, SC-005)
 - [X] T023 Create `nvim/lua/tests/markdown_whitespace_smoke.lua`, the one check that needs the real configuration: it requires the formatting toolchain and, when that require fails, prints `SKIP` and exits 0 so the offline suite stays green. Assert the content invariants here, because the steps that perform the cleanup are the toolchain's own: no line is left holding only whitespace, paragraph separation survives, leading indentation and tabs survive byte for byte on a file type whose chain is the fallback, a CRLF file keeps its endings, and a save with auto-formatting disabled changes nothing. Running these falsified two requirements as first written — FR-003's "never removed" and FR-006's "byte for byte" hold for the fallback, not for a main formatter, which may collapse blank lines and reindent code — and both are corrected in the spec and data model (FR-002, FR-003, FR-006, FR-010, FR-011, FR-012, SC-001)
-- [ ] T024 [P] Green run of everything built so far — the 8 original smokes, the 2 new offline smokes, `stylua --check nvim`, and the real-configuration boot — with the assertion counts written into the PR body (SC-004)
+- [X] T024 [P] Green run of everything built so far — the 8 original smokes, the 2 new offline smokes, `stylua --check nvim`, and the real-configuration boot — with the assertion counts written into the PR body (SC-004)
 
 ---
 
@@ -121,7 +121,7 @@ spec.
 - [X] T071 [P] Add the new validation commands to the `nvim/README.md` validation block: both offline smokes and the full-configuration Markdown check (constitution VIII)
 - [X] T072 Give every new production function the module's uniform header block — name, called by, SQL, args, returns, side effects — in `formatter_chains.lua`, `db_context.lua`, and the touched functions of `plugin/conform.lua` (constitution XII)
 - [X] T073 Confirm the invariants the constitution and the spec care about: no new runtime dependency from these two features, no new configuration file, no new save-time cleanup mechanism, no change outside the Neovim module, and the validation suite green (FR-009, FR-015, SC-004, constitution XI)
-- [ ] T074 Commit on `009-trim-trailing-whitespace` with conventional messages, push, and update the PR #91 body with the phase status; no commit targets `main`, and issue #90 is already approved and linked (FR-014)
+- [X] T074 Commit on `009-trim-trailing-whitespace` with conventional messages, push, and update the PR #91 body with the phase status; no commit targets `main`, and issue #90 is already approved and linked (FR-014)
 
 ---
 
