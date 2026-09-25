@@ -6,7 +6,7 @@
 -- schemes fall back to dadbod's native `tables()` (tables/collections only, no
 -- procedure source action).
 --
--- Database-scope control (specs/005-database-scope): for `sybase://` URLs the
+-- Database-scope control (specs/archive/2026-09-25-005-database-scope): for `sybase://` URLs the
 -- picker leads with a `Database: <current> — change…` entry. Choosing it opens a
 -- chooser of the databases the login can read (seeded with the connection's
 -- current database) plus a typed-name path; picking one rebuilds the URL with
@@ -15,7 +15,7 @@
 -- source loading, buffer binding (b:db), and save naming so everything executes
 -- in the owning database. Default behavior (no scope choice) is unchanged.
 --
--- Procedure save dialog (specs/002-procedure-save-dialog): after a
+-- Procedure save dialog (specs/archive/2026-09-23-002-procedure-save-dialog): after a
 -- procedure/function source opens, the user is always asked where to save its
 -- text to disk. Default target is the directory where Neovim was started
 -- (plugin source time, before any `:cd`), captured via M.setup(). Saved file
@@ -34,8 +34,6 @@ function M.reset()
     -- no persistent state to reset; kept for consistency with sibling modules
 end
 
--- Called once from nvim/plugin/database.lua at plugin source time with the
--- launch cwd (before any :cd). Defensive fallback: first-use getcwd().
 function M.setup(root)
     startup_root = root or vim.fn.getcwd()
 end
@@ -52,9 +50,6 @@ local function is_sybase(url)
     return (url:match '^([^:]+)://' or '') == 'sybase'
 end
 
--- Owning database implied by a URL: the path segment after host[:port] ('' when
--- absent, nil for non-Sybase URLs). Mirrors the adapter's s:database() so the
--- scope label and the row data always agree.
 local function url_database(url)
     if not is_sybase(url) then
         return nil
@@ -70,9 +65,6 @@ local function url_database(url)
     return db
 end
 
--- Readable scope label (FR-001): the database name read from the URL, or
--- 'login default' when the connection has none. Used by the picker header and
--- the scope row so both always show the same label (contract §1).
 local function scope_label(url)
     local db = url_database(url)
     return (db and db ~= '') and db or 'login default'
@@ -127,8 +119,6 @@ local function open_list_query(url, row)
     open_buffer(url, row.name, { 'select top 200 * from ' .. row.name }, row.database)
 end
 
--- File name (FR-006): `<owning-database>.<object>.sql`, falling back to
--- `<object>.sql` when the row carries no database (single-DB listing).
 function M.suggest_save_name(database, name)
     if database and database ~= '' then
         return database .. '.' .. name .. '.sql'
@@ -136,13 +126,10 @@ function M.suggest_save_name(database, name)
     return name .. '.sql'
 end
 
--- Overwrite guard (FR-007): true only when the target file already exists.
 function M.needs_confirmation(dir, filename)
     return vim.fn.filereadable(vim.fs.joinpath(dir, filename)) == 1
 end
 
--- Byte-exact write (FR-005): the saved file equals the source `lines`; errors
--- return a single actionable message instead of crashing (FR-009).
 function M.write_source(lines, dir, filename)
     local path = vim.fs.joinpath(dir, filename)
     local ok, err = pcall(vim.fn.writefile, lines, path)
@@ -152,8 +139,6 @@ function M.write_source(lines, dir, filename)
     return { ok = false, error = err or ('failed to write ' .. path) }
 end
 
--- Resolve a typed path: normalize (~ expansion, separators) and make relative
--- paths absolute against the startup root (FR-004).
 local function resolve_typed_path(typed)
     local target = vim.fs.normalize(typed)
     local is_relative = not vim.startswith(target, '/') and not vim.startswith(target, '~') and not target:match '^%a:'
@@ -163,10 +148,6 @@ local function resolve_typed_path(typed)
     return target
 end
 
--- Async directory picker (FR-004): browse available subdirectories via
--- vim.fs.dir + vim.ui.select, or type an arbitrary path (vim.ui.input). The
--- callback receives the chosen directory, or nil on cancel (FR-008). Seeded
--- with the startup root on every invocation (FR-002/FR-003).
 local function pick_save_target(initial, on_done)
     local current = vim.fs.normalize(initial)
     local function browse()
@@ -231,8 +212,6 @@ local function pick_save_target(initial, on_done)
     browse()
 end
 
--- Overwrite confirm (FR-007): explicit choice before replacing an existing
--- file; 'cancel' aborts with zero side effects (FR-008).
 local function confirm_overwrite(path, on_done)
     vim.ui.select({ 'Overwrite', 'Keep existing (cancel)' }, {
         prompt = 'File already exists: ' .. path,
@@ -241,9 +220,6 @@ local function confirm_overwrite(path, on_done)
     end)
 end
 
--- Save flow: pick target (always, seeded at startup root) → check collision →
--- write. Every abort path is a no-op (FR-008). Exported as M.run_save_flow for
--- wiring in the selection handler below.
 function M.run_save_flow(row, lines)
     pick_save_target(M.default_save_dir(), function(dir)
         if not dir then
@@ -270,11 +246,28 @@ function M.run_save_flow(row, lines)
     end)
 end
 
+-- open_procedure_source(url, row): open and offer to save one procedure/function.
+-- Called by: open_row()
+-- SQL: the adapter's source() extraction — by default
+--   `select convert(varchar(255), text) + '~' + case when text like '%' + char(10)
+--   then ' ' else '+' end from syscomments where id = object_id('<name>') order by
+--   number, colid2, colid` (reassembled client-side), or
+--   `exec sp_helptext '<name>', NULL, NULL, 'showsql,noparams'` when
+--   g:db_sybase_source_mode='showsql'
+-- Args: url = connection URL, row = picker row for a procedure/function
+-- Returns: nothing
+-- Side effects: opens the source buffer and starts M.run_save_flow(); when the
+--   text cannot be read (hidden/encrypted, no permission, missing object, no
+--   client) opens nothing and emits one actionable WARN notice
 local function open_procedure_source(url, row)
     local lines = vim.fn['db#adapter#sybase#source'](url, row.name)
     if vim.tbl_isempty(lines) then
         vim.notify(
-            'DBObjects: no source returned for ' .. row.name .. ' (client or server unavailable)',
+            'DBObjects: cannot read the source of '
+                .. row.name
+                .. ' — its text may be hidden (sp_hidetext), the login may lack '
+                .. 'select on syscomments.text, the object may not exist, or the '
+                .. 'client is unavailable',
             vim.log.levels.WARN
         )
         return
@@ -292,12 +285,12 @@ local function open_row(url, row)
     end
 end
 
+local pick -- forward declaration: pick <-> choose_database form a cycle
+
 -- Apply a chosen database: rebuild the URL with it as the path and re-run the
 -- listing inside it (FR-002). Invalid/inaccessible or empty results surface
 -- exactly one actionable message and never an empty picker: the picker re-opens
 -- on the last-good listing with the previous scope (FR-003, contract §2).
-local pick -- forward declaration: pick <-> choose_database form a cycle
-
 local function apply_database_scope(url, rows, database)
     local scoped = vim.fn['db#adapter#sybase#with_database'](url, database)
     if scoped == '' then
@@ -317,9 +310,6 @@ local function apply_database_scope(url, rows, database)
     pick(scoped_rows, scoped)
 end
 
--- Database chooser (FR-001): the databases the login can read (seeded with the
--- connected database) plus a typed-name path. Cancelling returns to the previous
--- picker with no state change (FR-009).
 local function choose_database(url, rows, current_db)
     local choices = {}
     if current_db and current_db ~= '' then

@@ -49,13 +49,30 @@ vim.fn.writefile({
     'function! db#systemlist(cmd, ...) abort',
     '  let s = g:__db_objects_smoke',
     "  let s.captured = {'cmd': a:cmd, 'lines': get(a:000, 0, [])}",
+    "  let s.all = get(s, 'all', []) + [get(a:000, 0, [])]",
     '  return s.canned',
     'endfunction',
 }, base .. '/autoload/db.vim')
 vim.opt.rtp:prepend(base)
 
 local function set_canned(lines)
-    vim.g.__db_objects_smoke = { canned = lines, captured = nil }
+    vim.g.__db_objects_smoke = { canned = lines, captured = nil, all = {} }
+end
+-- Every batch sent since the last set_canned() (db#systemlist stub keeps the
+-- last one in .captured; source() sends two queries, so multi-query asserts
+-- need the full list).
+local function captured_batches()
+    return vim.g.__db_objects_smoke.all or {}
+end
+local function batches_contain(line)
+    for _, batch in ipairs(captured_batches()) do
+        for _, l in ipairs(batch) do
+            if l == line then
+                return true
+            end
+        end
+    end
+    return false
 end
 local function captured_cmd()
     return vim.g.__db_objects_smoke.captured.cmd
@@ -107,26 +124,112 @@ fail(
 set_canned { 'Msg 2812, Level 16, State 62:', 'Procedure or function not found.' }
 fail(vim.tbl_isempty(objects(url)), 'objects filters diagnostic lines', objects(url), {})
 
-set_canned { 'create procedure usp_calc as', '  select 1', '', 'go' }
+-- Source extraction (issue #88): catalog mode is the default and reassembles
+-- the 255-byte syscomments rows, so no banner/heading/count reaches the buffer
+-- and no line is cut mid-token. Row shape under the client: every row is
+-- suffixed with `~` + ' ' (its text ended on a real newline, so the marker
+-- lands alone on the last output line) or `~+` (row cut mid-line, so the next
+-- output line continues the same source line).
+local catalog_sql =
+    "select convert(varchar(255), text) + '~' + case when text like '%' + char(10) then ' ' else '+' end from syscomments where id = object_id('usp_calc') order by number, colid2, colid"
+set_canned {
+    'create procedure usp_calc as',
+    '  select @var = substring(@dat~+',
+    'o, @poscicion, 1)',
+    'go',
+    '~ ',
+}
 local text = source(url, 'usp_calc')
+local want_source = { 'create procedure usp_calc as', '  select @var = substring(@dato, @poscicion, 1)', 'go' }
 fail(
-    vim.deep_equal(text, { 'create procedure usp_calc as', '  select 1', '', 'go' }),
-    'source returns full lines unchanged',
+    vim.deep_equal(text, want_source),
+    'source reassembles 255-byte syscomments chunks into whole lines',
     text,
-    { 'create procedure usp_calc as', '  select 1', '', 'go' }
+    want_source
 )
 fail(
-    captured_lines()[#captured_lines() - 1] == "exec sp_helptext 'usp_calc'",
-    'source builds sp_helptext call',
-    captured_lines()[#captured_lines() - 1],
-    "exec sp_helptext 'usp_calc'"
+    vim.tbl_contains(captured_lines(), catalog_sql),
+    'source reads syscomments ordered by number, colid2, colid',
+    captured_lines(),
+    catalog_sql
 )
+fail(
+    batches_contain "select case when count(*) > 0 then 'HIDDEN' else 'OK' end from syscomments where id = object_id('usp_calc') and (status & 1 = 1 or version is not null)",
+    'source checks hidden/encrypted text before reading it',
+    captured_batches(),
+    'hidden-text count query'
+)
+
+-- Client framing (column heading + separator) must never reach the buffer.
+set_canned { 'text', '--------', 'create proc usp_x as', 'select 1', 'go', '~ ' }
+fail(
+    vim.deep_equal(source(url, 'usp_x'), { 'create proc usp_x as', 'select 1', 'go' }),
+    'source strips column heading and separator rows',
+    source(url, 'usp_x'),
+    { 'create proc usp_x as', 'select 1', 'go' }
+)
+
+-- A row whose marker the client truncated away is still its own line.
+set_canned { 'create proc usp_x as', 'go' }
+fail(
+    vim.deep_equal(source(url, 'usp_x'), { 'create proc usp_x as', 'go' }),
+    'source keeps a truncated final row on its own line',
+    source(url, 'usp_x'),
+    { 'create proc usp_x as', 'go' }
+)
+
+-- Hidden text (sp_hidetext / encrypted): no buffer, one actionable notice.
+set_canned { 'HIDDEN' }
+fail(
+    vim.tbl_isempty(source(url, 'usp_hidden')),
+    'source returns nothing for hidden/encrypted text',
+    source(url, 'usp_hidden'),
+    {}
+)
+
+-- Server error in the middle of the output is not source text.
+set_canned { 'create proc usp_x as~', 'Msg 2812, Level 16, State 62:', 'Procedure not found.' }
+fail(
+    vim.tbl_isempty(source(url, 'usp_x')),
+    'source returns nothing when the server reports an error',
+    source(url, 'usp_x'),
+    {}
+)
+
+-- Opt-in showsql mode (ASE 15.0.2+): the sp_helptext '# Lines of Text' block
+-- is gone because sp_helptext delegates to sp_showtext.
+vim.g.db_sybase_source_mode = 'showsql'
+set_canned {
+    '# Lines of Text',
+    '---------------',
+    '3',
+    'text',
+    '-------',
+    'create procedure usp_calc as',
+    'as',
+    'select 1',
+}
+fail(
+    vim.deep_equal(source(url, 'usp_calc'), { 'create procedure usp_calc as', 'as', 'select 1' }),
+    'showsql mode strips the # Lines of Text block and headings',
+    source(url, 'usp_calc'),
+    { 'create procedure usp_calc as', 'as', 'select 1' }
+)
+fail(
+    vim.tbl_contains(captured_lines(), "exec sp_helptext 'usp_calc', NULL, NULL, 'showsql,noparams'"),
+    'showsql mode calls sp_helptext with showsql,noparams',
+    captured_lines(),
+    "exec sp_helptext 'usp_calc', NULL, NULL, 'showsql,noparams'"
+)
+vim.g.db_sybase_source_mode = nil
+
+set_canned { "create proc it''s as", '~ ' }
 source(url, "it's")
 fail(
-    vim.tbl_contains(captured_lines(), "exec sp_helptext 'it''s'"),
+    batches_contain "select convert(varchar(255), text) + '~' + case when text like '%' + char(10) then ' ' else '+' end from syscomments where id = object_id('it''s') order by number, colid2, colid",
     'source escapes single quotes',
-    captured_lines(),
-    "contains exec sp_helptext 'it''s'"
+    captured_batches(),
+    "contains object_id('it''s')"
 )
 
 set_canned { 'customers', 'orders', 'Msg 2812, Level 16' }
