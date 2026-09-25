@@ -21,12 +21,18 @@ decides the scope:
 | Is a formatter available? | Yes. The editor resolves a working formatter install and uses it for markdown on save. |
 | Does it run? | Yes. Reproduced headlessly: a markdown file with stray trailing spaces is cleaned on save. |
 | Why did some lines keep their spaces? | Every markdown line in the repository that still ends in spaces ends in **exactly two** spaces inside prose. Those are intentional hard line breaks, which the formatter preserves on purpose because they are semantically meaningful in Markdown. Lines that merely *accidentally* carried extra spaces (3 spaces, or 2 spaces on a heading) were already removed. |
-| Is the silent case real? | Yes, and it is the actual risk: the whitespace-only formatters are chained *after* the main one, and only the first available formatter runs. If the main formatter is ever unavailable, markdown silently gets **no** trimming at all, with no visible warning. |
+| If the main formatter is missing, is the trimming lost? | **No.** The formatter chain is resolved by availability: unavailable formatters are skipped, and only the *first available* one stops the chain. With the main formatter gone, the whitespace-only steps are selected and run, so the cleanup still happens. This was verified in the formatter's own resolution code, and it corrects an earlier draft of this spec that claimed the opposite. |
+| So is anything actually broken? | Two narrow cases, not the wholesale silent no-op the first draft described. (1) A document that a project configuration routes to a *different* formatter is given a chain that contains no whitespace-only step at all, so it gets no trimming when that formatter is unavailable. (2) The "formatters unavailable" message is emitted once per file type per session, so a failure that persists across many saves is silent from the second save onward. |
 | Is a second, parallel mechanism justified? | No. The user confirmed the formatter path is acceptable ("si el formateado lo hace está bien"). A competing auto command would duplicate behavior and race the formatter on the same save event. |
 
 **Scope decision**: no auto command is added. The work is to *guarantee* the behavior that
-already exists (regression coverage), close the silent-no-op hole, and document the
+already exists (regression coverage), close the two narrow gaps listed above, and document the
 hard-break exception so it is not "fixed" into broken rendering later.
+
+**Correction note (2026-09-25)**: this summary originally claimed that a missing main formatter
+left markdown completely untrimmed and silent. That was wrong: the fallback to the whitespace-only
+steps works. Any later session that revisits this spec must read the table above rather than the
+original wording.
 
 ## Clarifications
 
@@ -52,8 +58,8 @@ see stray spaces at the end of lines again — I do not have to remember to clea
 not need a separate auto command for it.
 
 **Why this priority**: This is the whole request. Today the cleanup works, but only because a
-specific chain happens to be configured; nothing protects it, and one missing tool turns the
-cleanup into a silent no-op.
+specific chain happens to be configured, and nothing protects it: no automated check would notice
+if a future change to that chain quietly removed the cleanup.
 
 **Independent Test**: Type trailing spaces on a few lines of any document type, save, reopen the
 file, and confirm the spaces are gone without running any command.
@@ -66,22 +72,27 @@ file, and confirm the spaces are gone without running any command.
 
 ---
 
-### User Story 2 - The cleanup never fails silently (Priority: P2)
+### User Story 2 - The cleanup survives a missing formatter and never stays quiet for long (Priority: P2)
 
-As someone who trusts the editor to clean files, I want to know when the cleanup could not run,
-instead of discovering later that spaces survived.
+As someone who trusts the editor to clean files, I want the cleanup to keep working when the
+main formatter is not available, and I want a failure that keeps repeating to keep reminding me
+instead of going quiet after the first time.
 
-**Why this priority**: A silent no-op is worse than no cleanup at all, because it looks like
-it works. This is the one real defect behind the original request.
+**Why this priority**: Two real gaps sit behind this story, both narrow: a document that a project
+configuration routes to a different formatter has no whitespace-only step in its chain, and the
+"no formatters" message is emitted only once per file type per session. Neither loses data on its
+own, but both make a persistent failure look like a working setup.
 
-**Independent Test**: Disable the main formatter and save a Markdown file; the result must be
-either a clean file or a visible message, never a silent pass.
+**Independent Test**: Make the main formatter unavailable and save a Markdown file, both inside
+and outside a directory that carries its own formatter configuration; then remove every formatter
+for a file type and save that file type repeatedly.
 
 **Acceptance Scenarios**:
 
 1. **Given** the main formatter is not installed or not runnable, **When** the user saves a document, **Then** the whitespace cleanup still runs.
-2. **Given** no formatter at all can run for the file type, **When** the user saves, **Then** the editor surfaces a message identifying the file type instead of silently doing nothing.
-3. **Given** the cleanup runs, **When** it changes nothing, **Then** the file's modification state and undo history are not disturbed.
+2. **Given** a document inside a directory that carries its own formatter configuration, **When** that formatter is unavailable and the user saves, **Then** the whitespace cleanup still runs for that document too.
+3. **Given** no formatter at all can run for the file type, **When** the user saves that file type more than once in the same session, **Then** the editor surfaces a message identifying the file type again on the later saves, not only on the first.
+4. **Given** the cleanup runs, **When** it changes nothing, **Then** the file's modification state and undo history are not disturbed.
 
 ---
 
@@ -132,9 +143,10 @@ other one — with no database server involved.
 
 ### Edge Cases
 
-- **Formatter chain ordering**: only the first available formatter runs today, so the
-  whitespace-only steps never execute for Markdown. If the main formatter is removed, all three
-  behaviors change at once.
+- **Formatter chain ordering**: the chain stops after the first *available* formatter, so while the
+  main formatter is present the whitespace-only steps never execute for Markdown. When it is
+  absent, they become the first available ones and run instead — the cleanup degrades to the
+  whitespace steps, not to nothing.
 - **A directory containing its own formatter configuration** (for example a JavaScript project
   with its own settings file): that directory's rules win, and the cleanup must still apply there.
 - **Whitespace inside fenced code blocks and indented examples**: never touched; the user may
@@ -183,8 +195,8 @@ other one — with no database server involved.
 - **FR-004**: Trailing whitespace that carries meaning in the document format — a two-space hard line break inside Markdown prose — MUST be preserved, and the rendered document MUST be unchanged.
 - **FR-005**: Whitespace inside fenced code blocks and indented code examples MUST be left exactly as written.
 - **FR-006**: Content inside the line MUST be preserved byte for byte, including leading indentation and tabs.
-- **FR-007**: When the primary formatter for a file type is unavailable, the trailing-whitespace cleanup MUST still be applied.
-- **FR-008**: When no formatter at all can run for a file type, the editor MUST show a message naming the file type instead of silently doing nothing.
+- **FR-007**: When the primary formatter for a document is unavailable, the trailing-whitespace cleanup MUST still be applied — both for documents the editor formats with its own chain, and for documents a project configuration routes to a different formatter.
+- **FR-008**: When no formatter at all can run for a file type, the editor MUST show a message naming the file type, and it MUST NOT go silent on subsequent saves of that file type in the same session while the failure persists.
 - **FR-009**: The cleanup MUST be part of the editor's existing single formatting path. A second, parallel auto command MUST NOT be added, so that saving a file never triggers two competing cleanup mechanisms.
 - **FR-010**: The behavior MUST be verifiable without a running editor session or a database, so it can be covered by automated checks that run in this repository.
 - **FR-011**: Line-ending style MUST be preserved: a file saved with Windows line endings MUST NOT be silently converted, and the carriage return MUST NOT be treated as trailing content.
@@ -218,7 +230,7 @@ other one — with no database server involved.
 
 - **SC-001**: After saving any file type, 100% of lines have no accidental trailing whitespace, verified by reopening the saved file.
 - **SC-002**: A saved file's two-space prose line breaks render identically to before the change: 0 documents change their rendered layout as a result of this feature.
-- **SC-003**: Removing the primary formatter for a file type still yields a saved file with no trailing whitespace in 100% of attempts; the silent no-op case count is 0.
+- **SC-003**: With the primary formatter made unavailable, 100% of saved documents still have no accidental trailing whitespace, including documents inside a directory that carries its own formatter configuration; and 0 saves of a file type with no available formatter pass without a message naming that file type.
 - **SC-004**: The automated checks for this behavior pass with 0 failures, run without a live editor session.
 - **SC-005**: Exactly one cleanup mechanism runs per save; no save triggers both a dedicated auto command and the formatting path.
 - **SC-006**: The user identifies the database a query will run against in under one second of looking at the status line, in 100% of query buffers that have a connection.
