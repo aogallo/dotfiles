@@ -29,6 +29,8 @@
 
 local M = {}
 
+local db_context = require 'config.db_context'
+
 -- Startup root (FR-002): directory where Neovim was started. Read-only after
 -- setup(); the dialog's initial path on every invocation, never a previously
 -- chosen directory (FR-003).
@@ -79,14 +81,12 @@ local function registry_urls()
 end
 
 -- is_sybase(url): does this URL use the custom Sybase adapter?
--- Called by: url_database(), fetch_objects(), pick()
+-- Called by: fetch_objects(), pick()
 -- SQL: none
 -- Args: url = connection URL string
 -- Returns: boolean
 -- Side effects: none
-local function is_sybase(url)
-    return (url:match '^([^:]+)://' or '') == 'sybase'
-end
+local is_sybase = db_context.is_sybase
 
 -- url_database(url): owning database implied by a URL.
 -- Called by: scope_label(), pick()
@@ -95,20 +95,7 @@ end
 -- Args: url = connection URL string
 -- Returns: database name, or nil for a non-Sybase URL / no path / empty path
 -- Side effects: none
-local function url_database(url)
-    if not is_sybase(url) then
-        return nil
-    end
-    local rest = url:match '^sybase://[^/]*/(.*)$'
-    if not rest then
-        return nil
-    end
-    local db = rest:match '^([^?]*)'
-    if db == '' then
-        return nil
-    end
-    return db
-end
+local url_database = db_context.url_database
 
 -- scope_label(url): readable database label for the picker.
 -- Called by: pick() (prompt + scope row)
@@ -126,19 +113,10 @@ end
 -- Called by: default_url()
 -- SQL: none
 -- Args: buf = buffer number
--- Returns: URL string, or nil when the buffer has no usable b:db context
---   (accepts both the string form and the {conn=…}/{db_url=…} table forms)
+-- Returns: URL string, or nil when no usable b:db context (string form, or the
+--   {conn=…}/{db_url=…} table forms)
 -- Side effects: none
-local function url_from_buffer(buf)
-    local bdb = vim.b[buf].db
-    if type(bdb) == 'string' then
-        return bdb
-    end
-    if type(bdb) == 'table' then
-        return bdb.conn or bdb.db_url
-    end
-    return nil
-end
+local url_from_buffer = db_context.url_from_buffer
 
 -- default_url(name): which connection :DBObjects should use.
 -- Called by: M.open()

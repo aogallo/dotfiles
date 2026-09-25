@@ -1,5 +1,24 @@
 local add_on_event = require('vim-pack').add_on_event
 local add = require('vim-pack').add
+
+-- Database context in the status line (spec 009, US4): the database a SQL
+-- buffer's connection declares, and a warning beside it when the text would
+-- switch to another one. Renders nothing for any other filetype, so the
+-- component costs nothing outside SQL. The text comes from
+-- config/db_context.lua, which never puts a URL, host, or password in it; the
+-- read is on the current buffer only, so it needs no server round-trip.
+local function db_context_component()
+    local db_context = require 'config.db_context'
+    local buf = vim.api.nvim_get_current_buf()
+    local text = db_context.label(buf)
+    if text == '' then
+        return ''
+    end
+    -- A conflict is a warning about the text, not a broken buffer, so it takes
+    -- the warning group rather than the error one.
+    return text, db_context.conflict(buf) and 'DiagnosticWarn' or 'Directory'
+end
+
 local notification_icons = require('icons').notifications
 local notifications = require 'notifications'
 
@@ -163,6 +182,9 @@ add {
         end,
     },
 
+    -- Status line (spec 008, US3): one neutral section for mode, branch, file,
+    -- diagnostics, encoding, filetype, location; the editor's own sections stay
+    -- empty so a plugin adding one is visible rather than doubled.
     {
         src = 'nvim-lualine/lualine.nvim',
         opts = {
@@ -182,7 +204,7 @@ add {
                     'encoding',
                     'filetype',
                 },
-                lualine_y = {},
+                lualine_y = { db_context_component },
                 lualine_z = { 'location' },
             },
             inactive_sections = {
@@ -190,7 +212,7 @@ add {
                 lualine_b = {},
                 lualine_c = { { 'filename', file_status = true, path = 1 } },
                 lualine_x = { 'location' },
-                lualine_y = {},
+                lualine_y = { db_context_component },
                 lualine_z = {},
             },
         },
@@ -215,12 +237,11 @@ add {
         setup = false,
     },
     {
+        -- Highlights TODO/FIXME/HACK in code and markdown. The empty opts are
+        -- intentional: the defaults are what the editor wants, and every setting
+        -- here would be a knob nobody has asked for.
         src = 'folke/todo-comments.nvim',
-        opts = {
-            -- your configuration comes here
-            -- or leave it empty to use the default settings
-            -- refer to the configuration section below
-        },
+        opts = {},
     },
 }
 

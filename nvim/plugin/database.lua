@@ -1,5 +1,6 @@
 require 'config.db_connections'
 
+local db_context = require 'config.db_context'
 local db_objects = require 'config.db_objects'
 local db_results = require 'config.db_results'
 
@@ -41,6 +42,12 @@ db_objects.setup(vim.fn.getcwd())
 -- `<leader>qr` summon: record dadbod's finished query results and let the keymap
 -- refocus/reopen the last one (specs/archive/2026-09-23-006-dbui-query-results, US1).
 db_results.setup()
+
+-- Pre-execution database check (FR-019): warns when a query buffer's text would
+-- run on a database other than the one its connection declares. It reuses the
+-- `User */DBExecutePre` event the query tool already emits, so no new trigger is
+-- registered and db_results.lua above stays untouched (spec 009, US4).
+db_context.setup()
 
 vim.api.nvim_create_user_command('DBObjects', function(args)
     db_objects.open(args.fargs[1])
