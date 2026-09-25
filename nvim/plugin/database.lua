@@ -18,7 +18,7 @@ add {
             vim.g.db_ui_save_location = vim.fn.stdpath 'data' .. '/db_ui'
             -- Route dadbod-ui notices through the native Neovim notification
             -- system (vim.notify, displayed by Snacks) instead of the editor
-            -- overlay (specs/006-dbui-query-results, US2).
+            -- overlay (specs/archive/2026-09-23-006-dbui-query-results, US2).
             vim.g.db_ui_use_nvim_notify = true
             -- Sybase ASE has no LIMIT; dadbod-ui's default helper uses "limit 200".
             -- Merge + re-assign the whole table: nested vim.g writes do not persist.
@@ -33,13 +33,13 @@ add {
 -- Schema object search (FR-022): :DBObjects [name] with completion over the
 -- registry connection names. Resolution: explicit name > current buffer's
 -- dadbod URL (b:db) > picker over g:dbs > warn.
--- The procedure save dialog's default target (specs/002-procedure-save-dialog,
+-- The procedure save dialog's default target (specs/archive/2026-09-23-002-procedure-save-dialog,
 -- FR-002) is the directory where Neovim was started: captured here at plugin
 -- source time, before any :cd, and handed to db_objects.setup().
 db_objects.setup(vim.fn.getcwd())
 
 -- `<leader>qr` summon: record dadbod's finished query results and let the keymap
--- refocus/reopen the last one (specs/006-dbui-query-results, US1).
+-- refocus/reopen the last one (specs/archive/2026-09-23-006-dbui-query-results, US1).
 db_results.setup()
 
 vim.api.nvim_create_user_command('DBObjects', function(args)

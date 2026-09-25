@@ -1,7 +1,7 @@
 -- db_results smoke test.
 -- Drives the `User */DBExecutePre|Post` autocallbacks directly via
 -- nvim_exec_autocmds with a temporary `.dbout` file (no live database, no
--- plugins) and asserts the summon path (specs/006-dbui-query-results, US1):
+-- plugins) and asserts the summon path (specs/archive/2026-09-23-006-dbui-query-results, US1):
 --   . no record -> exactly one INFO notice, nothing created
 --   . running (Pre without Post) -> one INFO notice, no-op
 --   . Post records the result -> summon focuses the open window

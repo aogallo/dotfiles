@@ -4,13 +4,17 @@
 
 **Created**: 2026-09-23
 
-**Status**: Closed
+**Status**: Closed (archived 2026-09-25; see [verify-report.md](./verify-report.md))
 
-> **Closed** (2026-09-23): the database-scope control this spec depends on landed in
-> `005-database-scope` (`:DBObjects` now searches a chosen database). The remaining cross-database
-> `%` scan, the catalog-based source extraction, and the team stored-procedure integration stay
-> **out of scope** and are not planned in this repo at this time. Marked for closure by the
-> `005-database-scope` PR review.
+> **Closed** (2026-09-25): the database-scope control this spec depends on landed in
+> `005-database-scope` (`:DBObjects` now searches a chosen database). **FR-013/FR-014 — the
+> catalog-based source extraction — are delivered by issue #88**: `source()` now reads
+> `syscomments` directly and reassembles the 255-byte chunks, so opened source has no
+> `sp_helptext` artifacts and no mid-token cuts. The cross-database `%` scan
+> (FR-001/002/004/005/006) and the team stored-procedure integration remain **out of scope by
+> decision**: the per-database scope covers the daily need and the `%` scan is not planned in this
+> repo. Verified in [verify-report.md](./verify-report.md); reopened only if a future requirement
+> needs a search across every accessible database.
 
 **Input**: User description: "hasta el momento probe :dbojects en neovim y funciona bien me busca la objeto y lo coloca en un buffer nuevo que para mi eso consdiero que es perfecto. Pero creo que unicamente va a buscar a una base de datos y eso genera probelma porque busque otro objeto y no lo encontro entonces mi propuesta va por ejecutar y tenog un preocedimiento que recibe lo siguiente nombre del objeto tipo de objeto que para procedimientos es P que es el que utilizare seguirdo y el ultio es la base de datos, pero si no se la sabe se puede enviar % como string"
 

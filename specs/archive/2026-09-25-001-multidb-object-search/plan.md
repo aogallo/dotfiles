@@ -2,7 +2,7 @@
 
 **Branch**: `001-multidb-object-search` | **Date**: 2026-09-23 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `specs/001-multidb-object-search/spec.md`
+**Input**: Feature specification from `specs/archive/2026-09-25-001-multidb-object-search/spec.md`
 
 ## Summary
 
@@ -118,7 +118,7 @@ PASS — revert restores `sp_helptext`/single-DB behavior. No new violations.
 ### Documentation (this feature)
 
 ```text
-specs/001-multidb-object-search/
+specs/archive/2026-09-25-001-multidb-object-search/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output: ASE catalog + isolation-0 facts, decisions
 ├── data-model.md        # Phase 1 output: result rows + config knobs + validation

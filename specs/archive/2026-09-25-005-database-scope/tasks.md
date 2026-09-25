@@ -5,7 +5,7 @@ description: "Task list for implementation of database scope for object search"
 
 # Tasks: Database Scope for Object Search
 
-**Input**: Design documents from [`specs/005-database-scope/`](./)
+**Input**: Design documents from [`specs/archive/2026-09-25-005-database-scope/`](./)
 
 **Prerequisites**: [plan.md](./plan.md) (required), [spec.md](./spec.md) (required for user stories),
 [research.md](./research.md) (decisions D-1..D-5), [data-model.md](./data-model.md) (entities),

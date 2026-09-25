@@ -11,7 +11,7 @@ This directory contains the repository-managed, portable zsh configuration extra
 
 ## Current-Machine Baseline
 
-The implementation is based on the current machine's zsh files, including `~/.zshrc`, `~/.zshenv`, `~/.p10k.zsh`, and any optional startup files that exist. The inventory lives at `specs/001-zsh-config-module/zsh-source-inventory.md`.
+The implementation is based on the current machine's zsh files, including `~/.zshrc`, `~/.zshenv`, `~/.p10k.zsh`, and any optional startup files that exist. The inventory lives at `specs/archive/2026-07-21-001-zsh-config-module/zsh-source-inventory.md`.
 
 The repository does not copy local files verbatim. Portable behavior is extracted into `zsh/.zshrc`; private paths, generated prompt configuration, work settings, and machine-specific exports are documented as local-only.
 
