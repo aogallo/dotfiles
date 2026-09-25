@@ -365,6 +365,42 @@ fail(
     true
 )
 
+-- Naming the database the connection already points at is not a conflict, and
+-- after a scope change that is exactly what a buffer looks like: the text
+-- still reads `use base-a` while the connection has become `base-a`.
+fail(
+    db_context.label(sql_buffer { 'use ventas' }) == 'DB ventas',
+    'a use naming the connected database is not a conflict',
+    db_context.label(sql_buffer { 'use ventas' }),
+    'DB ventas'
+)
+fail(
+    db_context.label(sql_buffer { 'use VENTAS' }) == 'DB ventas',
+    'the comparison folds case, the way the server treats the name',
+    db_context.label(sql_buffer { 'use VENTAS' }),
+    'DB ventas'
+)
+fail(
+    db_context.label(sql_buffer { 'select * from ventas..t1' }) == 'DB ventas',
+    'a two-part name inside the connected database is not a conflict',
+    db_context.label(sql_buffer { 'select * from ventas..t1' }),
+    'DB ventas'
+)
+fail(
+    db_context.switch_message(sql_buffer { 'use ventas' }) == nil,
+    'no message when the text switches to the database already in use',
+    db_context.switch_message(sql_buffer { 'use ventas' }),
+    'nil'
+)
+local rescoped = sql_buffer { 'use base-a' }
+vim.b[rescoped].db = 'sybase://sa:pw@ase:5000/base-a'
+fail(
+    db_context.label(rescoped) == 'DB base-a',
+    'the indicator follows a scope change and drops the mark it no longer needs',
+    db_context.label(rescoped),
+    'DB base-a'
+)
+
 --- the pre-execution message ------------------------------------------------
 
 local function switched_message(lines, url)

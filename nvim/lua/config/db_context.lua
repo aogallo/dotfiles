@@ -192,26 +192,57 @@ end
 -- Called by: M.label(), M.conflict(), the pre-execution check, and the tests
 -- SQL: none
 -- Args: buf = buffer number
--- Returns: nil, or { kind = 'use' | 'object', name = string }. The LAST `use`
---   wins, because that is the statement the adapter ends up sending; when there
---   is no `use`, the FIRST two-part name is reported, because that is the first
---   statement that would touch another database.
+-- Returns: nil, or { kind = 'use' | 'object', name = string, owner = string }.
+--   The LAST `use` wins, because that is the statement the adapter ends up
+--   sending; when there is no `use`, the FIRST two-part name is reported,
+--   because that is the first statement that would touch another database.
 -- Side effects: none
+--
+-- `name` is what a person reads, and for a two-part name it carries the object
+-- too. `owner` is only the database it names, because that is the half a
+-- conflict is decided on: `ventas..t1` on a `ventas` connection stays put.
 function M.switches(buf)
     local lines = strip_noise(vim.api.nvim_buf_get_lines(buf, 0, -1, false))
     local last_use, first_object = nil, nil
     for _, line in ipairs(lines) do
         local used = line:match('^[%s]*[Uu][Ss][Ee]%s+(' .. IDENT .. ')')
         if used then
-            last_use = { kind = 'use', name = used }
+            last_use = { kind = 'use', name = used, owner = used }
         elseif not first_object then
             local owner, object = line:match(TWO_PART .. '$')
             if owner and object then
-                first_object = { kind = 'object', name = owner .. '..' .. object }
+                first_object = { kind = 'object', name = owner .. '..' .. object, owner = owner }
             end
         end
     end
     return last_use or first_object
+end
+
+-- conflicting_switch(buf): the switch, but only when it leaves this database.
+-- Called by: M.label(), M.conflict(), and M.switch_message()
+-- SQL: none
+-- Args: buf = buffer number
+-- Returns: nil, or the switch table from M.switches()
+-- Side effects: none
+--
+-- A switch that names the database the connection already points at is not a
+-- conflict, and after a scope change it is the normal case: the buffer still
+-- reads `use base-a` and the connection has just become `base-a`. Comparing
+-- case-insensitively matches how the server treats the name, and only after a
+-- case-fold, because the two are reported as written.
+local function conflicting_switch(buf)
+    local switch = M.switches(buf)
+    if not switch then
+        return nil
+    end
+    local database = M.database(buf)
+    if not database then
+        return nil
+    end
+    if switch.owner:lower() == database:lower() then
+        return nil
+    end
+    return switch
 end
 
 --- presentation ---------------------------------------------------------
@@ -238,7 +269,7 @@ function M.label(buf)
     if not database then
         return 'DB —'
     end
-    local switch = M.switches(buf)
+    local switch = conflicting_switch(buf)
     if not switch then
         return 'DB ' .. database
     end
@@ -256,7 +287,7 @@ function M.conflict(buf)
     if vim.bo[buf].filetype ~= 'sql' then
         return false
     end
-    return M.switches(buf) ~= nil
+    return conflicting_switch(buf) ~= nil
 end
 
 -- M.switch_message(buf): the pre-execution warning text.
@@ -264,9 +295,9 @@ end
 -- SQL: none
 -- Args: buf = buffer number
 -- Returns: nil when the buffer is not `sql`, when the text does not switch
---   context, or when the connection declares no database (there would be
---   nothing to compare against), otherwise the warning naming both the
---   connection database and the reported switch
+--   context, or when the text switches to the database the connection already
+--   points at (there is nothing to warn about), otherwise the warning naming
+--   both the connection database and the reported switch
 -- Side effects: none
 --
 -- The filetype is checked here as well as in M.conflict() because this is the
@@ -276,13 +307,12 @@ function M.switch_message(buf)
     if vim.bo[buf].filetype ~= 'sql' then
         return nil
     end
-    local database = M.database(buf)
-    local switch = M.switches(buf)
-    if not database or not switch then
+    local switch = conflicting_switch(buf)
+    if not switch then
         return nil
     end
     return ('DB query runs on "%s", but the text switches to "%s". Check the statement before executing.'):format(
-        database,
+        M.database(buf),
         switch.name
     )
 end
