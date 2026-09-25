@@ -1,4 +1,4 @@
--- Database-scope smoke test (specs/005-database-scope, quickstart automated
+-- Database-scope smoke test (specs/archive/2026-09-25-005-database-scope, quickstart automated
 -- check 3). Headless coverage of the object-search scope flow:
 --   - contract: the REAL db#adapter#sybase#with_database() swaps the URL path
 --     and preserves auth/host/port/params; invalid names (incl. '%') return ''

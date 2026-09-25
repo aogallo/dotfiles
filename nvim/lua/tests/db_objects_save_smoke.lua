@@ -1,4 +1,4 @@
--- Procedure save dialog smoke test (specs/002-procedure-save-dialog, quickstart
+-- Procedure save dialog smoke test (specs/archive/2026-09-23-002-procedure-save-dialog, quickstart
 -- automated check 4). Asserts the pure, headless-testable parts of the save
 -- flow in nvim/lua/config/db_objects.lua:
 --   - suggest_save_name: database-qualified naming, fallback, collision-freedom
