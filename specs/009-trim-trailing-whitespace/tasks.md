@@ -130,10 +130,10 @@ spec.
 **Purpose**: the only work that cannot be automated. Live database required for the indicator
 scenarios; a restricted `PATH` for the fallback scenario.
 
-- [ ] T101 Run [quickstart.md](quickstart.md) §6 scenarios 6.1–6.9: indicator with and without a conflict, one warning per execution and none without, marker with no connection, nothing in the drawer or a result buffer, owning database on a procedure source, indicator following a scope change (SC-006, SC-010)
+- [X] T101 Run [quickstart.md](quickstart.md) §6 scenarios 6.1–6.9: indicator with and without a conflict, one warning per execution and none without, marker with no connection, nothing in the drawer or a result buffer, owning database on a procedure source, indicator following a scope change (SC-006, SC-010)
 - [ ] T102 Run [quickstart.md](quickstart.md) §5.2: with the formatter off `PATH`, a Markdown file is still trimmed and its hard breaks are flattened as documented (FR-007, FR-004 qualification)
-- [ ] T103 Confirm with the server unreachable that the indicator still renders and still reports the right database, proving no round trip is involved (SC-009, FR-021)
-- [ ] T104 Write `verify-report.md` with the real gate output and the manual results, and mark this spec for archival — it is not closed until T101–T103 are recorded
+- [X] T103 Confirm with the server unreachable that the indicator still renders and still reports the right database, proving no round trip is involved (SC-009, FR-021)
+- [X] T104 Write `verify-report.md` with the real gate output and the manual results, and mark this spec for archival — it is not closed until T101–T103 are recorded
 
 ---
 
