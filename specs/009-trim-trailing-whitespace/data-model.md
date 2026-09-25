@@ -13,12 +13,13 @@ The cleanup does not store anything. It maps a saved line to one of three outcom
 | Input | Outcome | Rule |
 | --- | --- | --- |
 | Line with 1+ trailing whitespace that carries no meaning | whitespace removed | FR-001, FR-002 |
-| Line consisting only of whitespace | becomes an empty line, never removed | FR-003 |
+| Line consisting only of whitespace | becomes an empty line, never removed — under the fallback; the main formatter may collapse it as it does any blank line | FR-003 |
 | Markdown prose line ending in exactly two spaces inside a paragraph | preserved | FR-004 |
 | Any line inside a fenced code block or indented example | untouched | FR-005 |
 
-Derived rules: leading indentation and tabs are never touched (FR-006); line-ending style is
-preserved (FR-011); nothing runs when the user disabled auto-formatting (FR-012).
+Derived rules: leading indentation and tabs are never touched by the fallback (FR-006 — a main
+formatter is free to reindent code, as the Lua formatter does); line-ending style is preserved
+(FR-011); nothing runs when the user disabled auto-formatting (FR-012).
 
 **Qualification on FR-004**: the hard-break exception holds while the main formatter is available.
 When it is absent, the whitespace-only fallback trims every trailing space, including the two-space

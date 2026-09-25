@@ -33,6 +33,9 @@ Run every one of them; the feature adds two to the existing eight.
 ```sh
 nvim --headless -u NORC -c 'lua require("tests.formatter_chains_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_context_smoke")' -c 'qa!'
+# real configuration, see section 5
+nvim --headless -u nvim/init.lua -c 'lua require("tests.markdown_whitespace_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua require("tests.no_formatter_warning_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_results_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_scope_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_save_smoke")' -c 'qa!'
@@ -51,7 +54,7 @@ What the two new tests must cover, in the spirit of [data-model.md](data-model.m
 | Test | Cases |
 | --- | --- |
 | `formatter_chains_smoke` | chain with a project configuration, chain without one, both contain the whitespace fallback, both stop after the first available formatter, a second call returns the same chain |
-| `db_context_smoke` | database from a string connection, from both table connection forms, absent connection, `use` detected, last `use` wins, two-part name detected, `use` in a comment ignored, `db..object` in a string ignored, block comment spanning lines ignored, `$`/`#` names intact, non-sql filetype renders nothing, non-connection buffer renders the marker, execution message fires once on conflict and not at all without one |
+| `db_context_smoke` | database from a string connection, from both table connection forms, absent connection, and agreement with the adapter's own derivation for every URL shape; then, once US4 lands: `use` detected, last `use` wins, two-part name detected, `use` in a comment ignored, `db..object` in a string ignored, block comment spanning lines ignored, `$`/`#` names intact, non-sql filetype renders nothing, non-connection buffer renders the marker, execution message fires once on conflict and not at all without one |
 
 ## 4. Boot with the real configuration
 
@@ -62,53 +65,60 @@ nvim --headless -u nvim/init.lua '+quitall'
 Expected: exits 0 with no error output. This loads conform, lualine and the database modules, which
 the offline tests deliberately do not.
 
-## 5. Fallback and reporting behavior (requires `prettier`)
+## 5. Fallback and reporting behavior (requires the real configuration)
 
-The fallback is only observable when the main formatter cannot be resolved, so this section runs the
-same save twice: once with the formatter reachable, once with a `PATH` that excludes it. Only Neovim
-and a system `printf` stay on that `PATH`.
+Two checks need the real configuration, because the claim is about what a real save does. Both are
+run the same way, and both skip with exit 0 when the formatting toolchain is not loadable:
 
-Prepare a file whose lines carry both kinds of trailing space:
+```sh
+nvim --headless -u nvim/init.lua -c 'lua require("tests.markdown_whitespace_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua require("tests.no_formatter_warning_smoke")' -c 'qa!'
+```
+
+### 5.1 Markdown rules, from the formatter itself
+
+`markdown_whitespace_smoke` writes a canned file and asserts the rules in
+[contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) section 2 against what the
+formatter actually produced.
+
+Expected: a two-space break followed by more text is preserved, three spaces become two, a two-space
+break on the last line of a paragraph is removed, and heading and fenced-block spaces are removed.
+
+**Correction found while running this**: FR-003 and FR-006 were written as guarantees about "the
+cleanup", and the first run showed they only hold for the whitespace-only fallback. With the main
+formatter, a line of only whitespace between two blank lines is collapsed, and a source formatter
+reindents code. Both requirements now say so, and the check asserts the two cases separately.
+
+### 5.2 A file type with nothing available, saved repeatedly
+
+`no_formatter_warning_smoke` uses `sh`, which maps to `shfmt` — a binary this configuration does not
+install, so the empty formatter list is genuine rather than staged.
+
+Expected: the first save reports one warning naming `sh`, a second save in quick succession raises
+that entry's repeat count to 2, a third save after the aggregation window is a new message, and
+neither the toolchain's own notice nor a message naming the file appears.
+
+**Correction found while running this**: an earlier draft of this section shortened `PATH` to make
+the main formatter unreachable. That cannot work here — the configuration prepends the formatter
+directory to `PATH` during startup — and the toolchain also memoizes which formatters are available,
+so `PATH` cannot be changed inside a live session either. The recipe would have passed without
+exercising anything.
+
+### 5.3 The accepted degradation, by hand
+
+Only reachable on a machine where the main formatter is genuinely missing, which is why it is not a
+check:
 
 ```sh
 printf '# ws-check\n\nprose with 3 spaces...   \nprose with a hard break.  \n' > /tmp/ws-check.md
-```
-
-### 5.1 Formatter reachable
-
-```sh
 nvim --headless -u nvim/init.lua -c 'edit /tmp/ws-check.md' -c 'write' -c 'qa!'
-cat -A /tmp/ws-check.md
+sed -n 'l' /tmp/ws-check.md
 ```
 
-Expected: the three-space line comes back without them, and the line that ended in exactly two
-spaces inside the paragraph keeps both spaces (`$` at end of line in `cat -A` output, preceded by
-two spaces on the prose line).
-
-### 5.2 Formatter unreachable
-
-```sh
-NVIM_BIN="$(dirname "$(command -v nvim)")"
-env PATH="$NVIM_BIN:/usr/bin:/bin" nvim --headless -u nvim/init.lua \
-  -c 'edit /tmp/ws-check.md' -c 'write' -c 'quitall'
-cat -A /tmp/ws-check.md
-```
-
-Expected: the accidental trailing spaces are still removed, and the two-space hard break is now
-flattened. That flattening is the accepted degradation recorded in
-[contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) section 2 rule 3, not a defect.
-
-### 5.3 A file type with nothing available, saved twice
-
-```sh
-env PATH="$NVIM_BIN:/usr/bin:/bin" nvim --headless -u nvim/init.lua \
-  -c 'lua _G.seen = {}; vim.notify = function(m) table.insert(_G.seen, tostring(m)) end' \
-  -c 'lua vim.bo.filetype = "yaml"' -c 'edit /tmp/ws-check.md' -c 'write' -c 'write' \
-  -c 'lua print("messages: " .. #_G.seen); for _, m in ipairs(_G.seen) do print(m) end' -c 'qa!'
-```
-
-Expected: `messages: 2`. One warning naming the file type per save, on both saves, and no duplicate
-for a single save. Repeating the check in a second session must produce the same result.
+Expected with the formatter present: the three-space line keeps exactly two spaces and the
+paragraph's last line loses its two. Expected without it: both lose every trailing space, which is
+the flattening recorded in the contract, section 2 rule 3. `sed -n 'l'` rather than `cat -A`, which
+macOS does not have.
 
 ## 6. Manual scenarios (live database)
 

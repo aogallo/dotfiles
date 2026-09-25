@@ -31,7 +31,7 @@ already works.
 **Purpose**: attribute later failures correctly, and record what entered the branch from outside
 this spec (constitution XII).
 
-- [ ] T001 Baseline before touching anything: `stylua --check nvim`, the 8 existing offline smokes, and `nvim --headless -u nvim/init.lua '+quitall'`, all green, with the assertion counts written down
+- [X] T001 Baseline before touching anything: `stylua --check nvim`, the 8 existing offline smokes, and `nvim --headless -u nvim/init.lua '+quitall'`, all green, with the assertion counts written down
 - [X] T002 [P] Record in the PR #91 body that the branch also carries the user's out-of-scope `folke/todo-comments.nvim` commit, with the risk accepted explicitly
 - [X] T003 [P] Commit the planning artifacts (`plan.md`, `research.md`, `data-model.md`, `quickstart.md`, both contracts) — done in `8c58a0a`; `.specify/feature.json` already points at this spec
 
@@ -43,12 +43,12 @@ this spec (constitution XII).
 
 **Story Link**: unlinked — shared plumbing for two stories (constitution XV).
 
-- [ ] T010 Create `nvim/lua/config/formatter_chains.lua` holding `markdown_project_markers`, `has_signal(bufnr)` and `M.markdown(bufnr)`, moved verbatim out of `nvim/plugin/conform.lua` so the chain is reachable without the plugin being installed (D8)
-- [ ] T011 [P] Create `nvim/lua/config/db_context.lua` holding `M.url_database(url)` and `M.url_from_buffer(buf)`, moved verbatim out of `nvim/lua/config/db_objects.lua:98-141`, so the status line and the query path cannot derive the name differently (FR-025, D3)
-- [ ] T012 Require `config.formatter_chains` from `nvim/plugin/conform.lua` and delete the moved locals; `formatters_by_ft.markdown` keeps pointing at the function, with no behavior change
-- [ ] T013 Rewire `nvim/lua/config/db_objects.lua` to require `config.db_context` for those two functions; keep `is_sybase()` local (it is not shared) and leave every call site unchanged
-- [ ] T014 [P] Create `nvim/lua/tests/formatter_chains_smoke.lua`: harness that builds a temp directory with and without a project marker, calls `M.markdown()` for a buffer inside each, and asserts the chain contents (T010 is the only dependency)
-- [ ] T015 [P] Create `nvim/lua/tests/db_context_smoke.lua`: harness with a `check()` helper, a `vim.notify` capture, and helpers to create a scratch buffer with given lines and a `b:db` value (T011 is the only dependency)
+- [X] T010 Create `nvim/lua/config/formatter_chains.lua` holding `markdown_project_markers`, `has_signal(bufnr)` and `M.markdown(bufnr)`, moved verbatim out of `nvim/plugin/conform.lua` so the chain is reachable without the plugin being installed (D8)
+- [X] T011 [P] Create `nvim/lua/config/db_context.lua` holding `M.url_database(url)` and `M.url_from_buffer(buf)`, moved verbatim out of `nvim/lua/config/db_objects.lua:98-141`, so the status line and the query path cannot derive the name differently (FR-025, D3)
+- [X] T012 Require `config.formatter_chains` from `nvim/plugin/conform.lua` and delete the moved locals; `formatters_by_ft.markdown` keeps pointing at the function, with no behavior change
+- [X] T013 Rewire `nvim/lua/config/db_objects.lua` to require `config.db_context` for those two functions; keep `is_sybase()` local (it is not shared) and leave every call site unchanged
+- [X] T014 [P] Create `nvim/lua/tests/formatter_chains_smoke.lua`: harness that builds a temp directory with and without a project marker, calls `M.markdown()` for a buffer inside each, and asserts the chain contents (T010 is the only dependency)
+- [X] T015 [P] Create `nvim/lua/tests/db_context_smoke.lua`: harness with a `check()` helper, a `vim.notify` capture, and helpers to create a scratch buffer with given lines and a `b:db` value (T011 is the only dependency)
 
 ---
 
@@ -56,10 +56,10 @@ this spec (constitution XII).
 
 **Story Link**: [User Story 1 — Save a document and it is already clean (P1)](spec.md#user-story-1---save-a-document-and-it-is-already-clean-priority-p1)
 
-- [ ] T020 Extend the project-signal branch in `M.markdown()` with `'trim_whitespace'` and `'trim_newlines'` **and** `stop_after_first = true`; without the flag the trims would run alongside the main formatter and flatten every hard break (FR-007, D1)
-- [ ] T021 Assert in `formatter_chains_smoke.lua` that both chains carry the whitespace fallback and stop after the first available formatter, so a missing main formatter degrades to trimming rather than to nothing (FR-007, SC-003)
-- [ ] T022 [P] Assert in `formatter_chains_smoke.lua` that the main formatter is still first in both chains, that a second call returns an equal chain, and that a buffer in a temp directory without any marker takes the other branch (FR-009, SC-005)
-- [ ] T023 Create `nvim/lua/tests/markdown_whitespace_smoke.lua`, the one check that needs the real configuration: it requires the formatting toolchain and, when that require fails, prints `SKIP` and exits 0 so the offline suite stays green. Assert the content invariants here, because the steps that perform the cleanup are the toolchain's own: a whitespace-only line becomes an empty line and is not deleted, leading indentation and tabs survive byte for byte, a CRLF file keeps its endings, a save with auto-formatting disabled changes nothing, and a non-Markdown file type is cleaned by the same mechanism rather than a special case (FR-002, FR-003, FR-006, FR-010, FR-011, FR-012, SC-001)
+- [X] T020 Extend the project-signal branch in `M.markdown()` with `'trim_whitespace'` and `'trim_newlines'` **and** `stop_after_first = true`; without the flag the trims would run alongside the main formatter and flatten every hard break (FR-007, D1)
+- [X] T021 Assert in `formatter_chains_smoke.lua` that both chains carry the whitespace fallback and stop after the first available formatter, so a missing main formatter degrades to trimming rather than to nothing (FR-007, SC-003)
+- [X] T022 [P] Assert in `formatter_chains_smoke.lua` that the main formatter is still first in both chains, that a second call returns an equal chain, and that a buffer in a temp directory without any marker takes the other branch (FR-009, SC-005)
+- [X] T023 Create `nvim/lua/tests/markdown_whitespace_smoke.lua`, the one check that needs the real configuration: it requires the formatting toolchain and, when that require fails, prints `SKIP` and exits 0 so the offline suite stays green. Assert the content invariants here, because the steps that perform the cleanup are the toolchain's own: no line is left holding only whitespace, paragraph separation survives, leading indentation and tabs survive byte for byte on a file type whose chain is the fallback, a CRLF file keeps its endings, and a save with auto-formatting disabled changes nothing. Running these falsified two requirements as first written — FR-003's "never removed" and FR-006's "byte for byte" hold for the fallback, not for a main formatter, which may collapse blank lines and reindent code — and both are corrected in the spec and data model (FR-002, FR-003, FR-006, FR-010, FR-011, FR-012, SC-001)
 - [ ] T024 [P] Green run of everything built so far — the 8 original smokes, the 2 new offline smokes, `stylua --check nvim`, and the real-configuration boot — with the assertion counts written into the PR body (SC-004)
 
 ---
@@ -68,10 +68,10 @@ this spec (constitution XII).
 
 **Story Link**: [User Story 2 — The cleanup survives a missing formatter and never stays quiet for long (P2)](spec.md#user-story-2---the-cleanup-survives-a-missing-formatter-and-never-stays-quiet-for-long-priority-p2)
 
-- [ ] T030 Add the save-time availability check in `nvim/plugin/conform.lua`: its own augroup created with `clear = true`, registered on `BufWritePre`, skipping non-file buffers and the same guards `format_on_save` honors (`vim.g.minifiles_active`, `vim.g.skip_formatting`), and calling `require('conform').list_formatters_to_run(bufnr)`; on an empty list with no LSP formatter, emit exactly one WARN through `config.notifications` naming the filetype (FR-008, D2)
-- [ ] T031 Set `notify_no_formatters = false` in the same file so the toolchain's own first-failure notice cannot duplicate the new message (FR-008, [contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) §3 rule 1)
-- [ ] T032 Extend `markdown_whitespace_smoke.lua` with the [quickstart.md](quickstart.md) §5.3 case: with the formatter directory off `PATH`, save twice and assert two messages naming the file type, and no third message from the toolchain (SC-003)
-- [ ] T033 [P] Assert in the same check that a save with an available formatter emits nothing, and that a save excluded from formatting by the `skip_formatting` guard emits nothing ([contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) §4 rule 3)
+- [X] T030 Add the save-time availability check in `nvim/plugin/conform.lua`: its own augroup created with `clear = true`, registered on `BufWritePre`, skipping non-file buffers and the same guards `format_on_save` honors (`vim.g.minifiles_active`, `vim.g.skip_formatting`), and calling `require('conform').list_formatters_to_run(bufnr)`; on an empty list with no LSP formatter, emit exactly one WARN through `config.notifications` naming the filetype (FR-008, D2)
+- [X] T031 Set `notify_no_formatters = false` in the same file so the toolchain's own first-failure notice cannot duplicate the new message (FR-008, [contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) §3 rule 1)
+- [X] T032 Create `nvim/lua/tests/no_formatter_warning_smoke.lua` for the [quickstart.md](quickstart.md) §5.3 case, replacing the planned in-process variant: the toolchain memoizes which formatters are available, so `PATH` cannot be changed inside a live session, and the configuration itself puts the formatter directory back on `PATH` at startup, so the recipe could never fail. The real case is used instead: `sh` maps to `shfmt`, which this configuration does not install, so the failure is genuine. Assert two saves report twice, the message names the file type and no path, and the toolchain's own notice stays off (SC-003)
+- [X] T033 [P] Assert in the same check that a save with an available formatter emits nothing, and that a save excluded from formatting by the `skip_formatting` guard emits nothing, including that the one-shot guard is still consumed exactly once so the formatter itself sees it ([contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) §4 rule 3)
 
 ---
 
@@ -79,10 +79,10 @@ this spec (constitution XII).
 
 **Story Link**: [User Story 3 — Intentional line breaks keep working (P3)](spec.md#user-story-3---intentional-line-breaks-keep-working-priority-p3)
 
-- [ ] T040 Extend `markdown_whitespace_smoke.lua` with the Markdown rule cases: write a canned file and assert the four verified outcomes — a two-space break with following text preserved, three spaces reduced to two, a two-space break on a paragraph's last line removed, heading and fenced-block spaces removed (FR-004, FR-005, SC-002)
-- [ ] T041 [P] Add the full-configuration invocation of that check to [quickstart.md](quickstart.md) §5 and to the README validation block, so the rule assertions actually run somewhere instead of skipping silently (constitution VIII)
-- [ ] T042 [P] Write the four rules, with a one-line reason for each, into the `nvim/README.md` behavior notes: what is preserved, what is normalized, what is removed, and that none of it changes the rendered output (FR-004, FR-005, FR-013, constitution XIV)
-- [ ] T043 [P] Record the accepted degradation in the same section: on a machine without the main formatter the fallback trims bluntly and flattens this document's hard breaks, which is pre-existing behavior now shared by both chains (D1, [contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) §2 rule 3)
+- [X] T040 Extend `markdown_whitespace_smoke.lua` with the Markdown rule cases: write a canned file and assert the four verified outcomes — a two-space break with following text preserved, three spaces reduced to two, a two-space break on a paragraph's last line removed, heading and fenced-block spaces removed (FR-004, FR-005, SC-002)
+- [X] T041 [P] Add the full-configuration invocation of that check to [quickstart.md](quickstart.md) §5 and to the README validation block, so the rule assertions actually run somewhere instead of skipping silently (constitution VIII)
+- [X] T042 [P] Write the four rules, with a one-line reason for each, into the `nvim/README.md` behavior notes: what is preserved, what is normalized, what is removed, and that none of it changes the rendered output (FR-004, FR-005, FR-013, constitution XIV)
+- [X] T043 [P] Record the accepted degradation in the same section: on a machine without the main formatter the fallback trims bluntly and flattens this document's hard breaks, which is pre-existing behavior now shared by both chains (D1, [contracts/whitespace-fallback.md](contracts/whitespace-fallback.md) §2 rule 3)
 
 ---
 
@@ -90,13 +90,13 @@ this spec (constitution XII).
 
 **Story Link**: [User Story 4 — Know which database a query will run against (P2)](spec.md#user-story-4---know-which-database-a-query-will-run-against-priority-p2)
 
-- [ ] T050 Add to `nvim/lua/config/db_context.lua`: `M.database(bufnr)` (the URL's database or nil), `M.switches(bufnr)` (the last `use`, else the first two-part name, as `{ kind, name }`), `M.label(bufnr)` and `M.conflict(bufnr)`; the text scan strips `--` comments, carries `/* … */` state across lines, removes single-quoted literals, and matches names with a class allowing `$` and `#` (FR-016, FR-017, FR-021, FR-023, D5)
-- [ ] T051 [P] Add the status-line component in `nvim/plugin/editor.lua`: a function that renders `M.label(bufnr)` for `filetype = sql` buffers and an empty string for every other filetype, registered in both `sections.lualine_y` and `inactive_sections.lualine_y`, with a distinct highlight when a conflict is present (FR-016, FR-017, FR-018, FR-024, D4, D7)
-- [ ] T052 [P] Add `M.setup()` in `nvim/lua/config/db_context.lua`: guarded by a `setup_done` flag like `db_results.setup()`, registering a `User */DBExecutePre` callback that emits one WARN naming the connection's database and the reported switch, and returns without touching the query. The event is the one the query tool already emits, so no new trigger is registered and the other result module stays untouched (FR-019, FR-020, FR-022, SC-010, D6)
-- [ ] T053 Call `db_context.setup()` from `nvim/plugin/database.lua` beside the existing `db_objects.setup()` and `db_results.setup()` calls; `db_results` itself stays untouched (D6, constitution IV)
-- [ ] T054 Assert in `db_context_smoke.lua`: database from a string connection and from both table forms, absent connection, `use` detected, last `use` wins, two-part name detected, `$`/`#` names intact, `use` inside a line comment ignored, `db..object` inside a string ignored, a block comment spanning lines ignored, a non-`sql` filetype renders nothing, a connection-less SQL buffer renders the marker (FR-016–FR-024, SC-006, SC-007, SC-008)
-- [ ] T055 [P] Assert in `db_context_smoke.lua`, driving `nvim_exec_autocmds('User', { pattern = '*/DBExecutePre' })` the way `db_results_smoke.lua` does: one message for a conflicting buffer, zero for a clean one, and the buffer's lines unchanged afterwards (SC-010, FR-020)
-- [ ] T056 [P] Assert in `db_context_smoke.lua` that no label and no message ever contains the connection URL or its host, only the database name ([contracts/db-indicator.md](contracts/db-indicator.md) §2 rule 5, constitution VII)
+- [X] T050 Add to `nvim/lua/config/db_context.lua`: `M.database(bufnr)` (the URL's database or nil), `M.switches(bufnr)` (the last `use`, else the first two-part name, as `{ kind, name }`), `M.label(bufnr)` and `M.conflict(bufnr)`; the text scan strips `--` comments, carries `/* … */` state across lines, removes single-quoted literals, and matches names with a class allowing `$` and `#` (FR-016, FR-017, FR-021, FR-023, D5)
+- [X] T051 [P] Add the status-line component in `nvim/plugin/editor.lua`: a function that renders `M.label(bufnr)` for `filetype = sql` buffers and an empty string for every other filetype, registered in both `sections.lualine_y` and `inactive_sections.lualine_y`, with a distinct highlight when a conflict is present (FR-016, FR-017, FR-018, FR-024, D4, D7)
+- [X] T052 [P] Add `M.setup()` in `nvim/lua/config/db_context.lua`: guarded by a `setup_done` flag like `db_results.setup()`, registering a `User */DBExecutePre` callback that emits one WARN naming the connection's database and the reported switch, and returns without touching the query. The event is the one the query tool already emits, so no new trigger is registered and the other result module stays untouched (FR-019, FR-020, FR-022, SC-010, D6)
+- [X] T053 Call `db_context.setup()` from `nvim/plugin/database.lua` beside the existing `db_objects.setup()` and `db_results.setup()` calls; `db_results` itself stays untouched (D6, constitution IV)
+- [X] T054 Assert in `db_context_smoke.lua`: database from a string connection and from both table forms, absent connection, `use` detected, last `use` wins, two-part name detected, `$`/`#` names intact, `use` inside a line comment ignored, `db..object` inside a string ignored, a block comment spanning lines ignored, a non-`sql` filetype renders nothing, a connection-less SQL buffer renders the marker (FR-016–FR-024, SC-006, SC-007, SC-008)
+- [X] T055 [P] Assert in `db_context_smoke.lua`, driving `nvim_exec_autocmds('User', { pattern = '*/DBExecutePre' })` the way `db_results_smoke.lua` does: one message for a conflicting buffer, zero for a clean one, and the buffer's lines unchanged afterwards (SC-010, FR-020)
+- [X] T056 [P] Assert in `db_context_smoke.lua` that no label and no message ever contains the connection URL or its host, only the database name ([contracts/db-indicator.md](contracts/db-indicator.md) §2 rule 5, constitution VII)
 
 ---
 
@@ -108,8 +108,8 @@ spec.
 
 **Story Link**: unlinked — not a user story of this spec (constitution XV).
 
-- [ ] T060 Replace the placeholder comment in the `folke/todo-comments.nvim` entry in `nvim/plugin/editor.lua` with a one-line comment in the repository's style stating that the defaults are intentional, and keep the empty `opts`
-- [ ] T061 [P] Document the plugin in `nvim/README.md`: what it is for, that it has no configuration surface, that it is pinned in `nvim/nvim-pack-lock.json`, and that it is unrelated to the two stories of this spec (constitutions VI, XIV)
+- [X] T060 Replace the placeholder comment in the `folke/todo-comments.nvim` entry in `nvim/plugin/editor.lua` with a one-line comment in the repository's style stating that the defaults are intentional, and keep the empty `opts`
+- [X] T061 [P] Document the plugin in `nvim/README.md`: what it is for, that it has no configuration surface, that it is pinned in `nvim/nvim-pack-lock.json`, and that it is unrelated to the two stories of this spec (constitutions VI, XIV)
 
 ---
 
@@ -117,10 +117,10 @@ spec.
 
 **Story Link**: unlinked — module and workflow obligations (constitution XV).
 
-- [ ] T070 [P] Add the database-indicator row and the whitespace-fallback row to the `nvim/README.md` behavior table, and add traceability entries for every new function to the function table (constitution XIV, FR-013)
-- [ ] T071 [P] Add the new validation commands to the `nvim/README.md` validation block: both offline smokes and the full-configuration Markdown check (constitution VIII)
-- [ ] T072 Give every new production function the module's uniform header block — name, called by, SQL, args, returns, side effects — in `formatter_chains.lua`, `db_context.lua`, and the touched functions of `plugin/conform.lua` (constitution XII)
-- [ ] T073 Confirm the invariants the constitution and the spec care about: no new runtime dependency from these two features, no new configuration file, no new save-time cleanup mechanism, no change outside the Neovim module, and the validation suite green (FR-009, FR-015, SC-004, constitution XI)
+- [X] T070 [P] Add the database-indicator row and the whitespace-fallback row to the `nvim/README.md` behavior table, and add traceability entries for every new function to the function table (constitution XIV, FR-013)
+- [X] T071 [P] Add the new validation commands to the `nvim/README.md` validation block: both offline smokes and the full-configuration Markdown check (constitution VIII)
+- [X] T072 Give every new production function the module's uniform header block — name, called by, SQL, args, returns, side effects — in `formatter_chains.lua`, `db_context.lua`, and the touched functions of `plugin/conform.lua` (constitution XII)
+- [X] T073 Confirm the invariants the constitution and the spec care about: no new runtime dependency from these two features, no new configuration file, no new save-time cleanup mechanism, no change outside the Neovim module, and the validation suite green (FR-009, FR-015, SC-004, constitution XI)
 - [ ] T074 Commit on `009-trim-trailing-whitespace` with conventional messages, push, and update the PR #91 body with the phase status; no commit targets `main`, and issue #90 is already approved and linked (FR-014)
 
 ---
