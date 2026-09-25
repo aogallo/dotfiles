@@ -96,6 +96,10 @@
       "rev": "882c996cf28183f4d63640de0b4c02ec886d01f2",
       "src": "https://github.com/folke/snacks.nvim"
     },
+    "todo-comments.nvim": {
+      "rev": "31e3c38ce9b29781e4422fc0322eb0a21f4e8668",
+      "src": "https://github.com/folke/todo-comments.nvim"
+    },
     "tokyonight.nvim": {
       "rev": "cdc07ac78467a233fd62c493de29a17e0cf2b2b6",
       "src": "https://github.com/folke/tokyonight.nvim"

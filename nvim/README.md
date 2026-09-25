@@ -86,7 +86,73 @@ Buffer navigation uses `<S-h>` (next) and `<S-l>` (previous). These mappings are
 
 When Neovim starts without a file argument, the Snacks dashboard shows a header, quick keymaps, and recent files.
 
+### Which database am I querying
+
+`lualine_y` carries a database indicator for `sql` buffers, and nothing at all for every other
+filetype, so a non-SQL window stays visually unchanged. It is answered locally, from the buffer's
+connection URL and its own text: it never queries the server, and it never renders a URL, host, or
+credential — only a database name.
+
+| Buffer state | Indicator |
+| --- | --- |
+| connection with a database, no `use` in the text | `DB ventas` |
+| connection with a database and a `use` naming another | `DB ventas` plus a warning mark naming `base-a` |
+| connection with a database and a `db..object` name | `DB ventas` plus a mark naming that object |
+| connection with no database in its URL | the "no database" marker, so a query is never sent blind |
+| any other filetype, or no connection | nothing |
+
+`--` comments, `/* … */` blocks, and `'…'` literals are ignored, so a `use` inside a comment or a
+string does not produce a false mark. On the last `use` wins, matching what the adapter does. When a
+`sql` buffer is executed and its text switches database, one warning names both databases before the
+query runs; the query itself is not modified. The whole thing lives in `nvim/lua/config/db_context.lua`
+so the status line and the query path cannot disagree about the name.
+
 Validate with:
+
+```sh
+nvim --headless -u NORC -c 'lua require("tests.db_context_smoke")' -c 'qa!'
+```
+
+### Markdown and trailing whitespace on save
+
+Saving a supported file type runs exactly one formatting path — the one already configured in
+`nvim/plugin/conform.lua` — and no cleanup auto command is registered alongside it. The rules below
+are the formatter's own, measured in `tests/markdown_whitespace_smoke.lua` rather than assumed:
+
+| Input | Result | Why |
+| --- | --- | --- |
+| two trailing spaces with text after them in the same paragraph | preserved | CommonMark hard break; removing it changes the rendering |
+| three or more trailing spaces mid-paragraph | reduced to exactly two | same hard break, normalized |
+| two trailing spaces on the last line of a paragraph | removed | renders identically without them |
+| two trailing spaces on a heading or table row | removed | not significant in those constructs |
+| trailing spaces inside a fenced block or an indented example | removed | not significant to the example |
+
+None of it changes the rendered document. Two qualifications, both verified rather than assumed:
+the byte-for-byte content guarantees (leading indentation, tabs, and a line of only whitespace) hold
+for the **whitespace-only fallback**, because a main formatter is free to collapse blank lines and
+reindent code — which is what the Lua formatter here does. And on a machine **without** the main
+Markdown formatter, the fallback trims bluntly and flattens this document's hard breaks; that
+degradation is accepted and pre-existing for the non-project chain, which this feature now matches.
+
+When a file type has no formatter at all, a save reports it: one warning naming the file type, on
+**every** failing save rather than only the first, with no duplicate from the formatting toolchain.
+The check never modifies the buffer, and it observes the same guards the formatter does
+(`minifiles_active`, `skip_formatting`, `autoformat`, Java), so it cannot report a failure for a
+save that was never going to be formatted.
+
+The formatter chain is built in `nvim/lua/config/formatter_chains.lua` rather than inside the plugin
+file, so it can be checked without the plugin being loaded. Both branches end with the whitespace-only
+steps and both stop after the first available formatter: a missing main formatter degrades to
+trimming instead of to nothing, and the trims never run alongside a formatter that would flatten the
+hard breaks above.
+
+Validate with:
+
+```sh
+nvim --headless -u NORC -c 'lua require("tests.formatter_chains_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua require("tests.markdown_whitespace_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua require("tests.no_formatter_warning_smoke")' -c 'qa!'
+```
 
 ```sh
 stylua --check nvim
@@ -109,6 +175,19 @@ $HOME/.local/share/nvim/mason/bin
 
 It is non-destructive: it reports missing required and optional tools but does not install,
 upgrade, delete, or link anything.
+
+### todo-comments.nvim
+
+`folke/todo-comments.nvim` highlights `TODO`, `FIXME`, `HACK`, and `WARN` annotations in both code
+and Markdown, so a leftover marker is visible without opening a search. It is declared in
+`nvim/plugin/editor.lua` with an empty `opts` table: the defaults are the whole intent, and the entry
+carries no configuration surface. The version is pinned in `nvim/nvim-pack-lock.json`
+(`31e3c38ce9b29781e4422fc0322eb0a21f4e8668`).
+
+It belongs to neither story of the whitespace or database-context work; it rides along in the same
+change because the constitution requires a new dependency to be declared and documented with the
+change that introduces it. It is not covered by any spec here, and removing the `opts` table or the
+lockfile pin would be a separate decision.
 
 `setup/bootstrap-nvim-deps.sh` consumes the same manifest. It defaults to `--dry-run`; use
 `--install` only when you want it to install supported missing tools. Optional tools are
@@ -641,6 +720,7 @@ header (see [Documenting a function](#documenting-a-function)):
 | `nvim/plugin/database.lua` | user commands (`:DBObjects`), `<leader>q` group wiring, startup `setup()` calls, startup-root capture |
 | `nvim/lua/config/db_connections.lua` | the connection registry (`g:dbs`) and its reload on `dbui` buffers |
 | `nvim/lua/config/db_objects.lua` | `:DBObjects` flow: listing, database-scope chooser, opening objects, the save dialog |
+| `nvim/lua/config/db_context.lua` | the single answer to "which database is this buffer talking to": URL derivation, the `use`/`db..object` scan, the status-line label, and the pre-execution conflict warning |
 | `nvim/lua/config/db_results.lua` | `<leader>qr` — summon the last finished query result from any window |
 | `nvim/lua/config/db_jump.lua` | `<leader>qj` — toggle between the code buffer and the DB workspace |
 | `nvim/autoload/db/adapter/sybase.vim` | the Sybase ASE adapter: client argv, batch handling, catalog queries, object source extraction |
@@ -680,6 +760,12 @@ DB-module behavior → the function that implements it → where it is specified
 | Connection registry load/reload | `M.load()`, `resolve_path()`, `warn()` | `specs/archive/2026-09-23-001-sybase-nvim-client/`, `db_connections_smoke.lua` |
 | `<leader>qr` summon last result | `M.setup()`, `M.show()`, `focus_win_for()`, `on_pre()`, `on_post()` | `specs/archive/2026-09-23-006-dbui-query-results/`, `db_results_smoke.lua` |
 | `<leader>qj` code ↔ DB workspace toggle | `M.jump()`, `M.find()`, `M.back()`, `open_drawer()`, `find_win()`, `is_drawer()`, `has_db_context()` | `specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/`, `db_jump_smoke.lua`, `keymap_groups_smoke.lua` |
+| Status-line database context: URL → database name | `M.database()`, `M.url_from_buffer()`, `M.url_database()` | `specs/009-trim-trailing-whitespace/` (FR-013), `db_context_smoke.lua` |
+| Status-line database context: what the text would switch to | `M.switches()`, `strip_noise()` | `specs/009-trim-trailing-whitespace/` (FR-016, FR-017), `db_context_smoke.lua` |
+| Status-line database context: rendered label and conflict flag | `M.label()`, `M.conflict()`, `M.switch_message()` | `specs/009-trim-trailing-whitespace/` (FR-018), `db_context_smoke.lua` |
+| Pre-execution cross-database warning | `M.setup()` → `User */DBExecutePre` | `specs/009-trim-trailing-whitespace/` (FR-019, FR-020, FR-022), `db_context_smoke.lua` |
+| Formatter chain per file type, with the whitespace fallback | `M.markdown()`, `has_signal()`, `M.markdown_project_markers` | `specs/009-trim-trailing-whitespace/` (FR-001–FR-008), `formatter_chains_smoke.lua` |
+| One warning when no formatter is available, no duplicate notice | `save_will_format()`, `format_on_save`, `M.no_formatter_message()` | `specs/009-trim-trailing-whitespace/` (FR-009, FR-010), `no_formatter_warning_smoke.lua` |
 
 ### Client prerequisites
 
@@ -725,7 +811,16 @@ nvim --headless -u NORC -c 'lua require("tests.db_objects_scope_smoke")' -c 'qa!
 nvim --headless -u NORC -c 'lua require("tests.db_results_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.keymap_groups_smoke")' -c 'qa!'
 nvim --headless -u nvim/init.lua -c 'lua assert(vim.g.db_ui_use_nvim_notify, "db_ui_use_nvim_notify not set"); vim.print("PASS notify-routing")' -c 'qa!'
+# whitespace feature (spec 009): first two are offline, last two need the real configuration
+nvim --headless -u NORC -c 'lua require("tests.formatter_chains_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_context_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua require("tests.markdown_whitespace_smoke")' -c 'qa!'
+nvim --headless -u nvim/init.lua -c 'lua require("tests.no_formatter_warning_smoke")' -c 'qa!'
 ```
+
+The last two skip with exit 0 when the formatting toolchain is not loadable, so the block stays
+green on a machine without it. `no_formatter_warning_smoke` relies on `shfmt` being absent, so it
+says `SKIP`-style information rather than passing quietly if that binary ever appears.
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
 are manual-only; see `specs/archive/2026-09-23-001-sybase-nvim-client/quickstart.md`.
