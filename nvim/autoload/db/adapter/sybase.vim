@@ -10,7 +10,24 @@
 " with `unknown option D`), the URL database is selected with a `use <db>` line
 " at the start of every batch. That works with any ASE client.
 "
+" DOCUMENTATION CONVENTION (see nvim/README.md, "Documenting a function"):
+"   every function below carries a header with Purpose / Called by / SQL /
+"   Args / Returns / Side effects. Required for new functions too.
 
+" s:client(): which client binary/argv prefix to run.
+" Called by: every function that spawns the client; db#connect() probe
+" SQL: none
+" Args: none
+" Returns: string[] argv prefix — g:db_sybase_client (string or list) when set,
+"   else ['isql'] on Windows, ['sqsh'] elsewhere
+" Side effects: none
+" s:client(): which client binary/argv prefix to run.
+" Called by: every function that spawns the client; db#connect() probe
+" SQL: none
+" Args: none
+" Returns: string[] argv prefix — g:db_sybase_client (string or list) when set,
+"   else ['isql'] on Windows, ['sqsh'] elsewhere
+" Side effects: none
 function! s:client() abort
   if exists('g:db_sybase_client')
     let c = g:db_sybase_client
@@ -19,24 +36,57 @@ function! s:client() abort
   return has('win32') ? ['isql'] : ['sqsh']
 endfunction
 
+" s:uses_sqsh(): are we driving sqsh rather than isql?
+" Called by: s:batch_flags(), s:transform(), s:script_flags(), s:batch_sep()
+" SQL: none
+" Args: none
+" Returns: boolean
+" Side effects: none
 function! s:uses_sqsh() abort
   return s:client()[0] =~# 'sqsh'
 endfunction
 
+" s:parsed(url): normalize a URL into a dict.
+" Called by: s:server(), s:database(), s:connect_args(), s:transform(),
+"   db#adapter#sybase#with_database()
+" SQL: none
+" Args: url = URL string or an already-parsed dict (tests pass dicts)
+" Returns: dict with scheme/user/password/host/port/path/params
+" Side effects: none
 function! s:parsed(url) abort
   return type(a:url) == v:t_dict ? a:url : db#url#parse(a:url)
 endfunction
 
+" s:server(url): the `host[:port]` the client connects to.
+" Called by: s:connect_args(), db#adapter#sybase#with_database()
+" SQL: none
+" Args: url = URL string or parsed dict
+" Returns: string — 'host' or 'host:port' (port omitted when absent)
+" Side effects: none
 function! s:server(url) abort
   let url = s:parsed(a:url)
   return get(url, 'host', '') . (has_key(url, 'port') ? ':' . url.port : '')
 endfunction
 
+" s:database(url): the database selected by the URL path.
+" Called by: s:use_lines(), s:transform(), db#adapter#sybase#objects()
+" SQL: none
+" Args: url = URL string or parsed dict
+" Returns: string database name, or '' when the URL selects none
+" Side effects: none
 function! s:database(url) abort
   let url = s:parsed(a:url)
   return get(url, 'path', '') =~# '^/\=$' ? '' : substitute(url.path, '^/', '', '')
 endfunction
 
+" s:connect_args(url): the per-connection client arguments.
+" Called by: db#adapter#sybase#interactive(), db#adapter#sybase#input(),
+"   s:run_query()
+" SQL: none
+" Args: url = URL string or parsed dict
+" Returns: string[] — ['-S', server] plus -U/-P for credentials and -J for
+"   ?charset=…; the database is NOT passed here (see s:use_lines())
+" Side effects: none
 function! s:connect_args(url) abort
   let url = s:parsed(a:url)
   let args = ['-S', s:server(a:url)]
@@ -53,6 +103,14 @@ function! s:connect_args(url) abort
   return args
 endfunction
 
+" s:use_lines(url, batch): prepend the `use <db>` prologue to a batch.
+" Called by: s:run_query()
+" Args: url = URL string or parsed dict, batch = string[] statements
+" Returns: string[] — batch unchanged when the URL has no database, else
+"   ['use <db>', batch separator, ''] + batch
+" SQL: `use <database>` (portable selection: the client-specific -D flag is
+"   rejected by some isql builds)
+" Side effects: none
 function! s:use_lines(url, batch) abort
   " First commands sent to the client: select the URL database so DB selection
   " never depends on a -D flag that some isql variants do not implement.
@@ -63,6 +121,14 @@ function! s:use_lines(url, batch) abort
   return ['use ' . db, s:batch_sep(), ''] + a:batch
 endfunction
 
+" s:batch_flags(): client flags that shape batch behavior.
+" Called by: db#adapter#sybase#interactive(), db#adapter#sybase#input(),
+"   s:run_query()
+" Args: none
+" Returns: string[] — sqsh: ['-L', 'semicolon_hack=false'] (isql-style \go batch
+"   handling); isql: ['-n', '-w', width] (no input prompts, wide output)
+" SQL: none
+" Side effects: none
 function! s:batch_flags() abort
   if !s:uses_sqsh()
     " isql: `-n` suppresses the n> input prompts polluting the result buffer,
@@ -74,10 +140,25 @@ function! s:batch_flags() abort
   return ['-L', 'semicolon_hack=false']
 endfunction
 
+" s:display_width(): output width for isql.
+" Called by: s:batch_flags()
+" SQL: none
+" Args: none
+" Returns: string width — g:db_sybase_width, default '32000' (the 80-column
+"   default wraps wide result rows)
+" Side effects: none
 function! s:display_width() abort
   return get(g:, 'db_sybase_width', '32000')
 endfunction
 
+" s:transform(url, in): rewrite dadbod's input file for this client.
+" Called by: db#adapter#sybase#input()
+" SQL: none in this function; it injects `use <db>` into the script
+" Args: url = URL string or parsed dict, in = path of dadbod's input file
+" Returns: path to a rewritten temp file, or `in` unchanged when nothing has to
+"   change (and when `in` is not readable yet — dadbod probes the client before
+"   creating it, and its own error must surface instead of an E484)
+" Side effects: writes the temp file; maps bare `go` to `\go` under sqsh
 function! s:transform(url, in) abort
   if !filereadable(a:in)
     " dadbod probes the client in db#connect() before the input temp file
@@ -106,18 +187,43 @@ function! s:transform(url, in) abort
   return copy
 endfunction
 
+" db#adapter#sybase#canonicalize(url): dadbod hook, nothing to rewrite.
+" Called by: vim-dadbod
+" SQL: none
+" Args: url = URL string
+" Returns: the URL unchanged
+" Side effects: none
 function! db#adapter#sybase#canonicalize(url) abort
   return a:url
 endfunction
 
+" db#adapter#sybase#interactive(url): argv for an interactive session.
+" Called by: vim-dadbod (:DB command, terminal buffer)
+" SQL: none
+" Args: url = URL string or parsed dict
+" Returns: string[] — client + connect args + batch flags
+" Side effects: none (dadbod spawns the client with it)
 function! db#adapter#sybase#interactive(url) abort
   return s:client() + s:connect_args(a:url) + s:batch_flags()
 endfunction
 
+" db#adapter#sybase#input(url, in): argv for a script run.
+" Called by: vim-dadbod
+" SQL: none
+" Args: url = URL string or parsed dict, in = path of dadbod's input file
+" Returns: string[] — client + connect args + batch flags + ['-i', transformed]
+" Side effects: writes the transformed input file (s:transform())
 function! db#adapter#sybase#input(url, in) abort
   return s:client() + s:connect_args(a:url) + s:batch_flags() + ['-i', s:transform(a:url, a:in)]
 endfunction
 
+" s:script_flags(): flags that suppress client output framing.
+" Called by: s:run_query()
+" SQL: none
+" Args: none
+" Returns: string[] — sqsh ['-h'] (also drops "(N rows affected)"), isql ['-b']
+"   (drops column headings)
+" Side effects: none
 function! s:script_flags() abort
   " sqlserver.vim uses -h-1/-W to suppress sqlcmd headers; here headers are
   " disabled per client: sqsh -h also drops the "(N rows affected)" trail,
@@ -125,11 +231,28 @@ function! s:script_flags() abort
   return s:uses_sqsh() ? ['-h'] : ['-b']
 endfunction
 
+" s:batch_sep(): the client's batch terminator.
+" Called by: s:use_lines(), s:run_query()
+" SQL: none
+" Args: none
+" Returns: string — '\go' for sqsh (a bare `go` would be sent to the server),
+"   'go' for isql
+" Side effects: none
 function! s:batch_sep() abort
   " sqsh requires \go; bare `go' would be sent to the server.
   return s:uses_sqsh() ? '\go' : 'go'
 endfunction
 
+" s:run_query(url, sql): run one read-only query and return its output lines.
+" Called by: db#adapter#sybase#tables(), db#adapter#sybase#objects(),
+"   db#adapter#sybase#complete_database(), s:text_is_hidden(),
+"   s:source_catalog(), s:source_showsql()
+" SQL: whatever the caller passes, preceded by `set nocount on` (drops the
+"   "(N rows affected)" trailer) and the `use <db>` prologue
+" Args: url = URL string or parsed dict, sql = one or more statements
+" Returns: string[] — raw client output lines (server diagnostics included; the
+"   caller decides what to keep, e.g. s:first_tokens() / s:clean_result())
+" Side effects: spawns the client synchronously via db#systemlist()
 function! s:run_query(url, sql) abort
   let cmd = s:client() + s:connect_args(a:url) + s:batch_flags() + s:script_flags()
   " `set nocount on` suppresses "(N rows affected)" messages on both clients.
@@ -139,10 +262,27 @@ function! s:run_query(url, sql) abort
   return db#systemlist(cmd, batch)
 endfunction
 
+" First non-whitespace token of every line that is exactly one token (headers
+" are already off). Multi-word diagnostic lines ("Msg 2812, Level 16...",
+" "Changed database context to 'master'.") are filtered out.
+" s:first_tokens(out): keep only real single-token result lines.
+" Called by: db#adapter#sybase#tables(), db#adapter#sybase#complete_database()
+" SQL: none
+" Args: out = raw output lines from s:run_query()
+" Returns: string[] — the first whitespace-delimited token of every line that
+"   holds exactly one token; multi-word diagnostics ("Msg 2812, Level 16…",
+"   "Changed database context to 'master'.") are dropped
+" Side effects: none
 function! s:first_tokens(out) abort
   return map(filter(copy(a:out), 'v:val =~# "^\\s*\\S\\+\\s*$"'), 'matchstr(v:val, "\\S\\+")')
 endfunction
 
+" s:object_kind(letter): sysobjects type letter -> picker kind.
+" Called by: db#adapter#sybase#objects()
+" SQL: none
+" Args: letter = single sysobjects.type letter (P, F, X, V, U, …)
+" Returns: 'procedure' | 'function' | 'view' | 'table'
+" Side effects: none
 function! s:object_kind(letter) abort
   if a:letter ==# 'P'
     return 'procedure'
@@ -154,6 +294,12 @@ function! s:object_kind(letter) abort
   return 'table'
 endfunction
 
+" db#adapter#sybase#tables(url): table/view names for dadbod.
+" Called by: vim-dadbod; db_objects.lua for non-Sybase schemes
+" SQL: `select name from sysobjects where type in ('U','V') order by name`
+" Args: url = URL string or parsed dict
+" Returns: string[] names, [] when the client is missing
+" Side effects: none (read-only)
 function! db#adapter#sybase#tables(url) abort
   if !executable(s:client()[0])
     return []
@@ -161,6 +307,13 @@ function! db#adapter#sybase#tables(url) abort
   return s:first_tokens(s:run_query(a:url, "select name from sysobjects where type in ('U','V') order by name"))
 endfunction
 
+" db#adapter#sybase#complete_database(url): databases the login can read.
+" Called by: db_objects.lua choose_database() (the database-scope chooser)
+" SQL: `select name from sysdatabases order by name`, run against the login
+"   default database (the URL path is forced to '/', no -D)
+" Args: url = URL string or parsed dict (credentials/host reused)
+" Returns: string[] names, [] when the client is missing
+" Side effects: none (read-only)
 function! db#adapter#sybase#complete_database(url) abort
   if !executable(s:client()[0])
     return []
@@ -170,6 +323,14 @@ function! db#adapter#sybase#complete_database(url) abort
   return s:first_tokens(s:run_query(server, 'select name from sysdatabases order by name'))
 endfunction
 
+" db#adapter#sybase#with_database(url, database): same URL, new database.
+" Called by: db_objects.lua apply_database_scope()
+" SQL: none (URL rewrite; the next query then runs inside the new database)
+" Args: url = URL string or parsed dict, database = target database name
+" Returns: the rewritten `sybase://…/<database>` URL preserving scheme, user,
+"   password, host, port and query params, or '' when the name is outside
+"   [A-Za-z0-9_$#] (so `%` and injection stay out of scope)
+" Side effects: none
 function! db#adapter#sybase#with_database(url, database) abort
   " Contract (specs/archive/2026-09-25-005-database-scope, contracts/sybase-db-scope.md §1.1).
   " Return a connection URL whose path is /<database>, preserving scheme, user,
@@ -197,6 +358,14 @@ function! db#adapter#sybase#with_database(url, database) abort
   return 'sybase://' . auth . server . '/' . a:database . qs
 endfunction
 
+" db#adapter#sybase#objects(url): the :DBObjects listing of one database.
+" Called by: db_objects.lua fetch_objects() through vim.fn
+" SQL: `select name, type from sysobjects where type in ('U','V','P','F','X')
+"   order by name`, run in the URL's database
+" Args: url = URL string or parsed dict
+" Returns: list of {name, kind, database} dicts (kind via s:object_kind()),
+"   [] when the client is missing
+" Side effects: none (read-only)
 function! db#adapter#sybase#objects(url) abort
   if !executable(s:client()[0])
     return []
@@ -417,10 +586,22 @@ function! db#adapter#sybase#source(url, name) abort
   return s:source_catalog(a:url, safe)
 endfunction
 
+" db#adapter#sybase#input_extension(): file extension for input scripts.
+" Called by: vim-dadbod
+" SQL: none
+" Args: none
+" Returns: string — 'sql'
+" Side effects: none
 function! db#adapter#sybase#input_extension() abort
   return 'sql'
 endfunction
 
+" db#adapter#sybase#output_extension(): file extension for query output.
+" Called by: vim-dadbod
+" SQL: none
+" Args: none
+" Returns: string — 'txt'
+" Side effects: none
 function! db#adapter#sybase#output_extension() abort
   return 'dbout'
 endfunction

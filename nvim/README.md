@@ -203,7 +203,7 @@ nvim --headless -u nvim/init.lua '+checkhealth nvim-treesitter' '+quitall'
 ```
 
 Validate textobjects with the fixtures in
-`specs/002-nvim-treesitter-textobjects/fixtures/`:
+`specs/archive/2026-07-29-002-nvim-treesitter-textobjects/fixtures/`:
 
 ```sh
 stylua --check nvim
@@ -452,7 +452,7 @@ Rollback:
    interactive notification/history checks.
 
 Manual validation for the older notification helper remains documented in
-`specs/002-unify-notifications/quickstart.md`. Diagnostics UI is intentionally out of scope
+`specs/archive/2026-07-17-002-unify-notifications/quickstart.md`. Diagnostics UI is intentionally out of scope
 for the notification flow and should only be checked for no-regression behavior.
 
 ## Linking
@@ -574,7 +574,7 @@ connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua p
 `g:dbs`. On Sybase, every row is `kind  database  name` (prototype: `kind  name`); fuzzy-filter
 by name as you type.
 
-**Database scope (Sybase only)** — `specs/005-database-scope/`:
+**Database scope (Sybase only)** — `specs/archive/2026-09-25-005-database-scope/`:
 
 - The picker header always shows the active scope: the connected database, or `login default` when
   the URL carries none; the picker leads with a `Database: <scope> — change…` entry using the same
@@ -597,8 +597,28 @@ by name as you type.
 
 - Table/view selection opens a new `sql` buffer with the ASE-safe List query
   `select top 200 * from <name>` (no `LIMIT`) ready to run via the `:%DB` flow.
-- Procedure/function selection (Sybase only) loads the full source via `sp_helptext` into a new
-  editable `sql` buffer for edit-and-re-run.
+- Procedure/function selection (Sybase only) loads the **full stored source** into a new editable
+  `sql` buffer for edit-and-re-run. It is read straight from the catalog:
+  `select convert(varchar(255), text) + '~' + case when text like '%' + char(10) then ' ' else '+' end
+  from syscomments where id = object_id('<name>') order by number, colid2, colid`, with the 255-byte
+  rows reassembled client-side (issue #88).
+  - Why not `sp_helptext`: in legacy mode it answers with a `# Lines of Text` counter **and** the
+    255-byte rows rendered as `convert(char(255) not null, text)`, so every opened object started with
+    the counter, the row count, the `text` heading and a dashed separator, and one syscomments row
+    became one buffer line — cutting long lines mid-token (`substring(@dat` / `o, @poscicion,1)`).
+  - The `~` suffix marks where a syscomments row ends, and the character after it encodes whether the
+    row ended on a real newline (`' '`) or mid-line (`'+'`) — that is what makes the reassembly
+    byte-exact. A source line whose last characters are exactly `~` at a row boundary is the one
+    known mis-read.
+  - Objects whose text is hidden (`sp_hidetext`) or encrypted are detected before reading
+    (`status & 1 = 1 or version is not null`); nothing is opened and one actionable notice names the
+    likely causes (hidden text, missing `select` on `syscomments.text`, missing object, missing client).
+  - `g:db_sybase_source_mode = 'showsql'` switches to the opt-in regenerated-SQL path
+    (`exec sp_helptext '<name>', NULL, NULL, 'showsql,noparams'`, which never emits the
+    `# Lines of Text` block and never chunks at 255 bytes). It needs ASE 15.0.2+ (`sp_showtext`);
+    on older servers `Msg 2812` surfaces as the same "cannot read the source" notice and the default
+    catalog mode is still the answer. Prefer the default `catalog` mode: it is the stored text, so
+    what you save is what the server holds.
 - After a procedure/function source opens, a **save dialog** always asks where to save the text to
   disk. The default is the directory where Neovim was started (`getcwd()` captured at plugin load,
   before any `:cd`); browse subdirectories or type a path on each save — a previously chosen folder
@@ -607,9 +627,59 @@ by name as you type.
   single-DB listing falls back to `<object>.sql`). After every confirmed save a notification shows
   the full path of the written file (specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/). If the file already
   exists, the user must explicitly choose overwrite or cancel; cancelling writes nothing and
-  changes nothing (see `specs/002-procedure-save-dialog/` for the full contract).
+  changes nothing (see `specs/archive/2026-09-23-002-procedure-save-dialog/` for the full contract).
 - On SQL Server/MongoDB the picker uses dadbod's native `tables()` (tables/collections; no
   procedure source action). Missing client or missing objects shows a clear notice, never a crash.
+
+### Database module map
+
+Where the DB pieces live and what each one owns. Every function in these files carries the same
+header (see [Documenting a function](#documenting-a-function)):
+
+| File | Owns |
+| --- | --- |
+| `nvim/plugin/database.lua` | user commands (`:DBObjects`), `<leader>q` group wiring, startup `setup()` calls, startup-root capture |
+| `nvim/lua/config/db_connections.lua` | the connection registry (`g:dbs`) and its reload on `dbui` buffers |
+| `nvim/lua/config/db_objects.lua` | `:DBObjects` flow: listing, database-scope chooser, opening objects, the save dialog |
+| `nvim/lua/config/db_results.lua` | `<leader>qr` — summon the last finished query result from any window |
+| `nvim/lua/config/db_jump.lua` | `<leader>qj` — toggle between the code buffer and the DB workspace |
+| `nvim/autoload/db/adapter/sybase.vim` | the Sybase ASE adapter: client argv, batch handling, catalog queries, object source extraction |
+| `nvim/lua/tests/*_smoke.lua` | offline smoke tests (temp `sqsh`/`isql` stubs, no server needed) |
+
+Navigation recipes:
+
+- **Why does my object open with `# Lines of Text` at the top, or with a line cut in half?** source
+  extraction — `sybase.vim` `db#adapter#sybase#source()` and its `s:source_*`/`s:join_chunks()`
+  helpers; user-visible behavior is in [`:DBObjects`](#dbobjects).
+- **Why is the listing empty / wrong database?** `fetch_objects()` and the scope chooser
+  (`choose_database()`, `apply_database_scope()`) in `db_objects.lua`; the query and the URL rewrite
+  are in `sybase.vim` (`db#adapter#sybase#objects()`, `db#adapter#sybase#with_database()`).
+- **Why did my save land in the wrong folder / overwrite a file?** `M.run_save_flow()`,
+  `M.default_save_dir()`, `M.suggest_save_name()`, `M.needs_confirmation()` in `db_objects.lua`.
+- **Why no connection list?** `M.load()` in `db_connections.lua` (registry path resolution, one
+  warning per failure mode).
+- **Why doesn't `<leader>qr`/`qj` do anything?** `db_results.lua` (result slot) and `db_jump.lua`
+  (window search/toggle); both notify with the reason.
+
+### Function traceability
+
+DB-module behavior → the function that implements it → where it is specified:
+
+| Behavior | Function | Spec / evidence |
+| --- | --- | --- |
+| Parse `sybase://` URLs, pick the client, build argv | `s:parsed()`, `s:client()`, `s:connect_args()`, `s:batch_flags()`, `s:script_flags()`, `s:batch_sep()` | `specs/archive/2026-09-23-001-sybase-nvim-client/`, `sybase_adapter_smoke.lua` |
+| Portable database selection (`use <db>`, no `-D`) | `s:use_lines()`, `s:transform()`, `s:database()` | `specs/archive/2026-09-23-001-sybase-nvim-client/`, `sybase_adapter_smoke.lua` |
+| Read a query's output without client framing | `s:run_query()`, `s:first_tokens()` | `sybase_adapter_smoke.lua`, `sybase_objects_smoke.lua` |
+| List tables/views (dadbod `tables()`) | `db#adapter#sybase#tables()`, `s:object_kind()` | `specs/archive/2026-09-23-001-sybase-nvim-client/` |
+| `:DBObjects` listing (tables/views/procedures/functions) | `db#adapter#sybase#objects()` → `fetch_objects()` → `M.open()` | `specs/archive/2026-09-25-005-database-scope/`, `sybase_objects_smoke.lua` |
+| Database-scope chooser + safe failures | `db#adapter#sybase#complete_database()`, `db#adapter#sybase#with_database()`, `choose_database()`, `apply_database_scope()` | `specs/archive/2026-09-25-005-database-scope/`, `specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/`, `db_objects_scope_smoke.lua` |
+| Full object source without client artifacts or 255-byte cuts | `db#adapter#sybase#source()`, `s:source_catalog()`, `s:join_chunks()`, `s:clean_result()`, `s:text_is_hidden()` | issue [#88](https://github.com/aogallo/dotfiles/issues/88), `specs/archive/2026-09-25-001-multidb-object-search/` (FR-013/FR-014), `sybase_objects_smoke.lua` |
+| Opt-in regenerated-SQL source (`showsql`) | `s:source_showsql()`, `s:source_mode()` | issue #88, `nvim/README.md` [Customization boundaries](#customization-boundaries) |
+| Table/view sample query buffer | `open_list_query()`, `open_buffer()` | `specs/archive/2026-09-25-005-database-scope/` |
+| Save dialog: startup root, typed path, no silent overwrite | `M.run_save_flow()`, `pick_save_target()`, `resolve_typed_path()`, `M.needs_confirmation()`, `confirm_overwrite()`, `M.write_source()`, `M.suggest_save_name()` | `specs/archive/2026-09-23-002-procedure-save-dialog/`, `specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/`, `db_objects_save_smoke.lua` |
+| Connection registry load/reload | `M.load()`, `resolve_path()`, `warn()` | `specs/archive/2026-09-23-001-sybase-nvim-client/`, `db_connections_smoke.lua` |
+| `<leader>qr` summon last result | `M.setup()`, `M.show()`, `focus_win_for()`, `on_pre()`, `on_post()` | `specs/archive/2026-09-23-006-dbui-query-results/`, `db_results_smoke.lua` |
+| `<leader>qj` code ↔ DB workspace toggle | `M.jump()`, `M.find()`, `M.back()`, `open_drawer()`, `find_win()`, `is_drawer()`, `has_db_context()` | `specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/`, `db_jump_smoke.lua`, `keymap_groups_smoke.lua` |
 
 ### Client prerequisites
 
@@ -629,6 +699,9 @@ by name as you type.
   (e.g. `vim.g.db_sybase_client = { '/opt/sqsh/bin/sqsh' }`).
 - `g:db_sybase_width` tunes the isql column width passed to `-w` (default `32000`). Not used by
   the sqsh client.
+- `g:db_sybase_source_mode` picks how `:DBObjects` reads a procedure/function body: `'catalog'`
+  (default — read `syscomments` and reassemble, byte-exact) or `'showsql'` (opt-in — regenerate the
+  SQL through `sp_showtext`, needs ASE 15.0.2+). Any other value behaves like `catalog`.
 - The procedure save dialog has **no configuration surface** by design: it always asks, defaults to
   the launch directory, and writes database-qualified names (spec `002-procedure-save-dialog`).
 - dadbod-ui notification routing is handled by `g:db_ui_use_nvim_notify` (enabled here);
@@ -655,7 +728,7 @@ nvim --headless -u nvim/init.lua -c 'lua assert(vim.g.db_ui_use_nvim_notify, "db
 ```
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
-are manual-only; see `specs/001-sybase-nvim-client/quickstart.md`.
+are manual-only; see `specs/archive/2026-09-23-001-sybase-nvim-client/quickstart.md`.
 
 ### Rollback / recovery
 
@@ -672,6 +745,49 @@ repo); reverting the module just removes the dialog, and deleting any previously
 The `<leader>qr` summon and the dadbod-ui notification routing hold no state outside the Neovim
 process and write nothing; reverting the config restores the previous overlay behavior and no
 buffers, files, or saved state are left behind.
+
+## Documenting a function
+
+**Convention (required for new code, applied to all existing DB-module functions):** every function
+starts with a short header, in the language of the file, using these fields in this order:
+
+```lua
+-- M.run_save_flow(row, lines): the full save dialog for one object source.
+-- Called by: open_procedure_source() right after the source buffer opens
+-- SQL: none
+-- Args: row = picker row (name + database), lines = the opened source lines
+-- Returns: nothing (asynchronous)
+-- Side effects: always asks for a target, then writes once
+function M.run_save_flow(row, lines)
+```
+
+```vim
+" db#adapter#sybase#tables(url): table/view names for dadbod.
+" Called by: vim-dadbod; db_objects.lua for non-Sybase schemes
+" SQL: `select name from sysobjects where type in ('U','V') order by name`
+" Args: url = URL string or parsed dict
+" Returns: string[] names, [] when the client is missing
+" Side effects: none (read-only)
+function! db#adapter#sybase#tables(url) abort
+```
+
+Rules that make the header useful rather than decorative:
+
+- **Purpose** is the first line: `name: what it does`, not a restatement of the name.
+- **Called by** names real callers (module + function, or the plugin that calls you) — this is what
+  makes dead code obvious.
+- **SQL** is the exact statement(s) with the interpolation shown as `<name>`/`<url>`, or `none`. For
+  Sybase work, write the statement you actually send, not an approximation.
+- **Args** gives each parameter's meaning, including the nil/empty cases that change behavior.
+- **Returns** gives the shape (`string[]`, `{ok=…}`, list of dicts) and what an empty/failed result
+  means.
+- **Side effects** covers notifications, files, buffers, windows, `vim.g`/`b:` state — and the absence
+  of all of them when the function is read-only.
+- Note real limits where they exist (`Known limits:`), e.g. the `~` row-boundary mis-read in
+  `s:join_chunks()` or the ASE 15.0.2+ requirement of `s:source_showsql()`.
+
+Test helpers in `nvim/lua/tests/` are exempt: they document the file's purpose and the harness at the
+top instead of every helper.
 
 ## Local Overrides
 
