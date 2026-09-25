@@ -4,7 +4,12 @@
 
 **Created**: 2026-09-23
 
-**Status**: Draft
+**Status**: Closed (archived 2026-09-25; see [verify-report.md](./verify-report.md))
+
+> **Closed** (2026-09-25): delivered. 22/22 tasks in [tasks.md](./tasks.md) are `[X]`; the
+> database-scope control ships in `db#adapter#sybase#with_database()` +
+> `nvim/lua/config/db_objects.lua`, is covered by `nvim/lua/tests/db_objects_scope_smoke.lua`, and is
+> documented in `nvim/README.md`. Evidence in [verify-report.md](./verify-report.md).
 
 **Input**: User description: "como quedo lo de los objetos porque no puedo setear alguna base de datos?" (clarificado: "setear una base de datos" significa filtrar la búsqueda de objetos por base de datos).
 
@@ -116,4 +121,4 @@ Every picker row shows the database that owns the object, so same-named objects 
 - "Setting a database" means picking one specific target database for the search in v1; the server-wide search across all databases (`%`) and the optional team procedure remain owned by the predecessor multi-DB spec.
 - Database selection reuses the portable in-batch selection already proven to work on macOS (sqsh) and Windows (isql), so no client-specific flags are needed.
 - The connected database and its connection stay untouched: scoping changes only which database the next search runs in, not the connection registry.
-- The predecessor multi-DB object-search spec (draft, `specs/001-multidb-object-search`) owns the cross-database scan and the catalog-based source extraction; this feature owns the database-scope control. If both proceed, the relationship is confirmed at planning time.
+- The predecessor multi-DB object-search spec (closed, `specs/archive/2026-09-25-001-multidb-object-search`) owns the cross-database scan and the catalog-based source extraction; this feature owns the database-scope control. If both proceed, the relationship is confirmed at planning time.

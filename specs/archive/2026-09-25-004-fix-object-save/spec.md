@@ -4,13 +4,16 @@
 
 **Created**: 2026-09-23
 
-**Status**: Closed
+**Status**: Closed (archived 2026-09-25; see [verify-report.md](./verify-report.md))
 
-> **Closed** (2026-09-23): the save-flow behavior this spec reviewed is delivered and exercised by
+> **Closed** (2026-09-25): the save-flow behavior this spec reviewed is delivered and exercised by
 > the `002-procedure-save-dialog` + `005-database-scope` work — the dialog always fires, buffer and
-> saved-file names are database-qualified, and overwrite is never silent. Marked for closure by the
-> `005-database-scope` PR review; if the reopen-with-same-name defect re-appears it should be
-> tracked as a new bug, not this spec.
+> saved-file names are database-qualified, and overwrite is never silent. **US4/FR-007/FR-008 — the
+> opened buffer showing only real definition text — are delivered by issue #88**: the object source
+> now comes from `syscomments` instead of `sp_helptext`, so no `# Lines of Text` counter, column
+> heading, row count, or blank framing line can reach the buffer, and the dialog save is
+> byte-identical to what the buffer shows. Verified in [verify-report.md](./verify-report.md); if
+> the reopen-with-same-name defect re-appears it should be tracked as a new bug, not this spec.
 
 **Input**: User description: "al buscar un objeto no me mostro donde guardar el archivo, adicional me da un erro si es un sp que ya existe, este es el error vim.schedule callback: ..../db_objects.lua:55 buffer with this name a....., y si le doy guardar me dice no file name. y al inicio del objeto me muestra #lines of text \n 62\n text" (clarificado: el diálogo de guardado no aparece nunca, ni la primera vez ni al reabrir un SP; "setear base de datos" es una feature separada).
 
@@ -136,7 +139,7 @@ The top of an opened object currently contains stray clipping/non-code lines (fo
 
 ## Assumptions
 
-- The predecessor save-dialog feature is present (per `specs/002-procedure-save-dialog`) but defective as described; this feature fixes those defects in place rather than redesigning the flow.
+- The predecessor save-dialog feature is present (per `specs/archive/2026-09-23-002-procedure-save-dialog`) but defective as described; this feature fixes those defects in place rather than redesigning the flow.
 - "The dialog never appears" is reproduced with the repository's current selection-dialog provider (the picker override installed in the Neovim module); the fix MUST guarantee the dialog appears regardless of which provider is active.
 - The buffer-name collision error and the "No file name" error are two visible symptoms of the same broken reopen path; fixing the collision fixes the unnamed-buffer symptom.
 - Source text is currently obtained through the existing extraction path; the 255-byte wrapping limitation remains documented and is owned by the upstream catalog-based extraction feature (`001-multidb-object-search`, FR-013). This feature adds artifact stripping on top of the current path and guarantees buffer↔file byte-equality.

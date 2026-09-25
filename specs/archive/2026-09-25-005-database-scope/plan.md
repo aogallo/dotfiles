@@ -2,7 +2,7 @@
 
 **Branch**: `005-database-scope` | **Date**: 2026-09-23 | **Spec**: [spec.md](./spec.md)
 
-**Input**: Feature specification from `/specs/005-database-scope/spec.md`
+**Input**: Feature specification from `specs/archive/2026-09-25-005-database-scope/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command; its definition describes the execution workflow.
 
@@ -100,7 +100,7 @@ No violations require justification; the Complexity Tracking table is left empty
 ### Documentation (this feature)
 
 ```text
-specs/005-database-scope/
+specs/archive/2026-09-25-005-database-scope/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)

@@ -4,7 +4,14 @@
 
 **Created**: 2026-09-23
 
-**Status**: Draft
+**Status**: Closed (archived 2026-09-25; see [verify-report.md](./verify-report.md))
+
+> **Closed** (2026-09-25) as **not planned**: only `spec.md` and this checklist were ever written
+> (no `plan.md`, no `tasks.md`), and the requested capability — cancelling a running query from the
+> buffer you are working in — is not implemented in this repo. The need is still valid (long-running
+> scripts are only cancellable today from the results window); this spec is closed so the remaining
+> open specs are not mistaken for pending work, and it is **reopened as a new feature** if the
+> capability is requested again. Decision recorded in [verify-report.md](./verify-report.md).
 
 **Input**: User description: "quiero ver si el scrip actual se puede cancelar ya que tarda mucho y me gustaria cancelarlo. auqnque cierre la salida del query se cancela? ... estoy en un query que abri de dbui y quisiera en ese buffer cancelar la invocaccion que hizo" (clarificado: cancelar desde el buffer de entrada/resultados con `:DBCancel`, `<leader>qc` y `<C-c>`).
 
