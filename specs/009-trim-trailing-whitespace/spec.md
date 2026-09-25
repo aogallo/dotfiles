@@ -8,6 +8,8 @@
 
 **Input**: User description: "crea un auto command que quite los espacios de las lineas yo tenia uno en mi version anteiror de nvim pero ya no lo pase a esata configuracion, hay lineas en el markdown que se quedan con espacios y no me gusta, segun yo loacia prettier pero en estos archivos no veo que lo haga, puedes investigar esta parte si es necesario el command o solo con el fomatter"
 
+**Second input** (2026-09-25, same feature branch): "y agrega a esta spec un indicador en la lualine que muestre contra que base de datos se ejecuta el query del buffer actual, porque cuando estoy escribiendo un query no se que base de datos se va a seleccionar, por ejemplo si hago `use base-a` y despues consulto `base-b..tabla2` no tengo forma de saberlo mirando el editor"
+
 ## Investigation Summary (2026-09-25)
 
 The request asked whether a separate auto command is needed or whether the formatter already
@@ -25,6 +27,21 @@ decides the scope:
 **Scope decision**: no auto command is added. The work is to *guarantee* the behavior that
 already exists (regression coverage), close the silent-no-op hole, and document the
 hard-break exception so it is not "fixed" into broken rendering later.
+
+## Clarifications
+
+### Session 2026-09-25
+
+- Q: ¿En qué spec vive el indicador de base de datos? → A: se agrega a **esta** spec (009), aunque
+  sea un tema distinto al de limpieza de whitespace. Decisión consciente del usuario: el PR queda
+  cubriendo dos features, y el nombre de la spec no describe todo su contenido.
+- Q: ¿Qué muestra el indicador? → A: la base declarada en la URL de la conexión del buffer, más una
+  marca de conflicto cuando el texto del buffer cambia de contexto (una sentencia `use <db>` o
+  referencias `<db>..<objeto>`). La marca **nunca** oculta la base de la conexión.
+- Q: ¿El aviso es solo visual o también al ejecutar? → A: ambos. Además del indicador, en el
+  instante en que se ejecuta un query se emite un aviso único si el texto cambia de contexto.
+- Q: ¿En qué buffers aparece? → A: en todo buffer SQL. Con conexión muestra la base; sin conexión
+  muestra un marcador visible de ausencia, para que se distinga de un indicador roto.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -87,6 +104,32 @@ rendered output still shows two lines.
 
 ---
 
+### User Story 4 - Know which database a query will run against (Priority: P2)
+
+As someone who writes queries against several databases on the same server, I want to see, at a
+glance, which database the current buffer will execute against, and whether the text I am typing
+sends it somewhere else — because a query can start on the connection's database and end up
+writing to a different one without any visible cue.
+
+**Why this priority**: The connection supplies a starting database, but the buffer's own text can
+change it mid-batch (`use <db>`) or target another one outright (`<db>..<objeto>`). Without a cue,
+the only way to find out is to read the text carefully before every execution. It is second
+priority because it does not block work; it prevents a wrong-database write.
+
+**Independent Test**: Open a query buffer whose connection points at one database, type a `use` of
+another, and confirm the indicator shows the connection's database plus a conflict mark naming the
+other one — with no database server involved.
+
+**Acceptance Scenarios**:
+
+1. **Given** a query buffer whose connection declares a database, **When** the user looks at the status line, **Then** that database is shown.
+2. **Given** a query buffer whose text switches context, **When** the user looks at the status line, **Then** the indicator shows the connection's database *and* a conflict mark that identifies the database or `db..object` reference found in the text.
+3. **Given** a query buffer with no database connection, **When** the user looks at the status line, **Then** a visible "no database" marker is shown instead of nothing.
+4. **Given** a query whose text switches context, **When** the user executes it, **Then** a single message identifies the conflict before the query runs, and the execution is not blocked.
+5. **Given** a query whose text does not switch context, **When** the user executes it, **Then** no message appears.
+
+---
+
 ### Edge Cases
 
 - **Formatter chain ordering**: only the first available formatter runs today, so the
@@ -109,6 +152,26 @@ rendered output still shows two lines.
 - **Tabs used for indentation**: untouched; only end-of-line whitespace is in scope.
 - **The user's other editors**: a file edited outside this editor may reintroduce spaces; the
   next save here must clean it again without complaint.
+- **`use` inside a comment or a string literal**: text that only looks like a context switch MUST
+  NOT be reported as one.
+- **Several `use` statements in the same buffer**: statements run in order, so the last one is the
+  one that determines the effective database, and that is the one to report.
+- **A `use` appearing after a `db..object` reference**: both kinds of signal are reported, since
+  the text targets a database explicitly and then changes it.
+- **A result buffer produced by a query**: it is not SQL the user is editing, so it MUST NOT show a
+  database indicator.
+- **A procedure source opened from the object browser**: the buffer's connection already names the
+  owning database, so the indicator shows it and no conflict mark is needed.
+- **A database name containing `$` or `#`**: valid in this database engine, and it MUST be matched
+  and displayed intact.
+- **A `master` or other system database written explicitly**: reported like any other name.
+- **The connection's database changed while the buffer is open**: the indicator MUST reflect the
+  new value without needing the buffer to be reloaded.
+- **No status line available** (the component is not loaded, or the status line is disabled): the
+  absence of the indicator MUST NOT break the editor, and the execution-time message MUST still
+  work.
+- **A very long query**: inspecting the buffer for context switches MUST NOT delay the status line
+  noticeably.
 
 ## Requirements *(mandatory)*
 
@@ -129,12 +192,25 @@ rendered output still shows two lines.
 - **FR-013**: The editor's module documentation MUST state that trailing whitespace is cleaned on save, list the intentional exception, and explain the fallback order, in the same change that alters this behavior.
 - **FR-014**: The change MUST be developed on a feature branch and submitted through a pull request that links an approved issue, before merge.
 - **FR-015**: No new runtime dependency and no new configuration file MUST be introduced.
+- **FR-016**: The status line MUST show, for the current buffer, the database the query would run against as declared by the buffer's database connection, whenever the buffer has such a connection.
+- **FR-017**: When the buffer's text changes the database context, the status line MUST mark that as a conflict and identify what was found, and the connection's database MUST remain visible next to the mark.
+- **FR-018**: A buffer without a database connection MUST still show a visible "no database known" marker, so an absent indicator is never confused with a broken one.
+- **FR-019**: At the moment a query is executed, the editor MUST emit a message identifying the context switch when the buffer's text contains one, and MUST NOT emit any message when it does not.
+- **FR-020**: The execution-time message MUST NOT block, delay, or alter the query in any way.
+- **FR-021**: The conflict detection MUST be derived locally from the connection and the buffer's text; it MUST NOT require a round trip to the database server, and MUST recognise both `use <db>` and `<db>..<object>` forms, with the last `use` taking precedence.
+- **FR-022**: The database indicator MUST reuse the editor's existing pre-execution hook rather than registering an additional one, and the detection logic MUST be testable without a running database.
+- **FR-023**: Text that only resembles a context switch — a `use` or `db..object` inside a comment or a string literal — MUST NOT be reported as one.
+- **FR-024**: The database indicator MUST NOT appear on buffers that are not user-editable query text, such as a rendered result buffer.
+- **FR-025**: The status line and the query path MUST derive the database name from the same single source of truth, so that what the status line shows and what a query actually uses can never disagree.
 
 ### Key Entities
 
 - **Trailing whitespace**: characters at the end of a line after the last non-whitespace character. Meaningful only when it is not a format-level hard line break.
 - **Hard line break**: the two-space convention inside Markdown prose that forces the following text onto a new rendered line. Intentional, and therefore protected.
 - **Cleanup step**: the whitespace-only part of the save-time formatting behavior, which must survive independently of the primary formatter.
+- **Connection database**: the database carried by the buffer's database connection, derived from the connection's URL. It is what a query uses unless the text says otherwise.
+- **Context switch**: anything in the buffer's text that makes the effective database differ from the connection database — a `use <db>` statement or a `<db>..<object>` reference.
+- **Conflict mark**: the status-line marker shown when a context switch is detected, naming what was found.
 
 ## Success Criteria *(mandatory)*
 
@@ -145,6 +221,11 @@ rendered output still shows two lines.
 - **SC-003**: Removing the primary formatter for a file type still yields a saved file with no trailing whitespace in 100% of attempts; the silent no-op case count is 0.
 - **SC-004**: The automated checks for this behavior pass with 0 failures, run without a live editor session.
 - **SC-005**: Exactly one cleanup mechanism runs per save; no save triggers both a dedicated auto command and the formatting path.
+- **SC-006**: The user identifies the database a query will run against in under one second of looking at the status line, in 100% of query buffers that have a connection.
+- **SC-007**: 0 false negatives: every query buffer whose text switches context shows a conflict mark, verified with canned buffers containing no server involved.
+- **SC-008**: 0 false positives: buffers whose text does not switch context show no conflict mark, in 100% of the canned cases, including comments and string literals.
+- **SC-009**: 0 database round trips are performed to render the status line, and the status line renders in the same time as before the change.
+- **SC-010**: The execution-time message appears exactly once per execution of a conflicting query, 0 times for a non-conflicting query, and 0 times change the query's result.
 
 ## Assumptions
 
@@ -159,3 +240,12 @@ rendered output still shows two lines.
   a prose line are treated as accidental and removed.
 - Automatic dependency installation is out of scope: if a formatter is missing, the user is told
   how to install it rather than having it installed silently.
+- The indicator is deliberately **not** confirmed against the server. Asking the server would cost a
+  round trip on every status-line redraw, and the answer would always be the connection's database
+  anyway, so it would add cost without adding truth.
+- Blocking or rewriting a query because of a detected conflict is out of scope. The conflict is
+  reported, not prevented; deciding whether a switch is intentional is the author's call.
+- Showing the server host, the schema, or the session id in the status line is out of scope; only
+  the database and any conflict are shown.
+- How the connection's database is chosen in the first place is unchanged by this feature; that
+  behavior belongs to the object-source work and is not touched here.
