@@ -1,1 +1,3 @@
-{"feature_directory":"specs/009-trim-trailing-whitespace"}
+{
+  "feature_directory": "specs/010-dbobjects-listing-integrity"
+}

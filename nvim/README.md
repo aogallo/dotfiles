@@ -653,26 +653,68 @@ connection: explicit name → current buffer's dadbod URL (`b:db`) → fzf-lua p
 `g:dbs`. On Sybase, every row is `kind  database  name` (prototype: `kind  name`); fuzzy-filter
 by name as you type.
 
-**Database scope (Sybase only)** — `specs/archive/2026-09-25-005-database-scope/`:
+**What is listed (Sybase)** — `specs/010-dbobjects-listing-integrity/`:
 
-- The picker header always shows the active scope: the connected database, or `login default` when
-  the URL carries none; the picker leads with a `Database: <scope> — change…` entry using the same
-  label. Selecting it opens the database chooser: the databases the login can read (seeded with
-  `[use current: <db>]`), or a typed database name.
-- Picking a database rebuilds the connection URL with that database as its path
+- The listing covers **tables, views, stored procedures, user-defined functions and triggers**, and
+  nothing else. Every row states which of those it is.
+- `sysobjects.type` is `char(2)`, padded, so the kind is a **two-character** code — not one letter.
+  The codes that matter here are `U` (table), `V` (view), `P` (stored procedure), `SF` (user-defined
+  function) and `TR` (trigger); `XP` is an extended stored procedure and is surfaced as a
+  procedure.
+- The earlier filter tested one-letter patterns, which is why **functions and triggers silently
+  never appeared**: `F` does not match the row `SF `, `X` does not match `XP `, and `TR` was not
+  even part of the query. The same broken filter made a correctly-scoped `select … where type in
+  ('TR')` look broken, and there was no object count to contradict the empty-looking result
+  (issue [#92](https://github.com/aogallo/dotfiles/issues/92)).
+- Every listing reconciles itself against the server's own count, in the header:
+  `DB objects (main_db — tables, views, procedures, functions, triggers)  12 of 12 objects shown`.
+  If the database holds objects this listing deliberately does not cover, the header says
+  `partial: 3 of 240 objects shown, 237 not shown`; if the server sent no count at all, it says it
+  may be incomplete rather than claiming to be whole.
+- A `0 of 0` header (plus a one-line notice) is how "this database has no objects of these kinds"
+  looks. It is deliberately different from "this database could not be read".
+
+**Why the system catalogue is not enumerated** — `sp_help`, `systypes`, `syscomments`, `sysindexes`
+and the rest of ASE's own `sys.*` tables are deliberately absent from the listing. Enumerating them
+would add thousands of rows that no one is searching for, and several of them (`syscomments`,
+`sysprotects`) carry the server's own text. This is a deliberate scope boundary, not an
+accident: use direct-open below when you know the name.
+
+**Opening an object by name** — the picker leads with `Open object by name…` whenever the active
+scope is a **confirmed database**:
+
+- It takes a **bare** object name (no `db.dbo.name`), and reads it from the confirmed database.
+- It is offered **only** after the server has confirmed the database for this session. With no
+  database in the connection the scope reads `login default` and the entry is **absent** — there is
+  nothing trustworthy to search.
+- It is the way to open an object of a kind the listing does not cover (a rule, a sequence, a
+  system table), and the way to open something whose name you know and the fuzzy filter did not
+  surface.
+- A name that does not exist gets one actionable notice and no buffer.
+
+**Database scope (Sybase)** — `specs/010-dbobjects-listing-integrity/`:
+
+- The picker header always shows the **confirmed** scope: the database the server confirmed for
+  this session, or `login default` when the URL carries none; the picker leads with a
+  `Database: <scope> — change…` entry using the same label. Selecting it opens the database
+  chooser: the databases the login can read (seeded with `[use current: <db>]`), or a typed
+  database name.
+- A chosen or typed database is **verified by the server** before anything is listed: the adapter
+  asks for the name back and for it in `master..sysdatabases` in the same batch. Only a confirmed
+  database becomes the scope, so the label never claims a database the session is not in.
+- Picking a confirmed database rebuilds the connection URL with that database as its path
   (`db#adapter#sybase#with_database()`, preserving user/host/port/charset) and re-runs the listing
-  inside it; the picker reopens with the header showing the chosen database. The **default on every
-  invocation is the connected database** — behavior with no scope choice is unchanged.
+  inside it. The **default on every invocation is the connected database**.
 - The scoped URL flows into source loading, buffer binding (`b:db`), and saved file names, so a
   procedure found in another database shows that database's source, **executes in that database**
   (never the connected one), and saves as `<owning-database>.<object>.sql`.
-- Safe failures (specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/): a failed scope — invalid database name
-  (anything not `[A-Za-z0-9_$#]`, including `%`), a name equal to the current scope, or an
-  empty/inaccessible listing — surfaces **exactly one** actionable message and the picker reopens on
-  the previous (last-good) list with the active scope unchanged; the scope never silently reverts
-  and the picker never vanishes. Cancelling the chooser or the typed-name prompt is a pure no-op.
-  The cross-database search across all databases (`%`) is explicitly out of scope (owned by the
-  multi-DB spec).
+- Safe failures (`specs/010-dbobjects-listing-integrity/`): every failure mode — a database that
+  does not exist, one that exists but the login cannot enter, an invalid typed name, a missing ASE
+  client — raises **exactly one** actionable message and opens **no** picker, so a stale listing can
+  never be mistaken for the database you asked for. Cancelling the chooser or the typed-name prompt
+  is a pure no-op. The cross-database search across all databases (`%`) is explicitly out of scope.
+- Server notes (e.g. `Changed database context to 'x'`) are surfaced once, deduplicated by text and
+  capped at three samples; they never add a request and never inflate the row count.
 
 - Table/view selection opens a new `sql` buffer with the ASE-safe List query
   `select top 200 * from <name>` (no `LIMIT`) ready to run via the `:%DB` flow.
@@ -751,8 +793,12 @@ DB-module behavior → the function that implements it → where it is specified
 | Portable database selection (`use <db>`, no `-D`) | `s:use_lines()`, `s:transform()`, `s:database()` | `specs/archive/2026-09-23-001-sybase-nvim-client/`, `sybase_adapter_smoke.lua` |
 | Read a query's output without client framing | `s:run_query()`, `s:first_tokens()` | `sybase_adapter_smoke.lua`, `sybase_objects_smoke.lua` |
 | List tables/views (dadbod `tables()`) | `db#adapter#sybase#tables()`, `s:object_kind()` | `specs/archive/2026-09-23-001-sybase-nvim-client/` |
-| `:DBObjects` listing (tables/views/procedures/functions) | `db#adapter#sybase#objects()` → `fetch_objects()` → `M.open()` | `specs/archive/2026-09-25-005-database-scope/`, `sybase_objects_smoke.lua` |
-| Database-scope chooser + safe failures | `db#adapter#sybase#complete_database()`, `db#adapter#sybase#with_database()`, `choose_database()`, `apply_database_scope()` | `specs/archive/2026-09-25-005-database-scope/`, `specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/`, `db_objects_scope_smoke.lua` |
+| `:DBObjects` listing (tables/views/procedures/functions/triggers) | `db#adapter#sybase#objects()` → `fetch_objects()` → `reconcile()` → `build_listing()` → `M.open()` | issue [#92](https://github.com/aogallo/dotfiles/issues/92), `specs/010-dbobjects-listing-integrity/`, `sybase_objects_smoke.lua` |
+| `char(2)` kind codes (`U`,`V`,`P`,`SF`,`TR`,`XP`) and the marker protocol | `s:covered_types`, `s:object_kinds()`, `s:object_kind()`, `s:type_in_list()`, `s:starts_with()`, `s:split_marker_row()`, `s:number_after()` | `specs/010-dbobjects-listing-integrity/contracts/sybase-listing-integrity.md`, `sybase_objects_smoke.lua` |
+| Server-confirmed database scope | `db#adapter#sybase#confirm_database()` → `start_listing()` → `apply_database_scope()` | `specs/010-dbobjects-listing-integrity/data-model.md`, `db_objects_scope_smoke.lua` |
+| One actionable message per failure, no stale listing | `report_failure()`, `surface_diagnostics()`, `prompt_for()` | issue #92, `specs/010-dbobjects-listing-integrity/spec.md` (FR-025–FR-029), `db_objects_scope_smoke.lua` |
+| Open an object by name (requires a confirmed scope) | `open_by_name()`, `prompt_for()`, `start_listing()` | `specs/010-dbobjects-listing-integrity/` (FR-035–FR-037), `db_objects_scope_smoke.lua` |
+| Database-scope chooser + safe failures | `db#adapter#sybase#complete_database()`, `db#adapter#sybase#with_database()`, `choose_database()`, `apply_database_scope()` | `specs/archive/2026-09-25-005-database-scope/`, `specs/archive/2026-09-24-007-fix-dbobjects-scope-save-dir/`, `specs/010-dbobjects-listing-integrity/`, `db_objects_scope_smoke.lua` |
 | Full object source without client artifacts or 255-byte cuts | `db#adapter#sybase#source()`, `s:source_catalog()`, `s:join_chunks()`, `s:clean_result()`, `s:text_is_hidden()` | issue [#88](https://github.com/aogallo/dotfiles/issues/88), `specs/archive/2026-09-25-001-multidb-object-search/` (FR-013/FR-014), `sybase_objects_smoke.lua` |
 | Opt-in regenerated-SQL source (`showsql`) | `s:source_showsql()`, `s:source_mode()` | issue #88, `nvim/README.md` [Customization boundaries](#customization-boundaries) |
 | Table/view sample query buffer | `open_list_query()`, `open_buffer()` | `specs/archive/2026-09-25-005-database-scope/` |
@@ -824,6 +870,38 @@ says `SKIP`-style information rather than passing quietly if that binary ever ap
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
 are manual-only; see `specs/archive/2026-09-23-001-sybase-nvim-client/quickstart.md`.
+
+#### Manual-only: `:DBObjects` against a real ASE server (spec 010)
+
+The suites above stub the ASE client, so they cannot prove the kind codes are right. Run this by
+hand against an instance that has objects in a **non-default** database.
+
+Reproduce issue [#92](https://github.com/aogallo/dotfiles/issues/92) — before the fix, a trigger or a
+user-defined function in another database was **absent from a populated listing with no message**:
+
+1. Connect to a database that is not the one you work in.
+2. `:DBObjects` → change scope to that database → search for a **trigger**, then a
+   **user-defined function**. Before the fix both are missing; after the fix both are found.
+3. Hand-run the issue's reference path to confirm the object exists and is readable.
+
+Then check the rest of the contract:
+
+| # | Action | Expected |
+|---|--------|----------|
+| 1 | Choose a database you can use | listing contains only that database's objects; the label names it |
+| 2 | Choose a database you **cannot** use | one message; **no** listing of the other database |
+| 3 | Type a database name that does not exist | one message, distinguishable from #2 |
+| 4 | Choose a database with zero objects | `0 of 0 objects shown` — visibly not an error |
+| 5 | Search for a **trigger** | found (impossible before the fix) |
+| 6 | Search for a **user-defined function** | found (impossible before the fix) |
+| 7 | `Open object by name…` with an uncovered kind (a rule, a sequence) | source opens, from the confirmed database |
+| 8 | `Open object by name…` with a nonexistent name | one actionable notice, no buffer |
+| 9 | Connection with no database in the URL | no `Open object by name…` entry; label reads `login default` |
+| 10 | Cancel the chooser / the name prompt | pure no-op |
+| 11 | Count the client invocations for one `:DBObjects` | **2** (confirmation batch + listing batch), or **1** when the scope is unchanged — and the **same** for 50 objects and for 50,000 |
+
+Full checklist, including the two open questions (`TR` vs `IT`; whether `db_id()` conflates
+"absent" with "not permitted"), in `specs/010-dbobjects-listing-integrity/quickstart.md` §4.
 
 ### Rollback / recovery
 
