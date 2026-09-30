@@ -5,18 +5,18 @@ Branch: `010-dbobjects-listing-integrity` · Issue: #92
 
 ## Status
 
-78 of 82 tasks done. The implementation, the documentation, and the static validation are
-complete. The four open tasks need a real ASE server, so they are not code:
+79 of 82 tasks done. The implementation, the documentation, and the static validation are
+complete. The three open tasks need a real ASE server, so they are not code:
 
 | Task | What it needs | Why it is open |
 | --- | --- | --- |
 | T075 | an ASE instance with a login that has objects in a non-default database | the reproduction of #92 and the ten-scenario confirmation; no server is reachable from this machine |
 | T076 | the same instance | the two `[ASSUMED]` items from `research.md` (does `TR` return `IT`; does `db_id()` conflate absent with not-permitted) |
 | T077 | the same instance | the client-invocation count has to be observed, not inferred — the code shape is verified below, the observed count is not |
-| T082 | a human decision | whether `spec.md` is closed as the completed solution (asked at PR time, constitution XIII) |
 
-T074 is **written** below. The spec is not closed: T075, T076, T077 and T082 are open, so this
-report records a partial acceptance on purpose.
+T074 is **written** below. The spec is not closed: T075, T076 and T077 are open, so this report
+records a partial acceptance on purpose. T082 is closed — see [T082](#t082--the-close-decision)
+at the end.
 
 ## Gate
 
@@ -163,3 +163,16 @@ codes, the marker protocol, server-confirmed scope, the single-message rule and 
   not-permitted (T076). Both are `[ASSUMED]` in `research.md`; the first would change a label, the
   second would change the existence probe.
 - The observed client-invocation count (T077), verified statically above only.
+
+## T082 — the close decision
+
+Asked before the PR, as constitution XIII requires, and answered by the developer: **yes**,
+`specs/010-dbobjects-listing-integrity/spec.md` is to be closed as the completed solution for
+issue #92.
+
+The question is recorded with the outcome rather than assumed, because the answer decides
+something the code cannot: whether #92 is resolved. It is, on the mechanism — the `char(2)`
+predicate that dropped `SF`, `XP` and `TR` is gone, and the listing now carries the server's own
+count so a truncated result cannot look whole again. The live scenarios in T075 are the
+confirmation of that against a real catalog, and they are tracked here rather than folded into
+the close, so the record stays honest about what was and was not observed.
