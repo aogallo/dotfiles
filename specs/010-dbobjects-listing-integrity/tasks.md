@@ -294,7 +294,7 @@ reconcile with what is displayed.
 - [X] T078 Confirm no secret, credential, or machine-specific absolute path entered `nvim/autoload/db/adapter/sybase.vim`, `nvim/lua/config/db_objects.lua` or `nvim/README.md` (constitution VII)
 - [X] T079 [P] Verify no change was made to `nvim/lua/config/db_context.lua`, `nvim/plugin/database.lua`, `nvim/lua/config/db_connections.lua`, `nvim/lua/config/keymaps.lua`, `nvim/plugin/fzf-lua.lua`, or anything outside `nvim/` (constitutions IV, V)
 - [X] T080 [P] Re-run the two untouched suites — `tests/db_objects_save_smoke` and `tests/keymap_groups_smoke` — and confirm they pass unmodified, proving the save flow and keymaps are unaffected
-- [ ] T081 Commit on branch `010-dbobjects-listing-integrity` with conventional commit messages; never commit directly to `main` (constitution XIII)
+- [X] T081 Commit on branch `010-dbobjects-listing-integrity` with conventional commit messages; never commit directly to `main` (constitution XIII)
 - [ ] T082 Before opening the PR: confirm the PR scope is related to this specification, link issue #92 in the PR body, and **ask the developer whether `specs/010-dbobjects-listing-integrity/spec.md` should be closed as the completed solution**, recording the outcome in `specs/010-dbobjects-listing-integrity/verify-report.md` (constitution XIII, FR-039)
 
 ---
