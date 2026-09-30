@@ -26,6 +26,17 @@
 -- names are `<database>.<object>.sql` (database-qualified so same-named objects
 -- from different databases never collide) and an existing same-named file is
 -- never overwritten silently. Cancelling leaves everything untouched.
+--
+-- Listing integrity (specs/010-dbobjects-listing-integrity, issue #92): a listing is
+-- only ever shown under a database the SERVER confirmed. The URL carries the
+-- request; `db#adapter#sybase#confirm_database()` carries the fact, and every
+-- label in this module derives from that fact, never from the request. A switch
+-- the server rejects produces exactly one message and no listing at all — the
+-- previous last-good reopen is gone, because re-presenting another database's
+-- objects after a failure is the reported bug. The listing also states what it
+-- covers (tables, views, procedures, functions, triggers — ASE's sysobjects.type
+-- is char(2), so the covered values are U/V/P/SF/TR/XP) and reconciles what the
+-- server reported against what is shown.
 
 local M = {}
 
@@ -89,25 +100,37 @@ end
 local is_sybase = db_context.is_sybase
 
 -- url_database(url): owning database implied by a URL.
--- Called by: scope_label(), pick()
--- SQL: none (the path segment after host[:port], mirroring the adapter's
---   s:database() so the scope label and the row data always agree)
--- Args: url = connection URL string
--- Returns: database name, or nil for a non-Sybase URL / no path / empty path
--- Side effects: none
-local url_database = db_context.url_database
+-- Kept exported by db_context for other callers; deliberately NOT used to label
+-- anything here — a URL states a request, not a fact, and a label built from it
+-- would be a claim the server never made (data-model.md §3, invariant I3).
+local _url_database = db_context.url_database
 
--- scope_label(url): readable database label for the picker.
--- Called by: pick() (prompt + scope row)
+-- scope_label(scope): readable database label for the picker.
+-- Called by: pick(), start_listing(), apply_database_scope()
 -- SQL: none
--- Args: url = connection URL string
--- Returns: the database name, or 'login default' when the URL carries none —
---   the same label for the prompt and the scope row (contract §1)
+-- Args: scope = a confirmed scope, `{ database = string, source = 'verified' |
+--   'none' }` (data-model.md §3)
+-- Returns: the server-confirmed database name when the scope is `verified`,
+--   otherwise 'login default'. A URL is deliberately NOT an argument: the label
+--   must be an observation, never a request restated (invariant I3)
 -- Side effects: none
-local function scope_label(url)
-    local db = url_database(url)
-    return (db and db ~= '') and db or 'login default'
+local function scope_label(scope)
+    if scope and scope.source == 'verified' and scope.database and scope.database ~= '' then
+        return scope.database
+    end
+    return 'login default'
 end
+
+-- COVERED_KINDS: the object kinds the listing covers, in plain language.
+-- Called by: prompt_for() (the picker header)
+-- SQL: none (the adapter queries ASE's U/V/P/SF/TR/XP sysobjects types)
+-- Args: none
+-- Returns: string
+-- Side effects: none
+-- The system catalogue is deliberately NOT enumerated: it is thousands of rows
+-- the developer cannot act on, for no benefit and real server load (FR-010).
+-- Anything outside this set stays reachable through the direct-open entry.
+local COVERED_KINDS = 'tables, views, procedures, functions, triggers'
 
 -- url_from_buffer(buf): the connection a buffer is bound to.
 -- Called by: default_url()
@@ -133,28 +156,90 @@ local function default_url(name)
 end
 
 -- fetch_objects(url): list the objects of one database.
--- Called by: M.open(), apply_database_scope()
--- SQL: for `sybase://` the adapter's objects() query
---   (`select name, type from sysobjects where type in ('P','FN','IF','TF','V','U')
---   order by name`); other schemes use dadbod's native tables() list when the
---   adapter reports support
+-- Called by: start_listing()
+-- SQL: for `sybase://` the adapter's ONE-batch listing —
+--   `select 'DDB~' + db_name()`,
+--   `select 'DOBJ~' + name + '~' + convert(char(2), type) from sysobjects where
+--    type in ('U','V','P','SF','TR','XP') order by name`, and
+--   `select 'DCNT~' + count(*) …` over the same predicate. ASE stores
+--   sysobjects.type as char(2), which is why the values are two characters and
+--   not the single letters an earlier version matched on; other schemes use
+--   dadbod's native tables() list when the adapter reports support
 -- Args: url = connection URL string (its path is the database to search)
--- Returns: row[] — {name, kind, database?} entries; {} for unsupported schemes
---   or when the query fails
+-- Returns: result table {rows, reported, excluded, diagnostics, count_known} as
+--   the adapter returns it; {rows = {}, …} for an unsupported scheme
 -- Side effects: none (read-only)
 local function fetch_objects(url)
     local scheme = url:match '^([^:]+)://' or ''
     if scheme == 'sybase' then
-        return vim.fn['db#adapter#sybase#objects'](url)
+        local result = vim.fn['db#adapter#sybase#objects'](url)
+        if type(result) ~= 'table' or result.rows == nil then
+            -- an adapter that still answers with a bare list
+            result = { rows = result or {}, reported = 0, excluded = 0, diagnostics = {}, count_known = false }
+        end
+        return result
     end
     if vim.fn['db#adapter#supports'](url, 'tables') ~= 1 then
-        return {}
+        return { rows = {}, reported = 0, excluded = 0, diagnostics = {}, count_known = false }
     end
     local rows = {}
     for _, name in ipairs(vim.fn['db#adapter#dispatch'](url, 'tables')) do
         table.insert(rows, { name = name, kind = 'table' })
     end
-    return rows
+    return { rows = rows, reported = #rows, excluded = 0, diagnostics = {}, count_known = true }
+end
+
+-- reconcile(result): the self-describing counts of one listing.
+-- Called by: build_listing()
+-- SQL: none (arithmetic over what the listing batch already returned)
+-- Args: result = the fetch_objects() return table
+-- Returns: report = {reported, shown, excluded, count_known, partial}
+--   invariant: shown + excluded = reported whenever count_known (I5)
+--   partial is true when objects were withheld OR when the server's count row
+--   never arrived — a listing that cannot prove its own total is never presented
+--   as complete (FR-030, data-model.md §4)
+-- Side effects: none
+local function reconcile(result)
+    local shown = #(result.rows or {})
+    local count_known = result.count_known and true or false
+    local reported = count_known and (tonumber(result.reported) or 0) or 0
+    local excluded = 0
+    if count_known and reported > shown then
+        excluded = reported - shown
+    end
+    return {
+        reported = reported,
+        shown = shown,
+        excluded = excluded,
+        count_known = count_known,
+        partial = (not count_known) or excluded > 0,
+    }
+end
+
+-- build_listing(url, scope): fetch, reconcile and own one listing.
+-- Called by: start_listing()
+-- SQL: fetch_objects() (one client invocation)
+-- Args: url = connection URL, scope = the confirmed scope that was established
+--   BEFORE the fetch
+-- Returns: listing = {rows, url, scope, report, diagnostics}; each row's
+--   `database` is stamped from the confirmed scope, never from the URL's
+--   requested name (contract §1.2, T013)
+-- Side effects: none (read-only)
+local function build_listing(url, scope)
+    local result = fetch_objects(url)
+    local rows = result.rows or {}
+    if scope.source == 'verified' then
+        for _, row in ipairs(rows) do
+            row.database = scope.database
+        end
+    end
+    return {
+        rows = rows,
+        url = url,
+        scope = scope,
+        report = reconcile(result),
+        diagnostics = result.diagnostics or {},
+    }
 end
 
 -- open_buffer(url, name, lines, database): show text in a new SQL buffer.
@@ -418,53 +503,153 @@ local function open_row(url, row)
     end
 end
 
--- apply_database_scope(url, rows, database): re-run the listing in a chosen DB.
--- Called by: choose_database() (picker row and typed name)
--- SQL: db#adapter#sybase#with_database() rebuilds the URL, then the same
---   objects() query as fetch_objects() runs inside the new database
--- Args: url = current URL, rows = last-good listing, database = chosen database
+-- report_failure(subject, causes, level): the single failure-reporting path.
+-- Called by: apply_database_scope(), start_listing(), open_by_name()
+-- SQL: none
+-- Args: subject = the thing the message is about (a database, an object, the
+--   connection), causes = the plausible causes, level = vim.log.levels.*
 -- Returns: nothing
--- Side effects: opens the picker with the new listing; an inaccessible name
---   ([A-Za-z0-9_$#] only) or an empty result emits exactly one actionable ERROR
---   and re-opens the last-good picker with the previous scope, never an empty
---   one (FR-002/FR-003, contract §2)
-local pick -- forward declaration: pick <-> choose_database form a cycle
-
-local function apply_database_scope(url, rows, database)
-    local scoped = vim.fn['db#adapter#sybase#with_database'](url, database)
-    if scoped == '' then
-        vim.notify(
-            'DBObjects: cannot access database ' .. database .. ' (name must match [A-Za-z0-9_$#])',
-            vim.log.levels.ERROR
-        )
-        pick(rows, url)
-        return
-    end
-    local scoped_rows = fetch_objects(scoped)
-    if vim.tbl_isempty(scoped_rows) then
-        vim.notify('DBObjects: no objects returned for ' .. database, vim.log.levels.ERROR)
-        pick(rows, url)
-        return
-    end
-    pick(scoped_rows, scoped)
+-- Side effects: exactly one vim.notify, so two paths can never report the same
+--   failure twice (contract §3.3)
+local function report_failure(subject, causes, level)
+    vim.notify('DBObjects: ' .. subject .. ' — ' .. causes, level or vim.log.levels.ERROR)
 end
 
--- choose_database(url, rows, current_db): pick the database to search in.
+-- open_by_name(listing): the direct-open entry.
+-- Called by: pick() when the entry is chosen
+-- SQL: none until the name is confirmed; then exactly the existing source read
+--   (`db#adapter#sybase#source()`, unchanged — no new SQL, no new mode)
+-- Args: listing = the current listing, whose scope MUST be `verified`
+-- Returns: nothing (asynchronous; drives vim.ui.input)
+-- Side effects: prompts for a name, then opens that object's source bound to
+--   the confirmed database; a two-part name is rejected, an unresolvable name
+--   yields one notice and no buffer, and cancelling is a pure no-op
+--   (FR-015..FR-021, FR-035..FR-039)
+local function open_by_name(listing)
+    if listing.scope.source ~= 'verified' then
+        report_failure(
+            'opening an object by name needs a confirmed database first',
+            'the connection carried no database, so there is nothing to read the object from — '
+                .. 'choose a database with the entry at the top of the picker',
+            vim.log.levels.WARN
+        )
+        return
+    end
+    vim.ui.input({ prompt = 'Object name: ' }, function(typed)
+        -- Nothing has been sent to the server at this point, and nothing is sent
+        -- until a non-empty name comes back (FR-018, invariant I7).
+        if typed == nil then
+            return
+        end
+        local name = vim.trim(typed)
+        if name == '' then
+            return
+        end
+        if name:find('.', 1, true) then
+            report_failure(
+                'cannot open the qualified name "' .. name .. '"',
+                'only a bare object name is accepted — pick the database with the '
+                    .. '"Database: … — change…" entry at the top of the picker, then search there',
+                vim.log.levels.WARN
+            )
+            return
+        end
+        open_procedure_source(listing.url, { name = name, kind = 'object', database = listing.scope.database })
+    end)
+end
+
+-- prompt_for(listing): the picker header.
+-- Called by: pick()
+-- SQL: none
+-- Args: listing = the current listing
+-- Returns: string — the confirmed scope, what the listing covers, and the
+--   reconciliation (how many the server reported, how many are shown, how many
+--   were left out). Dropped client lines are summarized once, trimmed, and only
+--   when there are any (FR-029..FR-031)
+-- Side effects: none
+local function prompt_for(listing)
+    local parts = { 'DB objects (' .. scope_label(listing.scope) .. ' — ' .. COVERED_KINDS .. ')' }
+    local report = listing.report
+    if not report.count_known then
+        -- Without the server's own count there is no total to reconcile against,
+        -- so the listing says it cannot prove itself rather than claiming to be
+        -- whole (FR-030).
+        table.insert(parts, 'the server sent no object count, so this listing may be incomplete')
+    elseif report.excluded > 0 then
+        table.insert(
+            parts,
+            'partial: '
+                .. report.shown
+                .. ' of '
+                .. report.reported
+                .. ' objects shown, '
+                .. report.excluded
+                .. ' not shown'
+        )
+    else
+        table.insert(parts, report.shown .. ' of ' .. report.reported .. ' objects shown')
+    end
+    -- Dropped client lines are summarized once, capped at three samples and
+    -- trimmed, so a chatty client can never dump an unbounded block (FR-029).
+    local dropped = {}
+    for _, diag in ipairs(listing.diagnostics) do
+        if diag.reason and #dropped < 3 then
+            table.insert(dropped, diag.text)
+        end
+    end
+    if #dropped > 0 then
+        table.insert(parts, 'server notes: ' .. table.concat(dropped, ' | '))
+    end
+    return table.concat(parts, '  ')
+end
+
+-- apply_database_scope(listing, database, origin): re-run the listing in a chosen DB.
+-- Called by: choose_database() (picker row and typed name)
+-- SQL: db#adapter#sybase#with_database() rebuilds the URL (rejected locally when
+--   the name is outside [A-Za-z0-9_$#], so no request is made), then
+--   db#adapter#sybase#confirm_database() asks the server which database is really
+--   in effect, then the same one-batch objects() read
+-- Args: listing = current listing, database = chosen name, origin = 'chosen' |
+--   'typed' (data-model.md §2 — it picks the hint for a typo)
+-- Returns: nothing
+-- Side effects: opens the picker with the new listing when the server confirms
+--   the database; otherwise emits exactly one message and opens NOTHING, so a
+--   failure never re-presents the previous database's objects as the answer
+--   (FR-002/FR-003/FR-007/FR-025, invariant I2/I4)
+-- Forward declarations: pick <-> choose_database and pick <-> start_listing
+-- form a cycle.
+local pick
+local start_listing
+
+local function apply_database_scope(listing, database, origin)
+    local scoped = vim.fn['db#adapter#sybase#with_database'](listing.url, database)
+    if scoped == '' then
+        report_failure(
+            'cannot access database ' .. database .. ' (name must match [A-Za-z0-9_$#])',
+            'the name was rejected locally, so nothing was sent to the server'
+        )
+        return
+    end
+    start_listing(scoped, vim.fn['db#adapter#sybase#confirm_database'](scoped), origin, listing.scope)
+end
+
+-- choose_database(listing): pick the database to search in.
 -- Called by: pick() when the scope row is chosen
 -- SQL: db#adapter#sybase#complete_database() lists the databases the login can
 --   read (`select name from master..sysdatabases order by name`)
--- Args: url = current URL, rows = last-good listing, current_db = active scope
+-- Args: listing = the current listing
 -- Returns: nothing (asynchronous)
 -- Side effects: one vim.ui.select of the readable databases (seeded with
 --   `[use current: …]`) plus a typed-name path; a typed name equal to the
 --   current scope warns instead of re-querying, and every cancel path returns
---   to the previous picker with no state change (FR-001/FR-009)
-local function choose_database(url, rows, current_db)
+--   to the previous picker with no state change (FR-001/FR-009, FR-027)
+local function choose_database(listing)
+    local current_db = listing.scope.database
     local choices = {}
     if current_db and current_db ~= '' then
         table.insert(choices, { label = '[use current: ' .. current_db .. ']', database = current_db })
     end
-    for _, d in ipairs(vim.fn['db#adapter#sybase#complete_database'](url)) do
+    for _, d in ipairs(vim.fn['db#adapter#sybase#complete_database'](listing.url)) do
         if d ~= current_db then
             table.insert(choices, { label = d, database = d })
         end
@@ -477,78 +662,172 @@ local function choose_database(url, rows, current_db)
         end,
     }, function(choice)
         if not choice then
-            pick(rows, url)
+            pick(listing)
             return
         end
         if choice.typed then
             vim.ui.input({ prompt = 'Database name: ' }, function(typed)
                 if typed == nil then
-                    pick(rows, url)
+                    pick(listing)
                     return
                 end
                 local db = vim.trim(typed)
                 if db == '' then
-                    pick(rows, url)
+                    pick(listing)
                     return
                 end
                 if db == current_db then
                     vim.notify('DBObjects: ' .. db .. ' is already the active database scope', vim.log.levels.WARN)
-                    pick(rows, url)
+                    pick(listing)
                     return
                 end
-                apply_database_scope(url, rows, db)
+                apply_database_scope(listing, db, 'typed')
             end)
             return
         end
-        apply_database_scope(url, rows, choice.database)
+        apply_database_scope(listing, choice.database, 'chosen')
     end)
 end
 
--- pick(rows, url): the object picker itself (forward-declared, see above).
--- Called by: M.open(), apply_database_scope(), choose_database()
--- SQL: none (rows are already fetched)
--- Args: rows = listing to show, url = URL the listing belongs to
+-- pick(listing): the object picker itself (forward-declared, see above).
+-- Called by: start_listing(), apply_database_scope(), choose_database()
+-- SQL: none (the listing is already fetched)
+-- Args: listing = {rows, url, scope, report, diagnostics}
 -- Returns: nothing
--- Side effects: one vim.ui.select; for `sybase://` URLs a leading
---   `Database: <db> — change…` row opens choose_database(), any other row opens
---   the object (open_row())
-pick = function(rows, url)
-    local current_db = url_database(url)
-    local items = rows
-    if is_sybase(url) then
-        items = { { scope = true, database = current_db } }
-        vim.list_extend(items, rows)
+-- Side effects: one vim.ui.select holding, in order: the `Database: <confirmed>
+--   — change…` entry, the object rows, and — only on a verified scope — the
+--   `Open object by name…` entry. The label reads the confirmed value, never the
+--   requested one (invariant I3)
+pick = function(listing)
+    local items = {}
+    if is_sybase(listing.url) then
+        table.insert(items, { scope = true, database = scope_label(listing.scope) })
+        vim.list_extend(items, listing.rows)
+        if listing.scope.source == 'verified' then
+            table.insert(items, { open_by_name = true })
+        end
+    else
+        vim.list_extend(items, listing.rows)
     end
     vim.ui.select(items, {
-        prompt = 'DB objects (' .. scope_label(url) .. ')',
+        prompt = prompt_for(listing),
         format_item = function(row)
             if row.scope then
-                return 'Database: ' .. scope_label(url) .. ' — change…'
+                return 'Database: ' .. scope_label(listing.scope) .. ' — change…'
+            end
+            if row.open_by_name then
+                return 'Open object by name…'
             end
             local db = row.database and row.database ~= '' and (row.database .. ' ') or ''
             return row.kind .. '\t' .. db .. row.name
         end,
     }, function(row)
-        if row then
-            if row.scope then
-                choose_database(url, rows, current_db)
-            else
-                open_row(url, row)
-            end
+        if not row then
+            return
+        end
+        if row.scope then
+            choose_database(listing)
+        elseif row.open_by_name then
+            open_by_name(listing)
+        else
+            open_row(listing.url, row)
         end
     end)
+end
+
+-- surface_diagnostics(listing): report what the server said alongside the rows.
+-- Called by: start_listing()
+-- SQL: none
+-- Args: listing = the built listing
+-- Returns: nothing
+-- Side effects: one WARN per distinct error-severity diagnostic, deduplicated —
+--   never once per line, and never silently dropped (FR-022, data-model.md §6)
+local function surface_diagnostics(listing)
+    local seen = {}
+    for _, diag in ipairs(listing.diagnostics) do
+        if diag.severity == 'error' and not seen[diag.text] then
+            seen[diag.text] = true
+            vim.notify(
+                'DBObjects: the server reported while listing ' .. scope_label(listing.scope) .. ': ' .. diag.text,
+                vim.log.levels.WARN
+            )
+        end
+    end
+end
+
+-- start_listing(url, confirmation, origin, previous): confirm the scope, then list.
+-- Called by: M.open(), apply_database_scope()
+-- SQL: the one-batch objects() read
+-- Args: url = connection URL, confirmation = its confirm_database() result,
+--   origin = 'chosen' | 'typed' | nil (the connection's own database) — it picks
+--   the hint for a typo (data-model.md §2), previous = the scope in effect
+--   before this attempt, so a rejection can name where the session stayed
+-- Returns: nothing
+-- Side effects: opens the picker on a confirmed or `login default` scope; on any
+--   rejection emits exactly one message and opens nothing, leaving the caller's
+--   scope untouched (FR-002/FR-003/FR-006/FR-025)
+start_listing = function(url, confirmation, origin, previous)
+    local scope
+    if confirmation.result == 'confirmed' then
+        scope = { database = confirmation.confirmed, source = 'verified' }
+    elseif confirmation.result == 'no_database' then
+        scope = { database = '', source = 'none' }
+    elseif confirmation.result == 'not_attempted' then
+        report_failure(
+            'cannot read the catalog of ' .. (confirmation.requested ~= '' and confirmation.requested or url),
+            'the ASE client is not installed or not on PATH for this connection, so nothing could '
+                .. 'be confirmed — set g:db_sybase_client, or install sqsh (macOS) / isql (Windows)'
+        )
+        return
+    elseif confirmation.result == 'rejected_absent' then
+        local absent_hint = origin == 'typed'
+                and 'check the spelling — it was typed, so it never appeared in the list of databases this login can read'
+            or 'it is not in the list of databases this login can read'
+        if origin then
+            absent_hint = absent_hint
+        else
+            absent_hint =
+                'check the name in the connection URL — it is not in the list of databases this login can read'
+        end
+        report_failure('database ' .. confirmation.requested .. ' does not exist on this server', absent_hint)
+        return
+    else
+        local stayed = previous and scope_label(previous) or 'the login default database'
+        report_failure(
+            'database ' .. confirmation.requested .. ' exists but this login could not enter it',
+            'the session stayed on '
+                .. stayed
+                .. ' — the login needs access to '
+                .. confirmation.requested
+                .. ' before its objects can be listed'
+        )
+        return
+    end
+    local listing = build_listing(url, scope)
+    surface_diagnostics(listing)
+    if listing.report.count_known and listing.report.shown == 0 then
+        -- No objects is an EMPTY RESULT, not a failure: the picker still opens so
+        -- the developer can change scope, and the header says "0 of 0" — visibly
+        -- different from a message about a database that could not be read
+        -- (FR-008).
+        local where = scope.source == 'verified' and scope.database or 'the login default database'
+        local how = scope.source == 'verified' and ' (the database was confirmed and read successfully)' or ''
+        vim.notify('DBObjects: 0 objects in ' .. where .. ' (' .. COVERED_KINDS .. ')' .. how, vim.log.levels.INFO)
+    end
+    pick(listing)
 end
 
 -- M.open(name): entry point of :DBObjects [name].
 -- Called by: nvim/plugin/database.lua (the :DBObjects command); recursion for
 --   the connection chooser
--- SQL: fetch_objects() for the resolved connection
+-- SQL: for `sybase://` one confirmation batch, then one listing batch; other
+--   schemes keep the native tables() list
 -- Args: name = connection name from the command line, or nil to use the current
 --   buffer's connection
 -- Returns: nothing
 -- Side effects: with no resolvable connection, offers a sorted vim.ui.select of
 --   registered names (or one WARN when the registry is empty); with no objects,
---   one WARN; otherwise opens the picker
+--   one WARN; otherwise opens the picker under a confirmed scope
 function M.open(name)
     local url = default_url(name)
     if not url or url == '' then
@@ -568,12 +847,22 @@ function M.open(name)
         end)
         return
     end
-    local rows = fetch_objects(url)
-    if vim.tbl_isempty(rows) then
-        vim.notify('DBObjects: no objects returned for ' .. url, vim.log.levels.WARN)
+    if not is_sybase(url) then
+        local result = fetch_objects(url)
+        if vim.tbl_isempty(result.rows) then
+            vim.notify('DBObjects: no objects returned for ' .. url, vim.log.levels.WARN)
+            return
+        end
+        pick {
+            rows = result.rows,
+            url = url,
+            scope = { database = '', source = 'none' },
+            report = reconcile(result),
+            diagnostics = result.diagnostics or {},
+        }
         return
     end
-    pick(rows, url)
+    start_listing(url, vim.fn['db#adapter#sybase#confirm_database'](url))
 end
 
 return M

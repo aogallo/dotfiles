@@ -14,6 +14,105 @@
 "   every function below carries a header with Purpose / Called by / SQL /
 "   Args / Returns / Side effects. Required for new functions too.
 
+" --- Row markers (contract specs/010-dbobjects-listing-integrity/contracts/
+" --- sybase-listing-integrity.md §1) --------------------------------------------
+"
+" Every query this adapter parses for the listing/confirmation path emits a
+" marker-prefixed row, so a data row can never be confused with client framing
+" (a heading, a dashed separator, a `(N rows affected)` trailer) or with a
+" server diagnostic (`Msg 2812, Level 16, …`).
+let s:marker_object = 'DOBJ~'
+let s:marker_count = 'DCNT~'
+let s:marker_database = 'DDB~'
+let s:marker_exists = 'DEX~'
+
+" Do NOT compare these with a Vim pattern. A bare `~` in a pattern is not a
+" literal tilde — in magic mode it means "the latest substitute string", and it
+" happily matches the empty string, so `^DOBJ~` never matches `DOBJ~name` and
+" `.*\ze~\S\+$` matches nothing at all. The helpers below use s:starts_with()
+" and s:split_marker_row() instead, which is plain string handling.
+
+" --- sysobjects.type is char(2) (issue #92 root cause) -------------------------
+"
+" SAP ASE stores sysobjects.type as a two-character column, so the values are
+" `U` (user table), `V` (view), `P` (procedure), `SF` (scalar / user-defined
+" function), `TR` (trigger), `IT` (instead-of trigger) and `XP` (extended
+" stored procedure). Matching that column on a SINGLE character is what made
+" :DBObjects hide objects: 'F' matches only rare SQLJ functions, so ordinary
+" user-defined functions never appeared, 'X' never matches the two-character
+" 'XP', so extended procedures were unlistable, and 'TR' was never queried at
+" all, so NO trigger was ever listable. Never narrow this list to one letter.
+let s:covered_types = ['U', 'V', 'P', 'SF', 'TR', 'XP']
+
+" s:object_kinds: trimmed sysobjects.type -> plain-language picker kind.
+" Contract §1.5. An unmapped type is carried through verbatim, never dropped.
+let s:object_kinds = {
+      \ 'U': 'table',
+      \ 'V': 'view',
+      \ 'P': 'procedure',
+      \ 'SF': 'function',
+      \ 'XP': 'function',
+      \ 'TR': 'trigger',
+      \ 'IT': 'trigger',
+      \ }
+
+" s:starts_with(text, marker): does this trimmed line carry this marker?
+" Called by: s:parse_listing(), db#adapter#sybase#confirm_database()
+" SQL: none
+" Args: text = a trimmed output line, marker = one of the marker constants
+" Returns: boolean
+" Side effects: none
+function! s:starts_with(text, marker) abort
+  return stridx(a:text, a:marker) == 0
+endfunction
+
+" s:split_marker_row(text): DOBJ~<name>~<type> -> [name, type].
+" Called by: s:parse_listing()
+" SQL: none
+" Args: text = a trimmed line already known to start with s:marker_object
+" Returns: [name, type] — the split is at the LAST tilde, because an ASE object
+"   name may itself contain one; either element is '' when absent, which the
+"   caller records rather than dropping silently
+" Side effects: none
+function! s:split_marker_row(text) abort
+  let body = strpart(a:text, strlen(s:marker_object))
+  if body ==# ''
+    return ['', '']
+  endif
+  for i in reverse(range(strlen(body) - 1))
+    if strpart(body, i, 1) ==# '~'
+      return [strpart(body, 0, i), strpart(body, i + 1)]
+    endif
+  endfor
+  return [body, '']
+endfunction
+
+" s:number_after(text, marker): the integer a marker-prefixed line carries.
+" Called by: s:parse_listing(), db#adapter#sybase#confirm_database()
+" SQL: none
+" Args: text = a trimmed output line, marker = one of the marker constants
+" Returns: number, or -1 when the line does not carry a plain integer — so a
+"   garbled count is treated as "no count given" instead of being read as 0
+" Side effects: none
+function! s:number_after(text, marker) abort
+  let rest = strpart(a:text, strlen(a:marker))
+  return matchstr(rest, '^\d\+$') ==# '' ? -1 : str2nr(rest)
+endfunction
+
+" s:type_in_list(): the `in (…)` filter built from s:covered_types.
+" Called by: db#adapter#sybase#objects()
+" SQL: none (assembles the fragment both listing statements share)
+" Args: none
+" Returns: string — `('U','V','P','SF','TR','XP')`
+" Side effects: none
+function! s:type_in_list() abort
+  let quoted = []
+  for t in s:covered_types
+    call add(quoted, "'" . t . "'")
+  endfor
+  return '(' . join(quoted, ',') . ')'
+endfunction
+
 " s:client(): which client binary/argv prefix to run.
 " Called by: every function that spawns the client; db#connect() probe
 " SQL: none
@@ -277,21 +376,18 @@ function! s:first_tokens(out) abort
   return map(filter(copy(a:out), 'v:val =~# "^\\s*\\S\\+\\s*$"'), 'matchstr(v:val, "\\S\\+")')
 endfunction
 
-" s:object_kind(letter): sysobjects type letter -> picker kind.
-" Called by: db#adapter#sybase#objects()
+" s:object_kind(type): sysobjects.type -> picker kind (contract §1.5).
+" Called by: s:parse_listing()
 " SQL: none
-" Args: letter = single sysobjects.type letter (P, F, X, V, U, …)
-" Returns: 'procedure' | 'function' | 'view' | 'table'
+" Args: type = sysobjects.type exactly as the server reported it — char(2), so
+"   it arrives blank-padded ('U ', 'SF', …) and MUST be trimmed before matching
+" Returns: 'table' | 'view' | 'procedure' | 'function' | 'trigger' for the
+"   mapped types; the trimmed type itself when unmapped (FR-011) — never '' and
+"   never a default that hides the object
 " Side effects: none
-function! s:object_kind(letter) abort
-  if a:letter ==# 'P'
-    return 'procedure'
-  elseif a:letter ==# 'F' || a:letter ==# 'X'
-    return 'function'
-  elseif a:letter ==# 'V'
-    return 'view'
-  endif
-  return 'table'
+function! s:object_kind(type) abort
+  let key = substitute(a:type, '^\s*\|\s\+$', '', 'g')
+  return get(s:object_kinds, key, key)
 endfunction
 
 " db#adapter#sybase#tables(url): table/view names for dadbod.
@@ -358,28 +454,171 @@ function! db#adapter#sybase#with_database(url, database) abort
   return 'sybase://' . auth . server . '/' . a:database . qs
 endfunction
 
+" s:parse_listing(out): raw listing output -> the contract §1.2 shape.
+" Called by: db#adapter#sybase#objects()
+" SQL: none (parses what the listing batch produced)
+" Args: out = raw client output lines from the listing batch
+" Returns: dict with
+"   rows        = list of {name, kind, database} (database = the db_name() the
+"                 batch reported, so a row never carries a guessed owner)
+"   reported    = count from the DCNT~ row, 0 when that row is absent
+"   excluded    = reported objects that did not become rows (0 when unknown)
+"   diagnostics = list of {text, severity, reason?}; severity 'error' for a
+"                 server `Msg …` line, 'info' for every other line the client
+"                 framed (reason: no_marker | malformed_marker |
+"                 missing_type). Nothing is discarded silently (FR-022)
+"   count_known = true when the DCNT~ row arrived; false marks the listing
+"                 partial, since a total it cannot prove is not a complete one
+" Side effects: none
+" Why marker-only parsing: the previous parser read any line shaped like two
+" tokens and filtered the rest away with s:first_tokens(), which is exactly why
+" every `Msg …` diagnostic — and every warning that the switch had failed —
+" vanished instead of being reported (contract §1.6).
+function! s:parse_listing(out) abort
+  let rows = []
+  let diagnostics = []
+  let database = ''
+  let reported = -1
+  for line in a:out
+    let text = substitute(line, '^\s*\|\s\+$', '', 'g')
+    if text ==# ''
+      continue
+    endif
+    if s:starts_with(text, s:marker_count)
+      let n = s:number_after(text, s:marker_count)
+      if n >= 0
+        let reported = n
+      endif
+      continue
+    endif
+    if s:starts_with(text, s:marker_database)
+      let database = strpart(text, strlen(s:marker_database))
+      continue
+    endif
+    if s:starts_with(text, s:marker_object)
+      " DOBJ~<name>~<type>, split at the LAST tilde (see s:split_marker_row()).
+      let [name, type] = s:split_marker_row(text)
+      if type ==# ''
+        call add(diagnostics, {'text': text, 'severity': 'info', 'reason': 'missing_type'})
+      elseif name ==# ''
+        call add(diagnostics, {'text': text, 'severity': 'info', 'reason': 'malformed_marker'})
+      else
+        call add(rows, {'name': name, 'kind': s:object_kind(type), 'database': database})
+      endif
+      continue
+    endif
+    if text =~# '^Msg \d\+\s*,\s*Level \d\+'
+      call add(diagnostics, {'text': text, 'severity': 'error'})
+      continue
+    endif
+    " Client framing (headings, `-----` separators, `(N rows affected)`,
+    " `Changed database context to 'X'.`, blank-ish noise) is recorded too, so
+    " a line we could not read is never indistinguishable from one we dropped
+    " on purpose (FR-012).
+    call add(diagnostics, {'text': text, 'severity': 'info', 'reason': 'no_marker'})
+  endfor
+  " `database` is known only once the first DOBJ~ row has been seen; rows parsed
+  " before the DDB~ row in the same batch would otherwise be unstamped.
+  for row in rows
+    if row.database ==# ''
+      let row.database = database
+    endif
+  endfor
+  let known = reported >= 0
+  if !known
+    let reported = 0
+  endif
+  let excluded = known && reported > len(rows) ? reported - len(rows) : 0
+  " v:true/v:false, not 0/1: a Vim number crosses into Lua as a number, and a
+  " Lua 0 is TRUTHY, so a plain `known` would make the picker treat an unprovable
+  " total as a known one.
+  return {'rows': rows, 'reported': reported, 'excluded': excluded,
+        \ 'diagnostics': diagnostics, 'count_known': known ? v:true : v:false}
+endfunction
+
 " db#adapter#sybase#objects(url): the :DBObjects listing of one database.
 " Called by: db_objects.lua fetch_objects() through vim.fn
-" SQL: `select name, type from sysobjects where type in ('U','V','P','F','X')
-"   order by name`, run in the URL's database
+" SQL: three statements in ONE batch (one client invocation):
+"   `select 'DDB~' + db_name()` — the database actually in effect, so a row is
+"   never labelled with a database the server did not confirm;
+"   `select 'DOBJ~' + name + '~' + convert(char(2), type) from sysobjects where
+"   type in ('U','V','P','SF','TR','XP') order by name` — char(2) kept as the
+"   server stores it (see the sysobjects.type note at the top of this file);
+"   `select 'DCNT~' + count(*) …` over the same predicate.
 " Args: url = URL string or parsed dict
-" Returns: list of {name, kind, database} dicts (kind via s:object_kind()),
-"   [] when the client is missing
+" Returns: dict {rows, reported, excluded, diagnostics, count_known} per contract
+"   §1.2 (**breaking**: it was a bare list); every field is empty/zero when the
+"   client is missing, so the caller reports the missing prerequisite once
 " Side effects: none (read-only)
 function! db#adapter#sybase#objects(url) abort
   if !executable(s:client()[0])
-    return []
+    return {'rows': [], 'reported': 0, 'excluded': 0, 'diagnostics': [], 'count_known': v:false}
   endif
-  let db = s:database(a:url)
-  let rows = []
-  for line in s:run_query(a:url, "select name, type from sysobjects where type in ('U','V','P','F','X') order by name")
-    let name = matchstr(line, '^\s*\zs\S\+\ze\s')
-    let letter = matchstr(line, '^\s*\S\+\s\+\zs\S\+\ze')
-    if name !=# '' && letter =~# '^[UVPFX]$'
-      call add(rows, {'name': name, 'kind': s:object_kind(letter), 'database': db})
+  let sql = "select '" . s:marker_database . "' + db_name()"
+        \ . "\nselect '" . s:marker_object . "' + name + '~' + convert(char(2), type) from sysobjects where type in "
+        \ . s:type_in_list() . ' order by name'
+        \ . "\nselect '" . s:marker_count . "' + convert(varchar(10), count(*)) from sysobjects where type in "
+        \ . s:type_in_list()
+  return s:parse_listing(s:run_query(a:url, sql))
+endfunction
+
+" db#adapter#sybase#confirm_database(url): which database is really in effect.
+" Called by: db_objects.lua apply_database_scope() through vim.fn
+" SQL: ONE batch — the `use <db>` prologue (s:use_lines()) followed by
+"   `select 'DDB~' + db_name()` (the switch's own answer) and
+"   `select 'DEX~' + count(*) from master..sysdatabases where name = '<db>'`
+"   (the server-wide existence probe, which distinguishes a typo from a login
+"   that is not permitted in that database — db_id() conflates the two)
+" Args: url = URL string or parsed dict
+" Returns: dict {requested, confirmed, result, exists}
+"   result  = 'confirmed' | 'rejected_absent' | 'rejected_forbidden'
+"             | 'no_database' (the URL carries none) | 'not_attempted' (the
+"             client is missing; returned so the caller reports it once instead
+"             of raising)
+"   confirmed = the server-reported name when result = 'confirmed', else ''
+"   exists  = 1 / 0 from the probe, '' when no database was requested
+" Side effects: one client invocation (read-only)
+" Deliberately NOT done: parsing `Changed database context to 'X'.` (sqsh emits
+" it, isql does not) and inferring success from the absence of an error. A
+" `use` that was rejected simply leaves the session on the login default, and
+" that default's objects are then labelled with the requested name — the exact
+" wrong-database listing issue #92 reports (R-0003).
+function! db#adapter#sybase#confirm_database(url) abort
+  let requested = s:database(a:url)
+  if requested ==# ''
+    return {'requested': '', 'confirmed': '', 'result': 'no_database', 'exists': ''}
+  endif
+  if !executable(s:client()[0])
+    return {'requested': requested, 'confirmed': '', 'result': 'not_attempted', 'exists': ''}
+  endif
+  let safe = substitute(requested, "'", "''", 'g')
+  let sql = "select '" . s:marker_database . "' + db_name()"
+        \ . "\nselect '" . s:marker_exists . "' + convert(char(2), count(*)) from master..sysdatabases where name = '"
+        \ . safe . "'"
+  let actual = ''
+  let exists = ''
+  for line in s:run_query(a:url, sql)
+    let text = substitute(line, '^\s*\|\s\+$', '', 'g')
+    if s:starts_with(text, s:marker_database)
+      let actual = strpart(text, strlen(s:marker_database))
+    elseif s:starts_with(text, s:marker_exists)
+      let n = s:number_after(text, s:marker_exists)
+      if n >= 0
+        let exists = n
+      endif
     endif
   endfor
-  return rows
+  if actual !=# '' && tolower(actual) ==# tolower(requested)
+    return {'requested': requested, 'confirmed': actual, 'result': 'confirmed',
+          \ 'exists': exists ==# '' ? 1 : exists}
+  endif
+  " Not in effect. exists = 1 means the server knows the database and this login
+  " could not enter it; exists = 0 means there is no such database. When the
+  " probe itself was unreadable ('') we report the weaker, safer claim
+  " (`rejected_forbidden`) rather than assert a database does not exist.
+  return {'requested': requested, 'confirmed': '',
+        \ 'result': exists == 0 ? 'rejected_absent' : 'rejected_forbidden',
+        \ 'exists': exists}
 endfunction
 
 " --- Object source (db#adapter#sybase#source) ---------------------------------
