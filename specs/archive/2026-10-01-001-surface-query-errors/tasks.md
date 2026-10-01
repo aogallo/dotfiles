@@ -5,7 +5,7 @@ description: "Task list for Surface Query Errors"
 
 # Tasks: Surface Query Errors
 
-**Input**: Design documents from `specs/012-surface-query-errors/`
+**Input**: Design documents from `specs/archive/2026-10-01-001-surface-query-errors/`
 
 **Prerequisites**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md), [data-model.md](data-model.md), [contracts/](contracts/), [quickstart.md](quickstart.md)
 
@@ -177,7 +177,7 @@ produced partial output and a complaint keeps both, distinguishable; fire the sa
 - [X] T026 [P] Re-run Part 2 of [quickstart.md](quickstart.md) and update any expected-value text that changed, so the documented reproductions match the fixed behavior (SC-015)
 - [X] T027 Verify non-regression for FR-034: the close semantics and tab visibility of `specs/011-query-buffer-tab-visibility/` and the `:DBObjects` guarantees of `specs/010-dbobjects-listing-integrity/` still hold
 - [ ] T028 Manual verification on Windows by the developer (FR-028): a query with a string literal does not break the status line; an invalid query names the server's complaint; a valid zero-row query does not warn; an `a..t1` reference with a trailing comment warns
-- [ ] T029 Commit on the feature branch with conventional messages and open a pull request linking issue #98; before opening it, review the active spec for scope fit and ask whether `specs/012-surface-query-errors/` should be closed as the completed solution (FR-035)
+- [X] T029 Commit on the feature branch with conventional messages and open a pull request linking issue #98; before opening it, review the active spec for scope fit and ask whether `specs/archive/2026-10-01-001-surface-query-errors/` should be closed as the completed solution (FR-035)
 
 ---
 

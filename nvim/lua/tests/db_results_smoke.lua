@@ -165,7 +165,7 @@ check(
     bufs_now
 )
 
---- classification and reporting (specs/012-surface-query-errors, US1) --------
+--- classification and reporting (specs/archive/2026-10-01-001-surface-query-errors, US1) --------
 
 -- Fixtures are the client's own output shapes; no server and no client binary
 -- are involved. M.classify() is the pure seam, then the listener is driven

@@ -3,7 +3,7 @@
 **Branch**: `012-surface-query-errors` | **Date**: 2026-10-01 | **Spec**:
 [spec.md](spec.md) · **Issue**: [#98](https://github.com/aogallo/dotfiles/issues/98)
 
-**Input**: Feature specification from `specs/012-surface-query-errors/spec.md`
+**Input**: Feature specification from `specs/archive/2026-10-01-001-surface-query-errors/spec.md`
 
 ## Summary
 
@@ -144,7 +144,7 @@ Research is complete and this is the post-Phase-0 re-check.
   No install, update, customize, or rollback path changes, so those sections are
   not affected.
 - **Module README** — PASS (planned). `nvim/README.md` is the affected module
-  README and will be updated. `specs/012-surface-query-errors/quickstart.md` and
+  README and will be updated. `specs/archive/2026-10-01-001-surface-query-errors/quickstart.md` and
   this plan's Research section carry the validation and troubleshooting detail.
   No new maintained module directory is created, so no additional `README.md` is
   required.
@@ -168,7 +168,7 @@ empty.
 ### Documentation (this feature)
 
 ```text
-specs/012-surface-query-errors/
+specs/archive/2026-10-01-001-surface-query-errors/
 ├── spec.md              # approved specification (input)
 ├── plan.md              # this file
 ├── research.md          # Phase 0: measured findings and decisions

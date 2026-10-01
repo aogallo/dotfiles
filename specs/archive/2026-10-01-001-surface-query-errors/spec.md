@@ -4,7 +4,7 @@
 
 **Created**: 2026-10-01
 
-**Status**: Draft
+**Status**: Closed (archived 2026-10-01; see [verify-report.md](./verify-report.md))
 
 **Input**: User description: "ahora tengo este issue https://github.com/aogallo/dotfiles/issues/98. Basicamente es que si hay un error de sintxis no se muestra el error"
 

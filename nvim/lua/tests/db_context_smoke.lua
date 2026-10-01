@@ -507,7 +507,7 @@ vim.notify = real_notify
 -- same byte length as the input with comment and literal regions blanked.
 -- Length is the assertion that matters: an implementation can stop crashing and
 -- still truncate, because table.concat over a table with holes returns whatever
--- prefix #kept happens to report (research.md, specs/012-surface-query-errors).
+-- prefix #kept happens to report (research.md, specs/archive/2026-10-01-001-surface-query-errors).
 local function stripped(lines)
     return db_context._strip_noise(lines)
 end
