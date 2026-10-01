@@ -396,6 +396,15 @@ with one buffer and with two.
 - **SC-013**: 0 discrepancies between the module `README.md` claims about the buffer row and
   actual behavior, found by review of each claim.
 
+## Close decision
+
+Asked before the PR, as the constitution requires, and answered by the developer on 2026-10-01:
+**this spec is closed as the completed solution for issue #96.** The interactive walkthrough
+(`quickstart.md` §5, task T059) is handed to the developer's own session on Windows, which is also
+the first run on a second platform, so it covers the cross-platform check as well as the defect.
+The outcome and everything that was verified statically are recorded in
+[verify-report.md](verify-report.md).
+
 ## Assumptions
 
 - **"Close every buffer except one" is the `delete other buffers` action, and it behaves
