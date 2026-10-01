@@ -500,4 +500,183 @@ vim.bo[non_sql].filetype = 'sh'
 fail(#execute(non_sql) == 0, 'a non-SQL buffer warns not at all', #warnings, 0)
 
 vim.notify = real_notify
+
+--- ordinary SQL shapes: no error and no lost bytes (FR-008, FR-012) ----------
+
+-- strip_noise() is the seam: it must write every column, so the output has the
+-- same byte length as the input with comment and literal regions blanked.
+-- Length is the assertion that matters: an implementation can stop crashing and
+-- still truncate, because table.concat over a table with holes returns whatever
+-- prefix #kept happens to report (research.md, specs/012-surface-query-errors).
+local function stripped(lines)
+    return db_context._strip_noise(lines)
+end
+
+local shapes = {
+    'use ventas',
+    'use ventas -- comment',
+    'use ventas -- c',
+    'use ventas /* c */',
+    '/* c */ use ventas',
+    'select 1',
+    'select 1 -- tail',
+    "select 'abc' from t",
+    "'x' = 1",
+    "select 'it''s' from t",
+    "select '/* not a comment */'",
+    '-- has /* inside',
+    "select 1 + 'unterminated",
+    '/* never closed',
+    '',
+}
+for _, line in ipairs(shapes) do
+    local ok, out = pcall(stripped, { line })
+    fail(ok, 'the scanner does not raise for: ' .. line, ok, true)
+    if ok then
+        fail(#out[1] == #line, 'the scanner preserves byte length for: ' .. line, #out[1], #line)
+    end
+end
+
+-- Multibyte content must not shift the surviving columns (FR-012).
+local multibyte = 'select 1 from t -- cafe 中文'
+local mb_out = stripped { multibyte }
+fail(#mb_out[1] == #multibyte, 'multibyte content keeps the byte length', #mb_out[1], #multibyte)
+
+-- Block-comment state crosses lines, and R-0007's block-close bug corrupts it.
+local state_in = { '/* multi', 'line 2 still block', 'line */ after open', 'select 1' }
+local state_ok, state_out = pcall(stripped, state_in)
+fail(state_ok, 'the scanner does not raise on a multi-line block comment', state_ok, true)
+if state_ok then
+    for i, line in ipairs(state_in) do
+        fail(#state_out[i] == #line, 'multi-line block keeps byte length on line ' .. i, #state_out[i], #line)
+    end
+    fail(state_out[1]:match '^%s*$' ~= nil, 'the block opener line is fully blank', state_out[1], 'spaces')
+    fail(state_out[2]:match '^%s*$' ~= nil, 'a line inside the block is fully blank', state_out[2], 'spaces')
+    fail(
+        state_out[3]:find('after open', 1, true) ~= nil,
+        'the closing line keeps its code',
+        state_out[3],
+        'code after open'
+    )
+    fail(state_out[4] == 'select 1', 'block state resets for the next line', state_out[4], 'select 1')
+end
+
+local never_ok, never_out = pcall(stripped, { '/* never closed', 'use base-a' })
+fail(never_ok, 'the scanner does not raise on an unterminated block comment', never_ok, true)
+if never_ok then
+    fail(
+        never_out[2]:find('use', 1, true) == nil,
+        'an unterminated block keeps later lines blanked',
+        never_out[2],
+        'spaces'
+    )
+end
+
+--- the pre-execution check cannot abort execution (FR-010) -------------------
+
+-- An error inside the `User */DBExecutePre` listener aborts the command dadbod
+-- fires immediately before starting the job, so a text-inspection bug becomes a
+-- query that never runs. Register a listener after db_context's and assert it is
+-- reached: firing the unprefixed event name matches nothing and would hide this.
+local real_notify_pre = vim.notify
+vim.notify = function(msg, level)
+    vim.g.h98_pre_warnings = tostring(msg)
+    vim.g.h98_pre_level = level
+end
+
+local function later_listener_reached(lines)
+    local buf = sql_buffer(lines)
+    vim.api.nvim_set_current_buf(buf)
+    db_context.setup()
+    _G.h98_reached = false
+    local autocmd = vim.api.nvim_create_autocmd('User', {
+        pattern = '*/DBExecutePre',
+        callback = function()
+            _G.h98_reached = true
+        end,
+    })
+    local ok = pcall(vim.cmd, 'doautocmd User */DBExecutePre')
+    pcall(vim.api.nvim_del_autocmd, autocmd)
+    return ok, _G.h98_reached
+end
+
+for _, lines in ipairs { { 'use ventas' }, { "select 'abc' from t" }, { '/* xx */ use ventas' }, { "'x' = 1" } } do
+    local ok, reached = later_listener_reached(lines)
+    fail(ok, 'the pre-execution command completes for: ' .. lines[1], ok, true)
+    fail(reached, 'a later pre-execution listener runs for: ' .. lines[1], reached, true)
+end
+
+vim.notify = real_notify_pre
+
+--- the cross-database warning survives noise (FR-019..FR-023) ----------------
+
+local cross_forms = {
+    'select * from a..t1',
+    'select * from a..t1 -- c',
+    'select * from a..t1 /* c */',
+    '/* c */ select * from a..t1',
+    "select * from a..t1 where c = 'z'",
+}
+for _, line in ipairs(cross_forms) do
+    fail(
+        switched { line } == 'a..t1',
+        'cross-database reference found despite noise: ' .. line,
+        switched { line },
+        'a..t1'
+    )
+end
+fail(
+    db_context.switch_message(sql_buffer { 'use ventas -- c' }) == nil,
+    'a noisy use naming the connected database still produces no warning',
+    db_context.switch_message(sql_buffer { 'use ventas -- c' }),
+    'nil'
+)
+
+--- an editor fault is reported as an editor fault, never a query failure (FR-011) --
+
+local real_notify_guard = vim.notify
+local guard_notices = {}
+vim.notify = function(msg, level)
+    guard_notices[#guard_notices + 1] = { msg = tostring(msg), level = level }
+end
+
+local real_switch_message = db_context.switch_message
+db_context.switch_message = function()
+    error 'injected scanner fault'
+end
+
+local guard_buf = sql_buffer { 'use base-a' }
+vim.api.nvim_set_current_buf(guard_buf)
+db_context.setup()
+_G.h98_guard_reached = false
+local guard_autocmd = vim.api.nvim_create_autocmd('User', {
+    pattern = '*/DBExecutePre',
+    callback = function()
+        _G.h98_guard_reached = true
+    end,
+})
+local guard_ok = pcall(vim.cmd, 'doautocmd User */DBExecutePre')
+pcall(vim.api.nvim_del_autocmd, guard_autocmd)
+db_context.switch_message = real_switch_message
+
+fail(guard_ok, 'an editor fault does not abort the pre-execution command', guard_ok, true)
+fail(_G.h98_guard_reached, 'a later pre-execution listener runs despite an editor fault', _G.h98_guard_reached, true)
+fail(#guard_notices == 1, 'an editor fault draws exactly one notice', #guard_notices, 1)
+if #guard_notices == 1 then
+    fail(
+        guard_notices[1].level == vim.log.levels.ERROR,
+        'an editor fault is reported at error level',
+        guard_notices[1].level,
+        vim.log.levels.ERROR
+    )
+    fail(
+        guard_notices[1].msg:find('editor', 1, true) ~= nil,
+        'an editor fault names the editor, not the server',
+        guard_notices[1].msg,
+        'mentions the editor'
+    )
+end
+
+vim.notify = real_notify_guard
+
 vim.print 'All database context smoke assertions passed'
