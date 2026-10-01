@@ -570,13 +570,19 @@ endfunction
 "   (the server-wide existence probe, which distinguishes a typo from a login
 "   that is not permitted in that database — db_id() conflates the two)
 " Args: url = URL string or parsed dict
-" Returns: dict {requested, confirmed, result, exists}
+" Returns: dict {requested, confirmed, result, exists, reason}
 "   result  = 'confirmed' | 'rejected_absent' | 'rejected_forbidden'
-"             | 'no_database' (the URL carries none) | 'not_attempted' (the
-"             client is missing; returned so the caller reports it once instead
-"             of raising)
+"             | 'indeterminate' (the probe produced no usable marker, so nothing
+"             can be concluded) | 'no_database' (the URL carries none) |
+"             'not_attempted' (the client is missing; returned so the caller
+"             reports it once instead of raising)
 "   confirmed = the server-reported name when result = 'confirmed', else ''
-"   exists  = 1 / 0 from the probe, '' when no database was requested
+"   exists  = 1 / 0 from the probe, '' while the probe is unreadable or no
+"             database was requested. POLYMORPHIC: a Number once a marker sets
+"             it, the String '' otherwise, and '' coerces to 0 — so it MUST be
+"             selected on type(), never compared to a number (R-0006)
+"   reason  = a short explanation of what happened; '' only for 'confirmed',
+"             non-empty for every not-established outcome (FR-016, FR-017)
 " Side effects: one client invocation (read-only)
 " Deliberately NOT done: parsing `Changed database context to 'X'.` (sqsh emits
 " it, isql does not) and inferring success from the absence of an error. A
@@ -586,10 +592,12 @@ endfunction
 function! db#adapter#sybase#confirm_database(url) abort
   let requested = s:database(a:url)
   if requested ==# ''
-    return {'requested': '', 'confirmed': '', 'result': 'no_database', 'exists': ''}
+    return {'requested': '', 'confirmed': '', 'result': 'no_database', 'exists': '',
+          \ 'reason': 'the connection URL names no database'}
   endif
   if !executable(s:client()[0])
-    return {'requested': requested, 'confirmed': '', 'result': 'not_attempted', 'exists': ''}
+    return {'requested': requested, 'confirmed': '', 'result': 'not_attempted', 'exists': '',
+          \ 'reason': 'the database client is not installed or not on PATH for this connection'}
   endif
   let safe = substitute(requested, "'", "''", 'g')
   let sql = "select '" . s:marker_database . "' + db_name()"
@@ -610,15 +618,27 @@ function! db#adapter#sybase#confirm_database(url) abort
   endfor
   if actual !=# '' && tolower(actual) ==# tolower(requested)
     return {'requested': requested, 'confirmed': actual, 'result': 'confirmed',
-          \ 'exists': exists ==# '' ? 1 : exists}
+          \ 'exists': exists ==# '' ? 1 : exists, 'reason': ''}
   endif
-  " Not in effect. exists = 1 means the server knows the database and this login
-  " could not enter it; exists = 0 means there is no such database. When the
-  " probe itself was unreadable ('') we report the weaker, safer claim
-  " (`rejected_forbidden`) rather than assert a database does not exist.
+  " Not in effect. The probe is polymorphic — a Number once a marker set it, the
+  " String '' while it stayed unreadable. Vimscript coerces '' to 0, so
+  " `exists == 0` reports an unreadable probe as `rejected_absent`: a database
+  " asserted not to exist because the check never ran (R-0006). Select on
+  " type() so the unreadable probe becomes its own outcome and asserts nothing
+  " (FR-015, FR-017).
+  if type(exists) == v:t_string
+    return {'requested': requested, 'confirmed': '', 'result': 'indeterminate',
+          \ 'exists': exists,
+          \ 'reason': "the existence probe returned no readable result for '" . requested . "'"}
+  endif
+  " exists = 1 means the server knows the database and this login could not
+  " enter it; exists = 0 means there is no such database.
   return {'requested': requested, 'confirmed': '',
         \ 'result': exists == 0 ? 'rejected_absent' : 'rejected_forbidden',
-        \ 'exists': exists}
+        \ 'exists': exists,
+        \ 'reason': exists == 0
+        \   ? "master..sysdatabases does not list '" . requested . "'"
+        \   : "the switch to '" . requested . "' did not take effect although the server knows it"}
 endfunction
 
 " --- Object source (db#adapter#sybase#source) ---------------------------------

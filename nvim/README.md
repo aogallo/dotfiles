@@ -157,6 +157,41 @@ Validate with:
 nvim --headless -u NORC -c 'lua require("tests.db_context_smoke")' -c 'qa!'
 ```
 
+### When a query fails
+
+A query the server rejects is reported by the server's own words. When a run finishes, the editor
+reads the completed response and, if it carries a `Msg N, Level N` complaint, raises one warning
+naming that complaint — the complaint's prose, not a generic "query failed". Several complaints in
+one response are all kept; the warning shows the first and the complete response remains in the
+query's result buffer, byte-for-byte, so the rest can be read there. A run the user cancels is
+reported as cancelled, never as a server rejection.
+
+An empty response is a success that returned nothing, never a warning. A response the editor cannot
+read at all — a non-zero exit with no recognizable complaint — is reported as unreadable, so "my
+query failed and nothing was shown" cannot happen silently.
+
+| Response | Reported as |
+| --- | --- |
+| `Msg 207, Level 16 … Invalid column name 'x'` | warning naming `Invalid column name 'x'` |
+| several `Msg …` complaints | one warning; each complaint kept in full |
+| rows, then a complaint | warning; the partial rows are kept beside it |
+| zero rows, no complaint | nothing — a successful empty result |
+| non-zero exit, no recognizable complaint | an unreadable-response warning |
+| cancelled by the user | cancelled, not a server complaint |
+
+The query text is also inspected before it runs — de-commented so `--`, `/* … */` and `'…'` cannot
+hide a database switch — and if that inspection itself faults, the editor says so and the query
+still runs. A fault in the editor never blocks a valid query and is never dressed up as a server
+complaint. Reporting lives in `nvim/lua/config/db_results.lua`; the pre-run inspection lives in
+`nvim/lua/config/db_context.lua`.
+
+Validate with:
+
+```sh
+nvim --headless -u NORC -c 'lua require("tests.db_results_smoke")' -c 'qa!'
+nvim --headless -u NORC -c 'lua require("tests.db_context_smoke")' -c 'qa!'
+```
+
 ### Markdown and trailing whitespace on save
 
 Saving a supported file type runs exactly one formatting path — the one already configured in

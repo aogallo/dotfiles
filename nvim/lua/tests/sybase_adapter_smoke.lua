@@ -128,4 +128,78 @@ fail(vim.deep_equal(got_no_db, want_no_db), 'no-db URL omits -D and use lines', 
 
 vim.fn.delete(copy)
 vim.fn.delete(infile)
+
+-- confirm_database(): the third outcome is selected by type(). exists is
+-- polymorphic — the String '' while the probe is unreadable, a Number once a
+-- marker sets it — and '' coerces to 0, so a numeric comparison would report an
+-- unreadable probe as a database that does not exist (R-0006; specs/012).
+local confirm = vim.fn['db#adapter#sybase#confirm_database']
+
+-- s:run_query() spawns the real client, so the probe is injected by pointing the
+-- client at a tiny executable that drains its input and prints the canned
+-- response. That drives the real confirm_database() with no database. A Lua-side
+-- vim.fn['db#systemlist'] stub would not be visible to Vimscript, and db#systemlist
+-- is autoloaded (its name cannot be redefined from the command line).
+local probe_file = vim.fn.tempname()
+local fake_client = vim.fn.tempname() .. '.sh'
+
+local function confirm_returns(probe)
+    vim.fn.writefile(probe, probe_file)
+    vim.fn.writefile({ '#!/bin/sh', 'cat >/dev/null 2>&1', "cat '" .. probe_file .. "'" }, fake_client)
+    vim.fn.setfperm(fake_client, 'rwx------')
+    vim.g.db_sybase_client = fake_client
+    return confirm { scheme = 'sybase', host = 'h', path = '/target', params = {} }
+end
+
+local unknown = confirm_returns { 'DDB~other_db' }
+fail(
+    unknown.result == 'indeterminate',
+    "an unreadable probe is 'indeterminate', not absent",
+    unknown.result,
+    'indeterminate'
+)
+fail(type(unknown.exists) == 'string', 'an unreadable probe keeps exists as a String', type(unknown.exists), 'string')
+fail(
+    unknown.reason ~= nil and unknown.reason ~= '',
+    'an indeterminate outcome carries a reason',
+    unknown.reason,
+    '<non-empty>'
+)
+fail(
+    unknown.reason:find('does not exist', 1, true) == nil and unknown.reason:find('could not enter', 1, true) == nil,
+    'an indeterminate reason names neither absence nor refusal',
+    unknown.reason,
+    '<neither "does not exist" nor "could not enter">'
+)
+
+local absent = confirm_returns { 'DDB~other_db', 'DEX~0' }
+fail(absent.result == 'rejected_absent', 'a completed probe reporting zero is absent', absent.result, 'rejected_absent')
+fail(absent.exists == 0, 'a completed probe reporting zero keeps exists = 0', absent.exists, 0)
+fail(absent.reason ~= nil and absent.reason ~= '', 'an absent outcome carries a reason', absent.reason, '<non-empty>')
+
+local forbidden = confirm_returns { 'DDB~other_db', 'DEX~1' }
+fail(
+    forbidden.result == 'rejected_forbidden',
+    'a completed probe reporting one is forbidden',
+    forbidden.result,
+    'rejected_forbidden'
+)
+fail(forbidden.exists == 1, 'a completed probe reporting one keeps exists = 1', forbidden.exists, 1)
+fail(
+    forbidden.reason ~= nil and forbidden.reason ~= '',
+    'a forbidden outcome carries a reason',
+    forbidden.reason,
+    '<non-empty>'
+)
+
+local confirmed = confirm_returns { 'DDB~target' }
+fail(confirmed.result == 'confirmed', 'a matching switch is confirmed', confirmed.result, 'confirmed')
+fail(confirmed.reason == '', 'a confirmed outcome carries no reason', confirmed.reason, "''")
+
+local no_db = confirm { scheme = 'sybase', host = 'h', path = '/', params = {} }
+fail(no_db.result == 'no_database', 'a URL without a database reports no_database', no_db.result, 'no_database')
+fail(no_db.reason ~= nil and no_db.reason ~= '', 'no_database carries a reason', no_db.reason, '<non-empty>')
+
+vim.fn.delete(probe_file)
+vim.fn.delete(fake_client)
 vim.g.db_sybase_client = nil

@@ -128,8 +128,11 @@ local function strip_noise(lines)
     local in_block = false
     for i, line in ipairs(lines) do
         local kept = {}
-        local j = 1
         local n = #line
+        for k = 1, n do
+            kept[k] = ' '
+        end
+        local j = 1
         while j <= n do
             if in_block then
                 local _, close_end = line:find('%*/', j)
@@ -159,15 +162,17 @@ local function strip_noise(lines)
                     end
                     j = n + 1
                 else
-                    -- Exactly the marker's own characters are blanked, which is
-                    -- why the found end offset is used rather than the length of
-                    -- the pattern that found it.
-                    for k = first[1], first[2] do
-                        kept[k] = ' '
+                    -- Code before the marker is real code. Everything from the
+                    -- marker on stays as the blank the initial fill wrote, so
+                    -- every column is written and the byte length is preserved
+                    -- -- a table with holes makes concat return a prefix of
+                    -- whatever #kept happens to be (research.md).
+                    for k = j, first[1] - 1 do
+                        kept[k] = line:sub(k, k)
                     end
                     if first[3] == 'block' then
                         -- Past the `/*` just consumed; `first[2]` is its last `/`.
-                        local _, close_end = line:find('%*/', first[2] + 1, true)
+                        local _, close_end = line:find('%*/', first[2] + 1)
                         if close_end then
                             j = close_end + 1
                         else
@@ -187,6 +192,16 @@ local function strip_noise(lines)
     end
     return out
 end
+
+-- M._strip_noise(lines): the scanner above, exposed so the tests can assert the
+-- byte-length invariant directly.
+-- Called by: the smoke tests
+-- SQL: none
+-- Args: lines = the buffer's lines
+-- Returns: a new list of strings, one per input line, each the same byte length
+--   as the line it came from
+-- Side effects: none
+M._strip_noise = strip_noise
 
 -- M.switches(buf): the context switch the buffer's text declares.
 -- Called by: M.label(), M.conflict(), the pre-execution check, and the tests
@@ -209,7 +224,10 @@ function M.switches(buf)
         if used then
             last_use = { kind = 'use', name = used, owner = used }
         elseif not first_object then
-            local owner, object = line:match(TWO_PART .. '$')
+            -- Unanchored: a trailing clause is ordinary SQL, and anchoring the
+            -- pattern to end-of-line missed most cross-database references that
+            -- carried one (research.md D-0004).
+            local owner, object = line:match(TWO_PART)
             if owner and object then
                 first_object = { kind = 'object', name = owner .. '..' .. object, owner = owner }
             end
@@ -338,12 +356,30 @@ function M.setup()
     vim.api.nvim_create_autocmd('User', {
         pattern = '*/DBExecutePre',
         callback = function()
-            local buf = vim.api.nvim_get_current_buf()
-            local message = M.switch_message(buf)
-            if not message then
-                return
+            -- The listener inspects the buffer before the query is sent, on the
+            -- event dadbod fires immediately before starting the job. An error
+            -- raised here would abort that command, so a fault in the editor's
+            -- own text inspection would stop an ordinary query from running
+            -- (FR-010). The body is wrapped so the fault is reported as an
+            -- editor fault and is never mistaken for a server complaint
+            -- (FR-011).
+            local ok, err = pcall(function()
+                local buf = vim.api.nvim_get_current_buf()
+                local message = M.switch_message(buf)
+                if not message then
+                    return
+                end
+                require('notifications').notify(message, vim.log.levels.WARN, { source = 'DB' })
+            end)
+            if not ok then
+                pcall(function()
+                    require('notifications').notify(
+                        'DB: the editor could not inspect the query before running it: ' .. tostring(err),
+                        vim.log.levels.ERROR,
+                        { source = 'DB' }
+                    )
+                end)
             end
-            require('notifications').notify(message, vim.log.levels.WARN, { source = 'DB' })
         end,
         desc = 'db_context: warn when a query would run on another database',
     })
