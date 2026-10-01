@@ -821,7 +821,7 @@ start_listing = function(url, confirmation, origin, previous)
         end
         report_failure('database ' .. confirmation.requested .. ' does not exist on this server', absent_hint)
         return
-    else
+    elseif confirmation.result == 'rejected_forbidden' then
         local stayed = previous and scope_label(previous) or 'the login default database'
         report_failure(
             'database ' .. confirmation.requested .. ' exists but this login could not enter it',
@@ -830,6 +830,22 @@ start_listing = function(url, confirmation, origin, previous)
                 .. ' — the login needs access to '
                 .. confirmation.requested
                 .. ' before its objects can be listed'
+        )
+        return
+    elseif confirmation.result == 'indeterminate' then
+        report_failure(
+            'could not determine whether database ' .. confirmation.requested .. ' exists',
+            confirmation.reason ~= nil and confirmation.reason ~= '' and confirmation.reason
+                or 'the check did not complete, so nothing can be concluded about this database'
+        )
+        return
+    else
+        -- An unrecognized result vocabulary: report it as undetermined rather
+        -- than infer a cause it never established (FR-015).
+        report_failure(
+            'could not determine the state of ' .. (confirmation.requested ~= '' and confirmation.requested or url),
+            confirmation.reason ~= nil and confirmation.reason ~= '' and confirmation.reason
+                or 'the database check returned a result this editor does not recognize'
         )
         return
     end

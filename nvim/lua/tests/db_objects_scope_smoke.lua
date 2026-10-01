@@ -155,6 +155,16 @@ local CONFIRM = {
     -- label must never read as the requested database (invariant I3).
     mismatch_db = { requested = 'mismatch_db', confirmed = 'other_db', result = 'confirmed', exists = 1 },
     no_client_db = { requested = 'no_client_db', confirmed = '', result = 'not_attempted', exists = '' },
+    -- The probe produced no usable marker: nothing can be concluded, so the
+    -- editor must say it could not determine rather than assert an absence
+    -- (FR-015, FR-017; R-0006).
+    indeterminate_db = {
+        requested = 'indeterminate_db',
+        confirmed = '',
+        result = 'indeterminate',
+        exists = '',
+        reason = "the existence probe returned no readable result for 'indeterminate_db'",
+    },
 }
 
 local objects_calls = 0
@@ -675,6 +685,22 @@ fail(
     'a missing client names the database and the missing prerequisite',
     no_client_notice,
     '<no_client_db ... g:db_sybase_client>'
+)
+
+local indeterminate_notice = try_scope 'indeterminate_db'
+fail(
+    indeterminate_notice.msg:find('indeterminate_db', 1, true) ~= nil
+        and indeterminate_notice.msg:find('could not determine', 1, true) ~= nil,
+    'an unreadable check reports that it could not determine, not an absence',
+    indeterminate_notice,
+    '<indeterminate_db ... could not determine>'
+)
+fail(
+    indeterminate_notice.msg:find('does not exist', 1, true) == nil
+        and indeterminate_notice.msg:find('could not enter', 1, true) == nil,
+    'an unreadable check asserts neither absence nor refusal',
+    indeterminate_notice,
+    '<neither "does not exist" nor "could not enter">'
 )
 
 -- --- I3: the label follows the server, not the request --------------------
