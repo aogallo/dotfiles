@@ -315,7 +315,7 @@ contradicts the behavior.
 - [X] T057 [P] Scan the full diff for user-specific absolute paths, credentials, tokens, private keys or real local secrets — the connection URL may live in `b:db` and in a draft record, but never in a name, a message or a test fixture (FR-025, FR-028, constitution VII)
 - [X] T058 [P] Confirm no new dependency was added and no keymap was added, removed or rebound — `nvim/lua/config/keymaps.lua`, `nvim/plugin/fzf-lua.lua` and the bufferline option block in `nvim/plugin/editor.lua` are untouched (FR-027, R-0012)
 - [ ] T059 Walk the manual validation checklist in [quickstart.md](quickstart.md) §5 with the developer's own session: §5.1 the reported sequence end to end, §5.2 which half of "a name shows up but it hides" applies, §5.3 the regression checks, §5.4 the documentation check
-- [ ] T060 Commit on `011-query-buffer-tab-visibility` with conventional commits, one commit per task group, never directly on `main` (constitution XIII, FR-031)
+- [X] T060 Commit on `011-query-buffer-tab-visibility` with conventional commits, one commit per task group, never directly on `main` (constitution XIII, FR-031)
 - [ ] T061 Before opening the PR, verify the change's scope fit against this spec and ask the developer whether `specs/011-query-buffer-tab-visibility` and issue #96 should be closed as the completed solution; the PR links issue #96 (constitution XIII/XV, FR-031)
 - [X] T062 Verify every relative link in `tasks.md` resolves and that each user-story phase's `Story Link` points at its `spec.md` heading (FR-032, constitution XV)
 
