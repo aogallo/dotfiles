@@ -42,6 +42,12 @@ local M = {}
 
 local db_context = require 'config.db_context'
 
+-- Query draft registry (specs/011-query-buffer-tab-visibility, issue #96): owns
+-- the display name, the connection binding and the text of a query buffer, so
+-- opening one here produces a buffer that survives being closed and brought
+-- back. Required (not lazy) so the module is loaded before any query can open.
+local db_query_buffer = require 'config.db_query_buffer'
+
 -- Startup root (FR-002): directory where Neovim was started. Read-only after
 -- setup(); the dialog's initial path on every invocation, never a previously
 -- chosen directory (FR-003).
@@ -242,24 +248,48 @@ local function build_listing(url, scope)
     }
 end
 
--- open_buffer(url, name, lines, database): show text in a new SQL buffer.
+-- open_buffer(url, name, lines, database): show text in a query buffer.
+--
+-- MEASURED ROOT CAUSE (specs/011-query-buffer-tab-visibility, issue #96; R-0001,
+-- R-0002, R-0011). Do not "simplify" this away without reading this first:
+--   * `:bdelete` clears 'buflisted'. bufferline renders only buffers with
+--     `listed == 1` (bufferline.nvim utils/init.lua:150) and exposes no option to
+--     relax that, so a closed query buffer has no tab.
+--   * Coming back does NOT undo it. `:buffer N`, `:bnext` and
+--     `nvim_set_current_buf` leave the buffer unlisted; only `:edit <name>` and
+--     fzf-lua's explicit `vim.bo[buf].buflisted = true` workaround re-list it.
+--     That route-dependence is why the tab seemed to vanish "for some reason".
+--   * `bufhidden = 'hide'` set below is inert here and is kept only because it is
+--     not dead if `'hidden'` is ever turned off. `'hidden'` is on by default and
+--     nvim/lua/config/options.lua never changes it (R-0004). It was investigated
+--     as the source of the picker's `h` marker and ruled out: that marker tracks
+--     `getbufinfo().hidden` for a loaded-but-not-displayed buffer, which is a
+--     true statement about the buffer, not a bug (R-0004).
+--   * `:bdelete` also unloads, which destroys `b:db` (buffer-local variables do
+--     not survive an unload, R-0006) and the unsaved text (R-0007).
+--   * Reopening the same query used to raise `Vim:E95: Buffer with this name
+--     already exists` here, because this function created a second buffer for a
+--     name the closed buffer still owned. The unhandled error skipped filetype,
+--     `b:db` and focus, leaving an unnamed `[No Name]` orphan tab beside stale
+--     content (R-0005).
+--
+-- The tab is restored by the additive-only guard in nvim/lua/config/buffers.lua.
+-- Name allocation, the E95-safe reclaim, and recovery of the text and the
+-- database binding all live in db_query_buffer.lua (FR-005, FR-012, FR-013,
+-- FR-014) -- this function is now only the two call sites' way in, and the
+-- duplicate-buffer path that caused E95 is gone.
+--
 -- Called by: open_list_query(), open_procedure_source()
 -- SQL: none (the buffer is bound to url as b:db, so later :DB commands reuse
 --   this connection and database)
 -- Args: url = connection URL, name = object name, lines = buffer text,
 --   database = owning database for the display name (may be nil)
--- Returns: nothing (focuses the new buffer)
--- Side effects: creates a listed scratch buffer, names it
---   `<database>.<object>.sql`, sets filetype=sql and b:db, switches to it
+-- Returns: the buffer number that was opened
+-- Side effects: delegates to db_query_buffer.open(), which allocates or reclaims
+--   a buffer, writes the text, sets filetype=sql and b:db, records a session-local
+--   draft, ensures the buffer is listed and focuses it
 local function open_buffer(url, name, lines, database)
-    local buf = vim.api.nvim_create_buf(true, false)
-    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-    local display = database and database ~= '' and (database .. '.' .. name .. '.sql') or (name .. '.sql')
-    vim.api.nvim_buf_set_name(buf, display)
-    vim.api.nvim_buf_set_option(buf, 'bufhidden', 'hide')
-    vim.api.nvim_buf_set_option(buf, 'filetype', 'sql')
-    vim.b[buf].db = url
-    vim.cmd('buffer ' .. buf)
+    return db_query_buffer.open(url, name, lines, database)
 end
 
 -- open_list_query(url, row): show a table/view as a sample query.

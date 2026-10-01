@@ -22,6 +22,15 @@ end
 local notification_icons = require('icons').notifications
 local notifications = require 'notifications'
 
+-- Buffer-visibility guard (specs/011-query-buffer-tab-visibility, issue #96).
+-- Restores the tab of a buffer the developer opened and then closed, so it is
+-- not left with a tab-less buffer in front of them. Additive only: it re-lists,
+-- it never unlists. Called from here, at plugin source time, because the guard
+-- is editor-level — it knows nothing about databases and must be live with no
+-- database loaded. The database query draft registry registers itself with it
+-- from nvim/plugin/database.lua; nothing below changes bufferline's options.
+require('config.buffers').setup()
+
 add {
     {
         src = 'folke/snacks.nvim',
