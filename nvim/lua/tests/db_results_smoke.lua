@@ -165,9 +165,161 @@ check(
     bufs_now
 )
 
+--- classification and reporting (specs/012-surface-query-errors, US1) --------
+
+-- Fixtures are the client's own output shapes; no server and no client binary
+-- are involved. M.classify() is the pure seam, then the listener is driven
+-- through the same autocmd dadbod raises.
+local function fixture(lines)
+    local path = vim.fn.tempname() .. '.dbout'
+    vim.fn.writefile(lines, path)
+    return path
+end
+
+-- 6. One complaint: the server's words, with the prose that follows the header.
+local one = M.classify {
+    'Msg 156, Level 15, State 1, Server srv, Line 1',
+    "Incorrect syntax near the keyword 'FROM'.",
+}
+check(one.kind == 'failed', 'a complaint classifies as failed', one.kind, 'failed')
+check(#one.complaints == 1, 'one complaint is captured', #one.complaints, 1)
+if #one.complaints == 1 then
+    check(one.complaints[1].code == 156, 'the complaint code is parsed', one.complaints[1].code, 156)
+    check(one.complaints[1].level == 15, 'the complaint level is parsed', one.complaints[1].level, 15)
+    check(
+        one.complaints[1].text:find('Incorrect syntax', 1, true) ~= nil,
+        'the complaint prose is kept',
+        one.complaints[1].text,
+        'mentions Incorrect syntax'
+    )
+end
+
+-- 7. Two complaints: every one is kept, not just the first (FR-004).
+local two = M.classify {
+    'Msg 156, Level 15, State 1, Server srv, Line 1',
+    "Incorrect syntax near 'FROM'.",
+    'Msg 102, Level 15, State 1, Server srv, Line 3',
+    "Incorrect syntax near ')'.",
+}
+check(two.kind == 'failed', 'two complaints classify as failed', two.kind, 'failed')
+check(#two.complaints == 2, 'both complaints are captured', #two.complaints, 2)
+
+-- 8. Complaint plus partial rows: both survive and stay distinguishable (FR-026).
+local mixed = M.classify {
+    'col1|col2',
+    'a|1',
+    'Msg 50000, Level 16, State 1, Server srv, Line 2',
+    'Divide by zero occurred.',
+}
+check(mixed.kind == 'failed', 'a complaint beside rows is still failed', mixed.kind, 'failed')
+check(#mixed.rows == 2, 'partial rows are retained', mixed.rows, { 'col1|col2', 'a|1' })
+check(mixed.row_count == 2, 'the row count matches the retained rows', mixed.row_count, 2)
+check(#mixed.complaints == 1, 'the complaint is retained beside the rows', #mixed.complaints, 1)
+
+-- 9. Zero rows and no complaint is a success, never a failure (FR-007, SC-004).
+local empty = M.classify {}
+check(empty.kind == 'success', 'an empty response is a success', empty.kind, 'success')
+check(empty.row_count == 0, 'an empty response has zero rows', empty.row_count, 0)
+for i = 1, 10 do
+    local zero = M.classify { '', ' ' }
+    check(zero.kind == 'success', 'zero-row response ' .. i .. ' is not a failure', zero.kind, 'success')
+end
+
+-- 10. Unrecognized non-zero output is a warning, never silence (FR-012).
+local unknown = M.classify({ 'ct_something: not a shape we know' }, { exit_status = 1 })
+check(unknown.kind == 'unreadable', 'unrecognized output degrades to unreadable', unknown.kind, 'unreadable')
+
+-- 11. A cancelled run is its own outcome, not a failure (FR-002).
+local cancelled = M.classify({ 'Msg 156, Level 15, State 1, Server srv, Line 1' }, { cancelled = true })
+check(cancelled.kind == 'cancelled', 'a cancelled run is cancelled', cancelled.kind, 'cancelled')
+
+-- 12. The listener reports the server's complaint exactly once per run (FR-001, FR-027).
+local complaint_file = fixture {
+    'Msg 156, Level 15, State 1, Server srv, Line 1',
+    "Incorrect syntax near the keyword 'FROM'.",
+}
+local complaint_buf = vim.fn.bufadd(complaint_file)
+vim.fn.bufload(complaint_buf)
+clear_notices()
+fire('DBExecutePost', complaint_file)
+check(seen 'Incorrect syntax', 'the listener notice names the server complaint', notices, 'Incorrect syntax')
+check(#notices == 1, 'the failed run reports exactly one notice', #notices, 1)
+fire('DBExecutePost', complaint_file)
+check(#notices == 1, 'observing the same run twice does not duplicate the notice', #notices, 1)
+
+-- 13. The full response stays readable afterwards, byte for byte (FR-005, FR-014, FR-025).
+local recorded = M._current_slot()
+local on_disk = vim.fn.readfile(complaint_file)
+check(
+    table.concat(recorded.lines, '\n') == table.concat(on_disk, '\n'),
+    'the full response is retained unmodified',
+    recorded.lines,
+    on_disk
+)
+check(
+    recorded.outcome and recorded.outcome.kind == 'failed',
+    'the slot records the failed outcome',
+    recorded.outcome and recorded.outcome.kind,
+    'failed'
+)
+
+-- 14. A run that reports partial rows beside a complaint keeps both, and they
+-- stay distinguishable (FR-026).
+local partial_file = fixture {
+    'col1|col2',
+    'a|1',
+    'Msg 50000, Level 16, State 1, Server srv, Line 2',
+    'Divide by zero occurred.',
+}
+fire('DBExecutePost', partial_file)
+local partial = M._current_slot()
+check(partial.outcome.kind == 'failed', 'a complaint beside rows is a failure', partial.outcome.kind, 'failed')
+check(
+    #partial.outcome.rows == 2 and partial.outcome.rows[1] == 'col1|col2',
+    'the partial rows are retained and distinguishable from the complaint',
+    partial.outcome.rows,
+    { 'col1|col2', 'a|1' }
+)
+check(#partial.outcome.complaints == 1, 'the complaint is retained beside the rows', #partial.outcome.complaints, 1)
+
+-- 15. The stored server response is the server's text alone: the editor's own
+-- locator or hint text never enters it (FR-014, FR-025).
+local stored = table.concat(partial.lines, '\n')
+check(
+    stored:find('DB: query from', 1, true) == nil,
+    "the editor's locator never enters the server text",
+    stored,
+    '<no DB: line>'
+)
+check(
+    stored:find('Divide by zero', 1, true) ~= nil,
+    'the server text is present in the stored response',
+    stored,
+    '<Divide by zero>'
+)
+
+-- 16. Two different failing runs each get their own notice (FR-027, SC-013).
+local second_file = fixture {
+    'Msg 102, Level 15, State 1, Server srv, Line 1',
+    "Incorrect syntax near ')'.",
+}
+clear_notices()
+fire('DBExecutePost', second_file)
+check(
+    seen "Incorrect syntax near ')'",
+    'a second distinct failure reports its own complaint',
+    notices,
+    "<Incorrect syntax near ')'>"
+)
+check(#notices == 1, 'the second distinct failure reports exactly one notice', #notices, 1)
+
 -- Cleanup.
 vim.api.nvim_win_close(code_win, true)
 vim.api.nvim_buf_delete(code_buf, { force = true })
 os.remove(outfile)
+pcall(vim.api.nvim_buf_delete, complaint_buf, { force = true })
+os.remove(complaint_file)
+os.remove(partial_file)
+os.remove(second_file)
 vim.notify = original_notify
 vim.print 'All db_results smoke assertions passed'

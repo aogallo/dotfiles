@@ -17,9 +17,59 @@
 
 local M = {}
 
-local slot = { outfile = nil, bufnr = nil, running = false }
+local slot = { outfile = nil, bufnr = nil, running = false, outcome = nil, lines = nil, query_buf = nil }
 
 local setup_done = false
+local diagnostics_done = false
+
+-- The ASE complaint header already used across the module (sybase.vim:510). The
+-- classifier recognizes this one shape and nothing client-specific beyond it, so
+-- a client that words things differently degrades to M.classify()'s fail-closed
+-- default rather than being silently treated as a success.
+local MSG_HEADER = '^Msg%s+(%d+)%s*,%s*Level%s+(%d+)'
+
+-- Runs whose notice was already emitted, keyed by output path plus notice text,
+-- so a run that is observed twice does not report twice (FR-027).
+local notified = {}
+
+-- trim(value): strip leading and trailing whitespace.
+-- Called by: M.classify(), origin_label()
+-- SQL: none
+-- Args: value = any value (coerced with tostring)
+-- Returns: the value without surrounding whitespace
+-- Side effects: none
+local function trim(value)
+    return (tostring(value or ''):gsub('^%s+', ''):gsub('%s+$', ''))
+end
+
+-- origin_label(run): the line naming the buffer the failing query came from.
+-- Called by: M.notice_text()
+-- SQL: none
+-- Args: run = the per-session slot
+-- Returns: a short locator line, or '' when no usable buffer name is known
+-- Side effects: none
+--
+-- A buffer name can be a connection URL, which may carry credentials, so a URL
+-- name is reduced to its last path component and never rendered whole (FR-031).
+local function origin_label(run)
+    if not run or not run.query_buf or run.query_buf <= 0 then
+        return ''
+    end
+    if not vim.api.nvim_buf_is_valid(run.query_buf) then
+        return ''
+    end
+    local name = vim.api.nvim_buf_get_name(run.query_buf)
+    if name == '' then
+        return 'DB: query from an unnamed buffer'
+    end
+    if name:find('://', 1, true) then
+        name = vim.fn.fnamemodify(name, ':t')
+        if name == '' then
+            return ''
+        end
+    end
+    return 'DB: query from ' .. name
+end
 
 -- on_pre(): mark the latest query as still running.
 -- Called by: the `User */DBExecutePre` autocmd registered in M.setup()
@@ -27,9 +77,11 @@ local setup_done = false
 -- Args: none (autocmd callback)
 -- Returns: nothing
 -- Side effects: sets slot.running = true, which makes M.show() refuse to
---   summon a half-written result file
+--   summon a half-written result file, and records the buffer the query ran from
+--   so a later failure notice can name it
 local function on_pre()
     slot.running = true
+    slot.query_buf = vim.api.nvim_get_current_buf()
 end
 
 -- on_post(args): record the finished result (output file + its buffer).
@@ -49,12 +101,221 @@ local function on_post(args)
     slot.running = false
 end
 
--- M.setup(): register the two dadbod query autocmds (idempotent).
+-- M._current_slot(): the per-session record of the last finished run.
+-- Called by: the diagnostics listener in M.setup_diagnostics(), and the tests
+-- SQL: none
+-- Args: none
+-- Returns: the slot table (outfile, bufnr, running, outcome, lines)
+-- Side effects: none
+function M._current_slot()
+    return slot
+end
+
+-- M._store(slot, outcome): retain a finished run's classification and full text.
+-- Called by: the diagnostics listener in M.setup_diagnostics(), and the tests
+-- SQL: none
+-- Args: slot = the run record from M._current_slot(), outcome = a RunOutcome
+--   whose `lines` field is the complete server response, unmodified
+-- Returns: the outcome
+-- Side effects: writes slot.outcome and keeps slot.lines = the full response,
+--   so a complaint can be reported without re-running the query (FR-025)
+function M._store(slot, outcome)
+    slot.outcome = outcome
+    slot.lines = outcome.lines or {}
+    return outcome
+end
+
+-- M.classify(lines, opts): classify one completed run's server response.
+-- Called by: M.setup_diagnostics()'s listener, and the tests
+-- SQL: none
+-- Args: lines = the complete response from the output file, in server order,
+--   unmodified; opts.cancelled = true when dadbod recorded query.canceled;
+--   opts.exit_status = the client's own status (nil when unknown)
+-- Returns: a RunOutcome { kind, complaints, rows, row_count, lines } where kind
+--   is one of success | failed | cancelled | unreadable
+-- Side effects: none (the input is never mutated)
+--
+-- Ordered recognition rules (contracts/query_diagnostics.lua.md): a cancelled
+-- run; any `Msg N, Level N` line (every one captured, FR-004), where the prose
+-- that follows a header belongs to that complaint; a non-zero exit with no
+-- complaint, which is the fail-closed unreadable default (FR-012); otherwise a
+-- success -- zero rows included, which is never a failure (FR-007). The full
+-- `lines` are retained so surfacing a complaint never consumes the response
+-- (FR-005, FR-025).
+function M.classify(lines, opts)
+    opts = opts or {}
+    lines = lines or {}
+    local complaints, rows = {}, {}
+    local i, n = 1, #lines
+    while i <= n do
+        local line = lines[i]
+        local code, level = line:match(MSG_HEADER)
+        if code then
+            local block = { trim(line) }
+            local j = i + 1
+            while j <= n do
+                local next_line = lines[j]
+                if trim(next_line) == '' or next_line:match(MSG_HEADER) then
+                    break
+                end
+                block[#block + 1] = trim(next_line)
+                j = j + 1
+            end
+            complaints[#complaints + 1] = {
+                code = tonumber(code),
+                level = tonumber(level),
+                text = table.concat(block, '\n'),
+                line_no = i,
+            }
+            i = j
+        else
+            if trim(line) ~= '' then
+                rows[#rows + 1] = line
+            end
+            i = i + 1
+        end
+    end
+
+    local kind
+    if opts.cancelled then
+        kind = 'cancelled'
+    elseif #complaints > 0 then
+        kind = 'failed'
+    elseif opts.exit_status ~= nil and opts.exit_status ~= 0 then
+        kind = 'unreadable'
+    else
+        kind = 'success'
+    end
+
+    return { kind = kind, complaints = complaints, rows = rows, row_count = #rows, lines = lines }
+end
+
+-- M.notice_text(outcome, run): the developer-facing text for a failed run.
+-- Called by: M._notify_once()
+-- SQL: none
+-- Args: outcome = a RunOutcome, run = the per-session slot (for the locator)
+-- Returns: the server's own complaint text, or a clear "could not read" warning
+--   for an unreadable run; '' for a success
+-- Side effects: none
+--
+-- Each complaint's own line breaks are reflowed to spaces so the first
+-- complaint is wholly visible in the notification summary, but the words are
+-- never rewritten or abbreviated (FR-014). The complaint lines are the server's
+-- response; the trailing locator line is the editor's own, kept separate so it
+-- is never presented as part of the response (FR-024).
+function M.notice_text(outcome, run)
+    if outcome.kind == 'failed' then
+        local parts = {}
+        for _, complaint in ipairs(outcome.complaints) do
+            parts[#parts + 1] = (complaint.text:gsub('%s*\n%s*', ' '))
+        end
+        local message = table.concat(parts, '\n')
+        local origin = origin_label(run)
+        if origin ~= '' then
+            message = message .. '\n' .. origin
+        end
+        return message
+    end
+    if outcome.kind == 'unreadable' then
+        return 'DB: the server response for the last query could not be read; open the result to inspect it in full'
+    end
+    return ''
+end
+
+-- M._notify_once(slot, outcome): emit one notice per failed run.
+-- Called by: the diagnostics listener in M.setup_diagnostics(), and the tests
+-- SQL: none
+-- Args: slot = the run record, outcome = a failed or unreadable RunOutcome
+-- Returns: true when a notice was emitted, false when this run already reported
+-- Side effects: one WARN notification built from the server's own complaint
+--   text; never renders a connection URL (FR-024, FR-027, FR-031)
+function M._notify_once(slot, outcome)
+    local message = M.notice_text(outcome, slot)
+    if message == '' then
+        return false
+    end
+    local key = (slot.outfile or '') .. '\0' .. message
+    if notified[key] then
+        return false
+    end
+    notified[key] = true
+    require('notifications').notify(message, vim.log.levels.WARN, { source = 'DB' })
+    return true
+end
+
+-- M.setup_diagnostics(): register the per-run reporting listener (idempotent).
+-- Called by: M.setup(), after on_post's listener is registered
+-- SQL: none
+-- Args: none
+-- Returns: nothing (a second call is a no-op via diagnostics_done)
+-- Side effects: creates a second `User */DBExecutePost` autocmd
+--
+-- Registered after on_post so the run's output path is recorded first, and on
+-- the same event dadbod raises once the output file is complete
+-- (autoload/db.vim:316 writes it, :329 raises Post). Reading the file rather
+-- than the job's line list is load-bearing: db#systemlist() returns [] on a
+-- non-zero exit, so the line list is the one source guaranteed to have lost the
+-- complaint (R-0005, D-0001). The body is wrapped so a fault in reporting is
+-- reported as an internal error and never as a server complaint (FR-011).
+function M.setup_diagnostics()
+    if diagnostics_done then
+        return
+    end
+    diagnostics_done = true
+    vim.api.nvim_create_autocmd('User', {
+        pattern = '*/DBExecutePost',
+        callback = function()
+            local ok, err = pcall(function()
+                local run = slot
+                if not run.outfile then
+                    return
+                end
+                local preview_buf = vim.fn.bufnr(run.outfile)
+                local query = preview_buf > 0 and vim.b[preview_buf].db or nil
+
+                local lines, readable
+                if vim.fn.filereadable(run.outfile) == 1 then
+                    local read_ok, read_lines = pcall(vim.fn.readfile, run.outfile)
+                    readable = read_ok
+                    lines = read_ok and read_lines or nil
+                end
+
+                local outcome
+                if not readable then
+                    outcome = { kind = 'unreadable', complaints = {}, rows = {}, row_count = 0, lines = {} }
+                else
+                    outcome = M.classify(lines, {
+                        cancelled = query and query.canceled == 1 or false,
+                        exit_status = query and query.exit_status or nil,
+                    })
+                end
+
+                if outcome.kind == 'failed' or outcome.kind == 'unreadable' then
+                    M._notify_once(run, outcome)
+                end
+                M._store(run, outcome)
+            end)
+            if not ok then
+                pcall(function()
+                    require('notifications').notify(
+                        'DB: the editor could not inspect the query result: ' .. tostring(err),
+                        vim.log.levels.ERROR,
+                        { source = 'DB' }
+                    )
+                end)
+            end
+        end,
+        desc = 'db_results: report the server complaint for the finished run',
+    })
+end
+
+-- M.setup(): register the dadbod query autocmds (idempotent).
 -- Called by: nvim/plugin/database.lua at plugin source time
 -- SQL: none
 -- Args: none
 -- Returns: nothing (a second call is a no-op via setup_done)
--- Side effects: creates the `User */DBExecutePre|Post` autocmds
+-- Side effects: creates the `User */DBExecutePre|Post` autocmds and the
+--   reporting listener from M.setup_diagnostics()
 function M.setup()
     if setup_done then
         return
@@ -70,6 +331,7 @@ function M.setup()
         callback = on_post,
         desc = 'db_results: record last finished query result',
     })
+    M.setup_diagnostics()
 end
 
 -- apply_drawer_options(bufnr): put a summoned result back in drawer shape.
