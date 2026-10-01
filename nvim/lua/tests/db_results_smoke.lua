@@ -134,6 +134,20 @@ check(
     reopened,
     vim.api.nvim_get_current_win()
 )
+-- 4b. A summoned result must come back as a drawer, not as a tab
+-- (specs/011-query-buffer-tab-visibility, R-0008; FR-018). `:pedit` re-derives
+-- buffer options from the file, so without re-applying them the summon handed
+-- generated output a tab in bufferline.
+local summoned = vim.fn.bufnr(outfile)
+check(not vim.bo[summoned].buflisted, 'a reopened result takes no tab', vim.bo[summoned].buflisted, false)
+check(vim.bo[summoned].readonly, 'a reopened result is read-only', vim.bo[summoned].readonly, true)
+check(not vim.bo[summoned].modifiable, 'a reopened result is nomodifiable', vim.bo[summoned].modifiable, false)
+check(
+    vim.bo[summoned].bufhidden == 'delete',
+    'a reopened result keeps bufhidden=delete',
+    vim.bo[summoned].bufhidden,
+    'delete'
+)
 vim.api.nvim_win_close(reopened, true)
 
 -- 5. Output file gone from disk: one warning notice, no buffer created.

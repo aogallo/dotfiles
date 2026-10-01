@@ -80,7 +80,51 @@ can be restored by re-adding/restoring the plugin spec or lockfile entry, then s
 
 ## Statusline and Bufferline
 
-The statusline is provided by `lualine.nvim` and renders mode, branch, filename, diagnostics, encoding, filetype, and cursor location in a single global statusline. The buffer list is provided by `bufferline.nvim` in `buffers` mode with LSP diagnostics and per-buffer close icons; it auto-hides when only one buffer is open.
+The statusline is provided by `lualine.nvim` and renders mode, branch, filename, diagnostics, encoding, filetype, and cursor location in a single global statusline. The buffer list is provided by `bufferline.nvim` in `buffers` mode with LSP diagnostics and per-buffer close icons. Whether the buffer *row* itself is drawn is bufferline's own decision, governed by its `auto_toggle_bufferline` option; this configuration leaves that option as bufferline ships it and does not change it. A missing row and a missing tab are different questions, and the row is not what hides a buffer.
+
+Buffer visibility follows one contract, implemented by the guard in
+[`lua/config/buffers.lua`](lua/config/buffers.lua): a tab exists for every buffer you opened, generated
+output takes none, and closing is final until you explicitly reopen. The guard only ever adds — it
+re-lists an unlisted buffer when you come back to it, and it never unlists, unloads or wipes anything.
+
+| Buffer | Tab | Why |
+| --- | --- | --- |
+| a query you opened from `:DBObjects` | yes, always | it is yours to come back to |
+| a query you closed, then reopened | yes, again | the reopen is what brings the tab back |
+| query output (`.dbout`, `nofile` drawers, `b:aogallo_no_tab`) | no | generated output is not somewhere to work |
+| a closed query you have not reopened | no | closing is final; nothing revives it implicitly |
+
+Nothing about this is persisted. A query buffer keeps its text, language and connection in memory for
+the session, so a restart does not bring drafts back; only what you saved to disk does. Opening the
+same query twice is safe: the first buffer keeps the plain name and the second gets a `.2`, `.3`, ...
+suffix instead of raising `Vim:E95`.
+
+Bufferline markers: `h` on a buffer means it is loaded but not currently displayed, and no marker
+means the buffer is displayed. That is a statement about the buffer, not a sign that its tab is
+missing. `auto_toggle_bufferline` still governs whether the row itself shows; this configuration does
+not change that behavior.
+
+Source of truth for this behavior:
+
+| Concern | File |
+| --- | --- |
+| the guard, the generated-output rules, the opt-out flag | `nvim/lua/config/buffers.lua` |
+| query naming, the reclaim, the draft registry | `nvim/lua/config/db_query_buffer.lua` |
+| the single wiring point for the guard | `nvim/plugin/editor.lua` |
+| the single wiring point for the registry | `nvim/plugin/database.lua` |
+| the regression tests | `nvim/lua/tests/buffer_visibility_smoke.lua` |
+
+Prerequisites: none. No plugin, no dependency and no keymap is involved; the guard uses only core
+Neovim APIs and `bufferline.nvim` reads the result. Manual activation is not required either --
+`buffers.setup()` runs from `nvim/plugin/editor.lua` and `db_query_buffer.setup()` from
+`nvim/plugin/database.lua` at plugin source time, both idempotent, so a reload is harmless and there
+is nothing to call by hand. The opt-out flag for a future generated buffer that matches neither the
+`.dbout` nor the `nofile` rule is `b:aogallo_no_tab`.
+
+Troubleshooting -- **my query buffer has no tab**: check that you are looking at a query you opened,
+not at query *output* (`.dbout` results intentionally take none), and check whether you closed the
+buffer without reopening it. To bring it back, switch to it explicitly -- `<S-h>`/`<S-l>`, `:buffer N`,
+or re-running the `:DBObjects` entry that produced it.
 
 Buffer navigation uses `<S-h>` (next) and `<S-l>` (previous). These mappings are muted from which-key. Closing and buffer-list actions stay under the `<leader>b` domain (`<leader>bx`, `<leader>bo`, `<leader>bb`).
 
@@ -765,6 +809,8 @@ header (see [Documenting a function](#documenting-a-function)):
 | `nvim/lua/config/db_context.lua` | the single answer to "which database is this buffer talking to": URL derivation, the `use`/`db..object` scan, the status-line label, and the pre-execution conflict warning |
 | `nvim/lua/config/db_results.lua` | `<leader>qr` — summon the last finished query result from any window |
 | `nvim/lua/config/db_jump.lua` | `<leader>qj` — toggle between the code buffer and the DB workspace |
+| `nvim/lua/config/buffers.lua` | the buffer-visibility guard: gives an unlisted buffer its tab back when you return to it, and decides what is generated output that takes none |
+| `nvim/lua/config/db_query_buffer.lua` | the query draft registry: display name, connection binding and in-memory text of a query buffer, so a closed query can be explicitly reopened |
 | `nvim/autoload/db/adapter/sybase.vim` | the Sybase ASE adapter: client argv, batch handling, catalog queries, object source extraction |
 | `nvim/lua/tests/*_smoke.lua` | offline smoke tests (temp `sqsh`/`isql` stubs, no server needed) |
 
@@ -856,6 +902,8 @@ nvim --headless -u NORC -c 'lua require("tests.db_objects_save_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_objects_scope_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.db_results_smoke")' -c 'qa!'
 nvim --headless -u NORC -c 'lua require("tests.keymap_groups_smoke")' -c 'qa!'
+# buffer visibility (spec 011, issue #96): offline, no server needed
+nvim --headless -u NORC -c 'lua require("tests.buffer_visibility_smoke")' -c 'qa!'
 nvim --headless -u nvim/init.lua -c 'lua assert(vim.g.db_ui_use_nvim_notify, "db_ui_use_nvim_notify not set"); vim.print("PASS notify-routing")' -c 'qa!'
 # whitespace feature (spec 009): first two are offline, last two need the real configuration
 nvim --headless -u NORC -c 'lua require("tests.formatter_chains_smoke")' -c 'qa!'

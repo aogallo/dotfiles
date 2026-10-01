@@ -2,6 +2,7 @@ require 'config.db_connections'
 
 local db_context = require 'config.db_context'
 local db_objects = require 'config.db_objects'
+local db_query_buffer = require 'config.db_query_buffer'
 local db_results = require 'config.db_results'
 
 local add = require('vim-pack').add
@@ -48,6 +49,14 @@ db_results.setup()
 -- `User */DBExecutePre` event the query tool already emits, so no new trigger is
 -- registered and db_results.lua above stays untouched (spec 009, US4).
 db_context.setup()
+
+-- Query draft registry (specs/011-query-buffer-tab-visibility, issue #96): own
+-- the display name, connection and text of a query buffer so closing it and
+-- bringing it back still works. Registers itself as a reopen handler with the
+-- editor-level visibility guard in nvim/lua/config/buffers.lua, which is wired
+-- from nvim/plugin/editor.lua. Everything this session holds is in memory only:
+-- no draft is ever written to disk.
+db_query_buffer.setup()
 
 vim.api.nvim_create_user_command('DBObjects', function(args)
     db_objects.open(args.fargs[1])
