@@ -221,3 +221,95 @@ check(
     { hex(rel[1].fg), hex(rel[2].fg), hex(rel[3].fg) },
     'all equal'
 )
+
+-- ---------------------------------------------------------------------------
+-- User Story 3: the emphasis holds, and nothing else moved
+-- ---------------------------------------------------------------------------
+
+-- FR-017 / SC-011: the case a startup-only implementation fails while every
+-- other case still passes. tokyonight's on_highlights runs during :colorscheme,
+-- so the values must come back after leaving and returning.
+local want_line_nr, want_selected = g 'LineNr', g 'BufferLineBufferSelected'
+vim.cmd.colorscheme 'habamax'
+check(
+    g('LineNr').fg ~= want_line_nr.fg,
+    'US3 habamax really does change LineNr (guard on this test)',
+    hex(g('LineNr').fg),
+    'a value other than ' .. hex(want_line_nr.fg)
+)
+vim.cmd.colorscheme 'tokyonight'
+check(
+    g('LineNr').fg == want_line_nr.fg,
+    'US3 LineNr survives a colorscheme round trip',
+    hex(g('LineNr').fg),
+    hex(want_line_nr.fg)
+)
+check(
+    g('BufferLineBufferSelected').fg == want_selected.fg and g('BufferLineBufferSelected').bg == want_selected.bg,
+    'US3 BufferLineBufferSelected survives a colorscheme round trip',
+    { fg = hex(g('BufferLineBufferSelected').fg), bg = hex(g('BufferLineBufferSelected').bg) },
+    { fg = hex(want_selected.fg), bg = hex(want_selected.bg) }
+)
+
+-- FR-012: mode-scoped variants must not silently override the configured values.
+-- These three are global highlight groups, so the headless claim is that no
+-- variant shadows them. Entering insert, visual and command-line mode is not
+-- reliably reachable from a headless one-shot (the mode never settles), so the
+-- per-mode reading is verified across separate launches by T049's shell check,
+-- and quickstart section 5.7 covers it interactively.
+local MODE_GROUPS = { 'LineNr', 'CursorLineNr', 'BufferLineBufferSelected' }
+for _, n in ipairs(MODE_GROUPS) do
+    local base = g(n)
+    for _, variant in ipairs { n .. 'Cursor', n .. 'Insert', n .. 'Visual', n .. 'Cmdline' } do
+        local v = g(variant)
+        check(v.fg == nil or v.fg == base.fg, 'US3 no ' .. variant .. ' variant shadows ' .. n, hex(v.fg), hex(base.fg))
+    end
+end
+
+-- FR-015 / SC-009: the pre-feature values of the frozen concerns, asserted as
+-- literals. A bare tokyonight load is the wrong reference here, because this
+-- repository already overrides Comment for its own reasons; the contract froze
+-- the values as they stood before this feature.
+local FROZEN = {
+    Normal = { fg = 0xc8d3f5, bg = 0x222436 },
+    Comment = { fg = 0x9aa7cf },
+    String = { fg = 0xc3e88d },
+    SignColumn = { fg = 0x3b4261, bg = 0x222436 },
+    StatusLine = { fg = 0x828bb8, bg = 0x1e2030 },
+}
+for _, n in ipairs { 'Normal', 'Comment', 'String', 'SignColumn', 'StatusLine' } do
+    local h, w = g(n), FROZEN[n]
+    check(
+        h.fg == w.fg and h.bg == w.bg,
+        'US3 frozen group ' .. n .. ' is unchanged',
+        { fg = hex(h.fg), bg = hex(h.bg) },
+        { fg = hex(w.fg), bg = hex(w.bg) }
+    )
+end
+
+-- FR-013 / FR-016: layout options must not have moved.
+check(vim.o.relativenumber == true, 'US3 relativenumber is still on', vim.o.relativenumber, true)
+check(vim.o.cursorline == true, 'US3 cursorline is still on', vim.o.cursorline, true)
+check(vim.o.number == true, 'US3 number is still on', vim.o.number, true)
+
+-- FR-014: the emphasis is global, not per-filetype.
+local function emphasis_here()
+    local h = g 'BufferLineBufferSelected'
+    return h.fg == want_selected.fg and h.bg == want_selected.bg
+end
+check(emphasis_here(), 'US3 emphasis applies to the ordinary file buffer', emphasis_here(), true)
+
+vim.cmd.enew()
+vim.bo.buftype = 'nofile'
+check(emphasis_here(), 'US3 emphasis applies to a nofile drawer', emphasis_here(), true)
+
+local query = require 'config.db_query_buffer'
+local qbuf = query.open('https://example.invalid/x', 'owner', { 'select 1;' }, 'testdb')
+check(
+    type(qbuf) == 'number' and vim.api.nvim_buf_is_valid(qbuf),
+    'US3 opened a query-result buffer',
+    qbuf,
+    'a valid buffer number'
+)
+vim.api.nvim_set_current_buf(qbuf)
+check(emphasis_here(), 'US3 emphasis applies to a query-result buffer', emphasis_here(), true)
