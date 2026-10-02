@@ -41,12 +41,34 @@ local function lum(rgb)
 end
 
 --- WCAG contrast ratio between two 0xRRGGBB integers. Order-independent.
+-- Returns nil when either colour is absent, so a missing override degrades to a
+-- named failure below instead of a Lua arithmetic error. The mutation test
+-- (T050) removes overrides on purpose and expects a clean failure, not a crash.
 local function cr(a, b)
+    if not (a and b) then
+        return nil
+    end
     local la, lb = lum(a), lum(b)
     if la < lb then
         la, lb = lb, la
     end
     return (la + 0.05) / (lb + 0.05)
+end
+
+--- A measured ratio reaches a floor. A nil ratio never does: an absent colour
+--- is an absent measurement, not a passing one.
+local function meets(value, floor)
+    return type(value) == 'number' and value >= floor
+end
+
+--- Format any value for a failure message, without erroring on nil.
+local function show(value)
+    return tostring(value)
+end
+
+--- A value sits within 0.01 of a reference, and exists at all.
+local function close(value, want)
+    return type(value) == 'number' and math.abs(value - want) < 0.01
 end
 
 --- Format a 0xRRGGBB integer for display.
@@ -90,18 +112,8 @@ end
 -- silently returned a constant would make every later case pass while proving
 -- nothing, and the whole suite would be worthless in exactly the way FR-027
 -- warns about. Both pairs are standard WCAG reference values.
-check(
-    math.abs(cr(0x000000, 0xffffff) - 21.00) < 0.01,
-    'ratio math: black on white is 21.00',
-    cr(0x000000, 0xffffff),
-    21.00
-)
-check(
-    math.abs(cr(0x777777, 0xffffff) - 4.48) < 0.01,
-    'ratio math: #777777 on white is 4.48',
-    cr(0x777777, 0xffffff),
-    4.48
-)
+check(close(cr(0x000000, 0xffffff), 21.00), 'ratio math: black on white is 21.00', cr(0x000000, 0xffffff), 21.00)
+check(close(cr(0x777777, 0xffffff), 4.48), 'ratio math: #777777 on white is 4.48', cr(0x777777, 0xffffff), 4.48)
 
 -- Report what the editor currently defines, so a later reader can tell a
 -- not-yet-implemented state from a broken one. Asserts nothing on its own.
@@ -123,23 +135,33 @@ local ind = g 'BufferLineIndicatorSelected'
 local sel_own = cr(sel.fg, sel.bg)
 local ina_own = cr(ina.fg, ina.bg)
 
-check(sel_own >= PRIMARY, 'US1 active name clears PRIMARY against its own bg', sel_own, PRIMARY)
-check(sel_own >= 1.5 * ina_own, 'US1 active name is at least 1.5x the inactive name', sel_own / ina_own, 1.5)
+check(meets(sel_own, PRIMARY), 'US1 active name clears PRIMARY against its own bg', sel_own, PRIMARY)
 check(
-    cr(sel.bg, ina.bg) >= 1.3,
+    meets(sel_own, 1.5 * ina_own),
+    'US1 active name is at least 1.5x the inactive name',
+    show(sel_own) .. ' / ' .. show(ina_own),
+    '1.5x'
+)
+check(
+    meets(cr(sel.bg, ina.bg), 1.3),
     'US1 active background separates from the inactive background',
     cr(sel.bg, ina.bg),
     1.3
 )
-check(ina_own >= SECONDARY, 'US1 inactive name clears SECONDARY against its own bg', ina_own, SECONDARY)
+check(meets(ina_own, SECONDARY), 'US1 inactive name clears SECONDARY against its own bg', ina_own, SECONDARY)
 check(
-    cr(vis.fg, ina.fg) >= 1.25,
+    meets(cr(vis.fg, ina.fg), 1.25),
     'US1 non-focused window name is distinguishable from the inactive name',
     cr(vis.fg, ina.fg),
     1.25
 )
-check(cr(vis.bg, sel.bg) >= 1.3, 'US1 non-focused window background does not mimic focus', cr(vis.bg, sel.bg), 1.3)
-check(ina_own < sel_own, 'US1 no inactive name reaches the active name contrast', ina_own < sel_own, true)
+check(meets(cr(vis.bg, sel.bg), 1.3), 'US1 non-focused window background does not mimic focus', cr(vis.bg, sel.bg), 1.3)
+check(
+    type(ina_own) == 'number' and type(sel_own) == 'number' and ina_own < sel_own,
+    'US1 no inactive name reaches the active name contrast',
+    ina_own,
+    'below ' .. show(sel_own)
+)
 
 -- Invariants added by T004. They are contract clauses now, so they are asserted
 -- here rather than living only in the read-only probe.
@@ -150,10 +172,10 @@ check(
     'fg equals bg'
 )
 check(
-    cr(ind.fg, sel.bg) >= SECONDARY and cr(ind.fg, sel.bg) < sel_own,
+    meets(cr(ind.fg, sel.bg), SECONDARY) and cr(ind.fg, sel.bg) < sel_own,
     'US1 indicator is visible but does not outrank the active name',
     cr(ind.fg, sel.bg),
-    '>= ' .. SECONDARY .. ' and < ' .. sel_own
+    '>= ' .. SECONDARY .. ' and < ' .. show(sel_own)
 )
 
 -- ---------------------------------------------------------------------------
@@ -175,13 +197,13 @@ for _, o in ipairs(OVERLAYS) do
     local h = g('BufferLine' .. o.name .. 'Selected')
     local measured = cr(h.fg, h.bg)
     check(
-        measured >= PRIMARY,
+        meets(measured, PRIMARY),
         'US1 overlay ' .. o.name .. ' clears PRIMARY on the active background',
         measured,
         PRIMARY
     )
     check(
-        measured >= ina_own,
+        meets(measured, ina_own),
         'US1 overlay ' .. o.name .. ' is never weaker than a plain inactive name',
         measured,
         ina_own
@@ -203,16 +225,28 @@ local rel = { g 'LineNr', g 'LineNrAbove', g 'LineNrBelow' }
 
 for i, h in ipairs(rel) do
     local group = ({ 'LineNr', 'LineNrAbove', 'LineNrBelow' })[i]
-    check(cr(h.fg, bg) >= SECONDARY, 'US2 ' .. group .. ' clears SECONDARY against Normal', cr(h.fg, bg), SECONDARY)
+    check(
+        meets(cr(h.fg, bg), SECONDARY),
+        'US2 ' .. group .. ' clears SECONDARY against Normal',
+        cr(h.fg, bg),
+        SECONDARY
+    )
 end
 
 local cursor_nr = g 'CursorLineNr'
-check(cr(cursor_nr.fg, bg) >= PRIMARY, 'US2 CursorLineNr clears PRIMARY against Normal', cr(cursor_nr.fg, bg), PRIMARY)
+check(
+    meets(cr(cursor_nr.fg, bg), PRIMARY),
+    'US2 CursorLineNr clears PRIMARY against Normal',
+    cr(cursor_nr.fg, bg),
+    PRIMARY
+)
 -- Strict: the cursor's number must stay the strongest, never merely equal.
 check(
-    cr(cursor_nr.fg, bg) > cr(rel[1].fg, bg),
+    type(cr(cursor_nr.fg, bg)) == 'number'
+        and type(cr(rel[1].fg, bg)) == 'number'
+        and cr(cursor_nr.fg, bg) > cr(rel[1].fg, bg),
     'US2 CursorLineNr outranks the relative numbers',
-    cr(cursor_nr.fg, bg) .. ' vs ' .. cr(rel[1].fg, bg),
+    show(cr(cursor_nr.fg, bg)) .. ' vs ' .. show(cr(rel[1].fg, bg)),
     'strictly greater'
 )
 check(
