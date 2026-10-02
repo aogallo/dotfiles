@@ -177,6 +177,14 @@ add {
                 hl.SnacksPickerGitStatusUntracked = { fg = c.green }
                 hl.SnacksPickerGitStatusIgnored = { fg = c.dark5 }
 
+                -- Relative line numbers. Tokyonight's gutter grey measured 1.56:1
+                -- against Normal, below the 3.0 floor; the cursor's own number stays
+                -- #ff966c at 7.16:1 and keeps its separate column, so the ordinal order
+                -- is preserved rather than flattened.
+                hl.LineNr = { fg = '#7aa2f7' }
+                hl.LineNrAbove = { fg = '#7aa2f7' }
+                hl.LineNrBelow = { fg = '#7aa2f7' }
+
                 -- Buffer row. The active tab carries the emphasis through two channels:
                 -- the strongest name and a background the inactive row no longer shares.
                 -- akinsho/bufferline.nvim is configured without a theme, so it would

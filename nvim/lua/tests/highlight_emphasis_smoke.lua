@@ -193,3 +193,31 @@ for _, o in ipairs(OVERLAYS) do
         o.bold
     )
 end
+
+-- ---------------------------------------------------------------------------
+-- User Story 2, contract section A: the number column
+-- ---------------------------------------------------------------------------
+
+local bg = normal_bg()
+local rel = { g 'LineNr', g 'LineNrAbove', g 'LineNrBelow' }
+
+for i, h in ipairs(rel) do
+    local group = ({ 'LineNr', 'LineNrAbove', 'LineNrBelow' })[i]
+    check(cr(h.fg, bg) >= SECONDARY, 'US2 ' .. group .. ' clears SECONDARY against Normal', cr(h.fg, bg), SECONDARY)
+end
+
+local cursor_nr = g 'CursorLineNr'
+check(cr(cursor_nr.fg, bg) >= PRIMARY, 'US2 CursorLineNr clears PRIMARY against Normal', cr(cursor_nr.fg, bg), PRIMARY)
+-- Strict: the cursor's number must stay the strongest, never merely equal.
+check(
+    cr(cursor_nr.fg, bg) > cr(rel[1].fg, bg),
+    'US2 CursorLineNr outranks the relative numbers',
+    cr(cursor_nr.fg, bg) .. ' vs ' .. cr(rel[1].fg, bg),
+    'strictly greater'
+)
+check(
+    rel[1].fg == rel[2].fg and rel[2].fg == rel[3].fg,
+    'US2 the three relative groups hold one foreground',
+    { hex(rel[1].fg), hex(rel[2].fg), hex(rel[3].fg) },
+    'all equal'
+)

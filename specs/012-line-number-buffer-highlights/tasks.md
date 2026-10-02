@@ -214,15 +214,15 @@ with the buffer row untouched.
 
 ### Tests for User Story 2 ⚠️ write first, watch them fail
 
-- [ ] T019 [US2] Append to `nvim/lua/tests/highlight_emphasis_smoke.lua` the contract §A cases: `LineNr`, `LineNrAbove` and `LineNrBelow` each ≥ `SECONDARY` against `normal_bg()`; `CursorLineNr` ≥ `PRIMARY`; and `cr(CursorLineNr.fg, normal_bg()) > cr(LineNr.fg, normal_bg())` as a strict ordinal comparison (FR-009, FR-010, FR-011; SC-004, SC-005)
-- [ ] T020 [US2] Add to `nvim/lua/tests/highlight_emphasis_smoke.lua` a case asserting all three relative groups hold the **same** foreground, so a split value cannot make the column look inconsistent when the cursor crosses the wrap point (contract §A invariant)
-- [ ] T021 [US2] Run the suite and confirm the three `LineNr*` cases fail at ~1.56 while the `CursorLineNr` and ordinal cases pass
+- [X] T019 [US2] Append to `nvim/lua/tests/highlight_emphasis_smoke.lua` the contract §A cases: `LineNr`, `LineNrAbove` and `LineNrBelow` each ≥ `SECONDARY` against `normal_bg()`; `CursorLineNr` ≥ `PRIMARY`; and `cr(CursorLineNr.fg, normal_bg()) > cr(LineNr.fg, normal_bg())` as a strict ordinal comparison (FR-009, FR-010, FR-011; SC-004, SC-005)
+- [X] T020 [US2] Add to `nvim/lua/tests/highlight_emphasis_smoke.lua` a case asserting all three relative groups hold the **same** foreground, so a split value cannot make the column look inconsistent when the cursor crosses the wrap point (contract §A invariant)
+- [X] T021 [US2] Run the suite and confirm the three `LineNr*` cases fail at ~1.56 while the `CursorLineNr` and ordinal cases pass. **Recorded**: `LineNr` fails at **1.5563526828985** against a floor of 3.0; `LineNrAbove` and `LineNrBelow` hold the identical `#3b4261` so both fail identically. `CursorLineNr` passes at 7.16, the ordinal comparison passes (7.16 > 1.56), and the same-foreground invariant passes since all three already match. All 27 US1 assertions stayed green throughout, confirming US2's red phase did not disturb US1
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] [R§A] Add to the same `on_highlights` hook in `nvim/plugin/editor.lua` the three §A overrides — `LineNr`, `LineNrAbove`, `LineNrBelow` each `fg = '#7aa2f7'` — and do **not** touch `CursorLineNr` (contract §A invariant; [spec.md](spec.md) Out of Scope)
-- [ ] T023 [US2] Re-run the suite: every case in the file green, exit 0 (SC-004, SC-005)
-- [ ] T024 [P] [US2] Confirm `nvim/lua/config/options.lua` is untouched — `number`, `relativenumber` and `cursorline` keep their current values, so the column's width, alignment and the cursor line number's separate column position are unchanged (FR-013)
+- [X] T022 [US2] [R§A] Add to the same `on_highlights` hook in `nvim/plugin/editor.lua` the three §A overrides — `LineNr`, `LineNrAbove`, `LineNrBelow` each `fg = '#7aa2f7'` — and do **not** touch `CursorLineNr` (contract §A invariant; [spec.md](spec.md) Out of Scope)
+- [X] T023 [US2] Re-run the suite: every case in the file green, exit 0 (SC-004, SC-005)
+- [X] T024 [P] [US2] Confirm `nvim/lua/config/options.lua` is untouched — `number`, `relativenumber` and `cursorline` keep their current values, so the column's width, alignment and the cursor line number's separate column position are unchanged (FR-013)
 
 **Checkpoint**: User Stories 1 AND 2 both independently functional. The two reported halves of
 issue #95 are both addressed and both measurable.
