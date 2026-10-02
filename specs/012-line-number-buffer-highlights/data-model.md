@@ -63,14 +63,22 @@ position. These are frozen by FR-013 and are not properties of this entity.
 
 ## Entity 2: Buffer tab
 
-One entry in the buffer row per listed buffer. Carries three states, and — unlike Entity 1 — the
-baseline for two of the three is **already correct**, which is the finding that reshaped the design.
+One entry in the buffer row per listed buffer. Carries three states. Unlike Entity 1, the active
+state's **name** is already correct today; what is missing is the **background** channel, and what is
+wrong outright is the inactive row, which bufferline paints in its own palette (see the table below).
 
 | State | Group | Baseline (today) | Target | Invariant |
 |---|---|---|---|---|
 | focused buffer | `BufferLineBufferSelected` | name `#e0e2ea` on bg `#14161b`, **13.99:1**, bg-vs-inactive **1.05** | name `#e0e2ea` on bg `#2d3f76`, **7.79:1**, bg-vs-inactive **1.70** | name ≥ 4.5; ordinal ≥ 1.5× inactive; **bg separation ≥ 1.3** |
 | selected in a non-focused window | `BufferLineBufferVisible` | name `#9b9ea4` on bg `#121418` | name `#a6adf8` on bg `#1f2131` | ordinal vs inactive ≥ 1.25 **and** bg vs selected ≥ 1.3 |
-| inactive | `BufferLineBuffer` | name `#636da6` on bg `#191b28`, **3.47:1** | **unchanged** | name ≥ 3.0 |
+| inactive | `BufferLineBuffer` | name `#9b9ea4` on bg `#0f1014`, **7.08:1** — bufferline's built-in `desert` theme, not tokyonight | name `#636da6` on bg `#191b28`, **3.47:1** | name ≥ 3.0 |
+
+**The inactive row is a correction, not a side effect.** `akinsho/bufferline.nvim` is configured with
+no `theme`, so it paints the row in its own hardcoded greys. The original baseline column of this
+table assumed tokyonight values that never existed here, and implementing only the active row against
+the real one fails three clauses: SC-002's `≥ 1.5×` measures **1.10×**, FR-008's
+`tint ≥ inactive` fails for `Error` (6.47) and `Hint` (6.81), and FR-006 clears 1.25 by only 0.02.
+Setting the inactive row explicitly is what makes the rest of this document true.
 
 Two further groups belong to the active tab without being states of it. They are resolved in T004
 and recorded here so this document, the contract, [quickstart.md](quickstart.md) §6 and
@@ -86,20 +94,24 @@ and recorded here so this document, the contract, [quickstart.md](quickstart.md)
 
 **Validation rules**:
 
-- `contrast(name, own_bg) ≥ 4.5` — SC-002. **Baseline 13.99 already passes.**
+- `contrast(name, own_bg) ≥ 4.5` — SC-002. **Baseline 13.99 already passes**, and still passes at
+  7.79 after the background moves.
 - `contrast(name, own_bg) ≥ 1.5 × contrast(inactive name, own_bg)` — SC-002 second clause.
-  **Baseline 1.98× already passes.**
+  Baseline 13.99/7.08 = **1.98×** passes; after the change 7.79/3.47 = **2.24×**. It holds on both
+  sides of the change, which is why the palette was chosen to lower the active contrast rather than
+  raise the inactive one.
 - `contrast(active bg, inactive bg) ≥ 1.3` — **no requirement in the specification states this
   number**, but R-0002 measured it at **1.05** and identified it as the actual defect: the tab
   *region* carries no signal, so FR-001's "at least two independent visual ways" is not met by the
   baseline. Target 1.70.
 - `contrast(visible name, inactive name) ≥ 1.25` — FR-006, second half. **Baseline 1.00 FAILS**:
-  both groups hold the identical foreground `#9b9ea4` (R-0004).
+  both groups hold the identical foreground `#9b9ea4` (R-0004). Target 2.33.
 - `contrast(visible bg, selected bg) ≥ 1.3` — FR-006, third half: it must not mimic focus. Target
   1.58.
-- `contrast(inactive name, own_bg) ≥ 3.0` — SC-003. Baseline 3.47 passes; target 3.47 unchanged. This
-  is the invariant that **tightens** as the active background rises, and the one to re-check if the
-  active background is ever raised further.
+- `contrast(inactive name, own_bg) ≥ 3.0` — SC-003. Baseline **7.08** passes; the target **3.47**
+  passes too, and deliberately sits lower than the baseline. Lowering the inactive row is what buys
+  the active row its 2.24× ordinal margin. This is the invariant that **tightens** as the active
+  background rises, and the one to re-check if the active background is ever raised further.
 
 **Relationships**: a tab is in exactly one state per window. In a multi-window session the focused
 window's tab is `…Selected`, a tab displayed in another window is `…Visible`, and all others are

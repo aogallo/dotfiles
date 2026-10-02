@@ -303,21 +303,27 @@ for _, d in ipairs({ 'Error', 'Warning', 'Info', 'Hint', 'Modified' }) do
 end
 
 print('\n-- active-tab furniture resolved in T004 --')
--- These two groups are unset until this feature lands, so every read here must survive a nil
--- foreground. A measurement tool that crashes is worse than one that reports FAIL: it hides the
--- value it was built to expose.
+-- These two are unset until this feature lands, so every read must survive a nil. A measurement
+-- tool that crashes is worse than one that reports FAIL: it hides the value it was built to expose.
+-- The two are checked independently: bufferline never sets a background on the indicator, and
+-- gating the separator on that would misreport it as failing.
 local sep, ind = g('BufferLineSeparatorSelected'), g('BufferLineIndicatorSelected')
-if sep.fg and sep.bg and ind.fg and ind.bg then
+if sep.fg and sep.bg then
+    local s = cr(sep.fg, sep.bg)
     print(string.format('  separator  %s on %s = %6.2f  bold=%-5s %s', hex(sep.fg), hex(sep.bg),
-        cr(sep.fg, sep.bg), tostring(sep.bold),
-        (sep.fg == sep.bg and cr(sep.fg, sep.bg) == 1.0) and 'PASS (vanishes)' or 'FAIL'))
-    local iv, nv = cr(ind.fg, ind.bg), cr(sel.fg, sel.bg)
-    print(string.format('  indicator  %s on %s = %6.2f  (>= 3.0, and < name %.2f)  %s',
-        hex(ind.fg), hex(ind.bg), iv, nv,
-        (iv >= 3.0 and iv < nv) and 'PASS' or 'FAIL'))
+        s, tostring(sep.bold),
+        (sep.fg == sep.bg and s == 1.0) and 'PASS (vanishes)' or 'FAIL'))
 else
     print(string.format('  separator  fg=%s bg=%s   FAIL (expected fg == bg == selected bg)', hex(sep.fg), hex(sep.bg)))
-    print(string.format('  indicator  fg=%s bg=%s   FAIL (expected fg #7aa2f7 on #2d3f76)', hex(ind.fg), hex(ind.bg)))
+end
+if ind.fg then
+    -- The indicator inherits its background from the selected tab, so measure it there.
+    local iv, nv = cr(ind.fg, sel.bg), cr(sel.fg, sel.bg)
+    print(string.format('  indicator  %s on %s = %6.2f  (>= 3.0, and < name %.2f)  %s',
+        hex(ind.fg), hex(sel.bg), iv, nv,
+        (iv >= 3.0 and iv < nv) and 'PASS' or 'FAIL'))
+else
+    print(string.format('  indicator  fg=%s   FAIL (expected fg #7aa2f7)', hex(ind.fg)))
 end
 
 print('\n-- frozen by FR-015: these must be untouched --')

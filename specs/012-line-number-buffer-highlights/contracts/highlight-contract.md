@@ -74,7 +74,7 @@ position — frozen by FR-013, untouched by design.
 |---|---|---|---|---|
 | `BufferLineBufferSelected` | `#e0e2ea`, bold | `#2d3f76` | 7.79:1 | the focused buffer — **owns the emphasis** |
 | `BufferLineBufferVisible` | `#a6adf8` | `#1f2131` | 7.54:1 | selected in a **non-focused** window |
-| `BufferLineBuffer` | *unchanged* | *unchanged* | 3.47:1 | inactive |
+| `BufferLineBuffer` | `#636da6` | `#191b28` | 3.47:1 | inactive |
 | `BufferLineSeparatorSelected` | `#2d3f76` | `#2d3f76` | 1.00:1 | segment divider inside the active tab — **blends away** |
 | `BufferLineIndicatorSelected` | `#7aa2f7` | `#2d3f76` | 4.00:1 | the selected tab's left indicator |
 
@@ -88,6 +88,24 @@ position — frozen by FR-013, untouched by design.
 - `contrast(BufferLineBuffer) ≥ 3.0` — SC-003. Measured 3.47. **This is the invariant that tightens
   if the active background is ever raised further** — re-check it on any future change to
   `BufferLineBufferSelected.bg`.
+
+**The inactive row is overridden too, and that is a correction, not a preference.**
+`akinsho/bufferline.nvim` is configured in [plan.md](../plan.md) with no `theme` option, so it falls
+back to its built-in `desert` palette and paints the row in `#9b9ea4` on `#0f1014` — greys that belong
+to neither tokyonight nor this repository. The three-state design above was measured against
+`#636da6` on `#191b28`, values that **never existed in this configuration**. Implementing §B and §C
+while leaving the inactive row alone was measured and fails three of this contract's own clauses:
+
+| Clause | Floor | With the real inactive row | With the values above |
+|---|---|---|---|
+| SC-002, `selected ≥ 1.5 × inactive` | 1.5× | **1.10× FAIL** | 2.24× pass |
+| FR-008, `tint ≥ inactive name` | 7.08 | **Error 6.47, Hint 6.81 FAIL** | all six pass at ≥ 3.47 |
+| FR-006, `visible ≥ 1.25 × inactive` | 1.25 | 1.27, by 0.02 | 2.33 pass |
+
+The emphasis would have been 1.10× over an almost equally bright inactive row — the feature not
+delivering what it exists to deliver. Setting `BufferLineBuffer` explicitly is therefore load-bearing:
+it is what makes every number in this contract true, and it also removes a foreign grey palette from
+the middle of a tokyonight editor.
 - `contrast(BufferLineBufferVisible, BufferLineBuffer) ≥ 1.25` and
   `contrast(BufferLineBufferVisible.bg, BufferLineBufferSelected.bg) ≥ 1.3` — FR-006.
   Baselines were **1.00** and imperceptible ([research.md](../research.md) R-0004); targets 2.33

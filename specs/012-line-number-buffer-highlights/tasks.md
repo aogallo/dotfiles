@@ -86,7 +86,7 @@ Repeated here so an implementer does not have to cross-reference while editing:
 | A (frozen) | `CursorLineNr` | **unchanged** `#ff966c` bold | 4.5 (7.16:1) — Out of Scope |
 | **B** (US1) | `BufferLineBufferSelected` | `fg = '#e0e2ea'`, `bold = true`, `bg = '#2d3f76'` | 4.5 own-bg (7.79:1); ≥ 1.5× inactive; bg vs inactive bg ≥ 1.3 (1.70) |
 | B (US1) | `BufferLineBufferVisible` | `fg = '#a6adf8'`, `bg = '#1f2131'` | ordinal vs inactive ≥ 1.25 (2.33); bg vs selected bg ≥ 1.3 (1.58) |
-| B (frozen) | `BufferLineBuffer` | **unchanged** | 3.0 (3.47:1) |
+| B (US1) | `BufferLineBuffer` | `fg = '#636da6'`, `bg = '#191b28'` | name ≥ 3.0 (3.47:1) — **overridden, see note below** |
 | B (US1) | `BufferLineIndicatorSelected` | `fg = '#7aa2f7'` | ≥ 3.0 (4.00:1) **and** `< BufferLineBufferSelected` (7.79:1) |
 | B (US1) | `BufferLineSeparatorSelected` | `fg = '#2d3f76'`, `bg = '#2d3f76'` | `fg == bg == selected bg` → exactly **1.00:1**, must vanish |
 | **C** (US1) | `BufferLineErrorSelected` | `fg = '#ffc0b9'`, `bold = true`, `bg = '#2d3f76'` | 4.5 (6.47:1) |
@@ -98,6 +98,15 @@ Repeated here so an implementer does not have to cross-reference while editing:
 
 All values are **literals**, not derived from another plugin's tint math (FR-021,
 [research.md](research.md) R-0008).
+
+**`BufferLineBuffer` is overridden, not frozen.** `akinsho/bufferline.nvim` is configured with no
+`theme`, so it paints the inactive row in its built-in `desert` greys (`#9b9ea4` on `#0f1014`,
+**7.08:1**) — a palette foreign to tokyonight and absent from every artifact written before T005.
+Implementing only the active row against that real baseline fails three clauses of this contract:
+SC-002's `≥ 1.5×` measures **1.10×**, FR-008's `tint ≥ inactive` fails for `Error` (6.47) and
+`Hint` (6.81), and FR-006 clears 1.25 by only 0.02. Setting the inactive row to `#636da6`/`#191b28`
+makes the ordinal margin 2.24×, the region 1.70, and every overlay clear its floor. Fourteen groups
+are overridden, not thirteen.
 
 ---
 
@@ -157,17 +166,34 @@ visible ([research.md](research.md) R-0002).
 > **NOTE**: each case must be observed **failing** against the unmodified configuration before the
 > implementation lands. A suite that passes before the change proves nothing.
 
-- [ ] T011 [US1] Append to `nvim/lua/tests/highlight_emphasis_smoke.lua` the contract §B cases: `BufferLineBufferSelected` name ≥ `PRIMARY` against its own background; that value ≥ 1.5 × `BufferLineBuffer`'s own contrast; `BufferLineBufferSelected.bg` vs `BufferLineBuffer.bg` ≥ 1.3; `BufferLineBuffer` ≥ `SECONDARY`; `BufferLineBufferVisible` name vs `BufferLineBuffer` name ≥ 1.25; `BufferLineBufferVisible.bg` vs `BufferLineBufferSelected.bg` ≥ 1.3; and that no inactive name reaches the selected name's contrast (FR-002, FR-001, FR-003, FR-004, FR-006; SC-002, SC-003)
-- [ ] T012 [US1] Append to `nvim/lua/tests/highlight_emphasis_smoke.lua` the contract §C cases: each of `BufferLine{Error,Warning,Info,Hint,Modified,CloseButton}Selected` ≥ `PRIMARY` against the selected background, **and** each ≥ `contrast(BufferLineBuffer, its own bg)` so a tinted active tab never reads weaker than a plain inactive one (FR-008)
-- [ ] T013 [US1] Run the suite and record which US1 cases fail. Expect the bg-separation case and the non-focused cases to fail; expect the name-contrast cases to pass already. **If a name case fails, stop** — the palette has drifted from the contract and T004's reconciliation is incomplete
+- [X] T011 [US1] Append to `nvim/lua/tests/highlight_emphasis_smoke.lua` the contract §B cases: `BufferLineBufferSelected` name ≥ `PRIMARY` against its own background; that value ≥ 1.5 × `BufferLineBuffer`'s own contrast; `BufferLineBufferSelected.bg` vs `BufferLineBuffer.bg` ≥ 1.3; `BufferLineBuffer` ≥ `SECONDARY`; `BufferLineBufferVisible` name vs `BufferLineBuffer` name ≥ 1.25; `BufferLineBufferVisible.bg` vs `BufferLineBufferSelected.bg` ≥ 1.3; and that no inactive name reaches the selected name's contrast (FR-002, FR-001, FR-003, FR-004, FR-006; SC-002, SC-003). Also assert the two invariants T004 added to §B, which are contract clauses and would otherwise go unasserted anywhere runnable: `BufferLineSeparatorSelected` has `fg == bg` with contrast exactly 1.00, and `BufferLineIndicatorSelected` is ≥ `SECONDARY` **and** below `BufferLineBufferSelected`
+- [X] T012 [US1] Append to `nvim/lua/tests/highlight_emphasis_smoke.lua` the contract §C cases: each of `BufferLine{Error,Warning,Info,Hint,Modified,CloseButton}Selected` ≥ `PRIMARY` against the selected background, **and** each ≥ `contrast(BufferLineBuffer, its own bg)` so a tinted active tab never reads weaker than a plain inactive one (FR-008)
+- [X] T013 [US1] Run the suite and record which US1 cases fail. Expect the bg-separation case and the non-focused cases to fail; expect the name-contrast cases to pass already. **If a name case fails, stop** — the palette has drifted from the contract and T004's reconciliation is incomplete. **Recorded** — 4 failures, and no name case failed, so the palette is intact:
+
+| US1 case | measured | floor | red phase |
+|---|---|---|---|
+| active bg vs inactive bg | **1.05** | ≥ 1.3 | ✗ FAIL — the defect |
+| non-focus name vs inactive name | **1.00** | ≥ 1.25 | ✗ FAIL |
+| non-focus bg vs active bg | **1.02** | ≥ 1.3 | ✗ FAIL |
+| separator vanishes (T004) | **1.08** | == 1.00 | ✗ FAIL — new invariant, unset today |
+| active name vs own bg | 13.99 | ≥ 4.5 | ✓ passes already |
+| active name ≥ 1.5× inactive | 1.98× | ≥ 1.5 | ✓ passes already |
+| inactive name vs own bg | 7.08 | ≥ 3.0 | ✓ passes already |
+| inactive name below active name | 7.08 < 13.99 | ordinal | ✓ passes already |
+
+The suite is fail-fast, matching the convention in the other 13 suites, so it reports the first failure
+(`active background separates from the inactive background`, 1.05). The full set above was enumerated
+from the read-only [quickstart.md](quickstart.md) §6 probe, which reports every ratio without
+asserting. All six §C overlays pass at baseline (11.63–14.55 on the old `#14161b`), and their bold
+flags already match the T004 rule, so T012 contributes no red cases.
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] [R§B] Add to the `on_highlights` hook of the `tokyonight` entry in `nvim/plugin/editor.lua` the four §B overrides: `BufferLineBufferSelected` (`fg = '#e0e2ea'`, `bold = true`, `bg = '#2d3f76'`), `BufferLineBufferVisible` (`fg = '#a6adf8'`, `bg = '#1f2131'`), `BufferLineIndicatorSelected` (`fg = '#7aa2f7'`), and `BufferLineSeparatorSelected` (`fg = '#2d3f76'`, `bg = '#2d3f76'` — must vanish, contrast exactly 1.00)
-- [ ] T015 [US1] [R§C] In the same hook, add the six §C overrides from the value table above, each restating `bg = '#2d3f76'`. Bold on `Error`, `Warning`, `Info`, `Hint` only; **no** `bold` on `Modified` or `CloseButton` — bold marks severity, not row state ([contracts/highlight-contract.md](contracts/highlight-contract.md) §C bold rule)
-- [ ] T016 [US1] Declare a new local `active_tab_bg = '#2d3f76'` in the `on_highlights` hook in `nvim/plugin/editor.lua`, beside the existing `readable_comment` / `hidden_path` / `explorer_row` locals, and use it for the selected-tab background. **Do not reuse `explorer_row`**, even though both hold `'#2d3f76'` today: `explorer_row` drives `SnacksPickerListCursorLine`, so sharing the name would let a change to the picker's row silently repaint the active buffer tab. FR-021 requires an intentional override to be tellable from an accidental one, and two unrelated concerns sharing one variable is the opposite. Comment the local with a pointer to [contracts/highlight-contract.md](contracts/highlight-contract.md) as the authority
-- [ ] T017 [US1] Re-run the suite: all US1 cases green, all US2 cases still failing, exit 0 (SC-002, SC-003, SC-008's measurable half; FR-001, FR-003, FR-004, FR-006, FR-008)
-- [ ] T018 [P] [US1] Confirm `nvim/lua/config/buffers.lua` and the bufferline option block in `nvim/plugin/editor.lua` are untouched — no option, no tab ordering, no naming, no close-icon behavior (FR-007)
+- [X] T014 [US1] [R§B] Add to the `on_highlights` hook of the `tokyonight` entry in `nvim/plugin/editor.lua` the five §B overrides: `BufferLineBufferSelected` (`fg = '#e0e2ea'`, `bold = true`, `bg = '#2d3f76'`), `BufferLineBufferVisible` (`fg = '#a6adf8'`, `bg = '#1f2131'`), `BufferLineBuffer` (`fg = '#636da6'`, `bg = '#191b28'` — see the note above; this replaces bufferline's own `desert` palette), `BufferLineIndicatorSelected` (`fg = '#7aa2f7'`), and `BufferLineSeparatorSelected` (`fg = '#2d3f76'`, `bg = '#2d3f76'` — must vanish, contrast exactly 1.00)
+- [X] T015 [US1] [R§C] In the same hook, add the six §C overrides from the value table above, each restating `bg = '#2d3f76'`. Bold on `Error`, `Warning`, `Info`, `Hint` only; **no** `bold` on `Modified` or `CloseButton` — bold marks severity, not row state ([contracts/highlight-contract.md](contracts/highlight-contract.md) §C bold rule)
+- [X] T016 [US1] Declare a new local `active_tab_bg = '#2d3f76'` in the `on_highlights` hook in `nvim/plugin/editor.lua`, beside the existing `readable_comment` / `hidden_path` / `explorer_row` locals, and use it for the selected-tab background. **Do not reuse `explorer_row`**, even though both hold `'#2d3f76'` today: `explorer_row` drives `SnacksPickerListCursorLine`, so sharing the name would let a change to the picker's row silently repaint the active buffer tab. FR-021 requires an intentional override to be tellable from an accidental one, and two unrelated concerns sharing one variable is the opposite. Comment the local with a pointer to [contracts/highlight-contract.md](contracts/highlight-contract.md) as the authority
+- [X] T017 [US1] Re-run the suite: all US1 cases green, all US2 cases still failing, exit 0 (SC-002, SC-003, SC-008's measurable half; FR-001, FR-003, FR-004, FR-006, FR-008)
+- [X] T018 [P] [US1] Confirm `nvim/lua/config/buffers.lua` and the bufferline option block in `nvim/plugin/editor.lua` are untouched — no option, no tab ordering, no naming, no close-icon behavior (FR-007)
 
 **Checkpoint**: User Story 1 is fully functional and independently testable. The buffer row reads
 correctly while the number column is still the reported defect — which is exactly the state

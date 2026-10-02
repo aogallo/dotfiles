@@ -108,3 +108,88 @@ check(
 vim.print(
     string.format('harness ready: Normal bg=%s, PRIMARY=%.1f, SECONDARY=%.1f', hex(normal_bg()), PRIMARY, SECONDARY)
 )
+
+-- ---------------------------------------------------------------------------
+-- User Story 1, contract section B: the buffer row
+-- ---------------------------------------------------------------------------
+
+local sel = g 'BufferLineBufferSelected'
+local vis = g 'BufferLineBufferVisible'
+local ina = g 'BufferLineBuffer'
+local sep = g 'BufferLineSeparatorSelected'
+local ind = g 'BufferLineIndicatorSelected'
+
+-- Each name measured against the background it actually sits on.
+local sel_own = cr(sel.fg, sel.bg)
+local ina_own = cr(ina.fg, ina.bg)
+
+check(sel_own >= PRIMARY, 'US1 active name clears PRIMARY against its own bg', sel_own, PRIMARY)
+check(sel_own >= 1.5 * ina_own, 'US1 active name is at least 1.5x the inactive name', sel_own / ina_own, 1.5)
+check(
+    cr(sel.bg, ina.bg) >= 1.3,
+    'US1 active background separates from the inactive background',
+    cr(sel.bg, ina.bg),
+    1.3
+)
+check(ina_own >= SECONDARY, 'US1 inactive name clears SECONDARY against its own bg', ina_own, SECONDARY)
+check(
+    cr(vis.fg, ina.fg) >= 1.25,
+    'US1 non-focused window name is distinguishable from the inactive name',
+    cr(vis.fg, ina.fg),
+    1.25
+)
+check(cr(vis.bg, sel.bg) >= 1.3, 'US1 non-focused window background does not mimic focus', cr(vis.bg, sel.bg), 1.3)
+check(ina_own < sel_own, 'US1 no inactive name reaches the active name contrast', ina_own < sel_own, true)
+
+-- Invariants added by T004. They are contract clauses now, so they are asserted
+-- here rather than living only in the read-only probe.
+check(
+    sep.fg == sep.bg and cr(sep.fg, sep.bg) == 1.0,
+    'US1 separator vanishes on the active tab (fg equals bg)',
+    { fg = hex(sep.fg), bg = hex(sep.bg) },
+    'fg equals bg'
+)
+check(
+    cr(ind.fg, sel.bg) >= SECONDARY and cr(ind.fg, sel.bg) < sel_own,
+    'US1 indicator is visible but does not outrank the active name',
+    cr(ind.fg, sel.bg),
+    '>= ' .. SECONDARY .. ' and < ' .. sel_own
+)
+
+-- ---------------------------------------------------------------------------
+-- User Story 1, contract section C: diagnostic overlays on the active tab
+-- ---------------------------------------------------------------------------
+
+-- bold marks a severity, not a row state: only the four diagnostic overlays
+-- carry it. Modified and CloseButton are state markers (contract section C).
+local OVERLAYS = {
+    { name = 'Error', fg = '#ffc0b9', bold = true },
+    { name = 'Warning', fg = '#fce094', bold = true },
+    { name = 'Info', fg = '#8cf8f7', bold = true },
+    { name = 'Hint', fg = '#a6dbff', bold = true },
+    { name = 'Modified', fg = '#b3f6c0', bold = false },
+    { name = 'CloseButton', fg = '#e0e2ea', bold = false },
+}
+
+for _, o in ipairs(OVERLAYS) do
+    local h = g('BufferLine' .. o.name .. 'Selected')
+    local measured = cr(h.fg, h.bg)
+    check(
+        measured >= PRIMARY,
+        'US1 overlay ' .. o.name .. ' clears PRIMARY on the active background',
+        measured,
+        PRIMARY
+    )
+    check(
+        measured >= ina_own,
+        'US1 overlay ' .. o.name .. ' is never weaker than a plain inactive name',
+        measured,
+        ina_own
+    )
+    check(
+        (h.bold and true or false) == o.bold,
+        'US1 overlay ' .. o.name .. ' bold is ' .. tostring(o.bold),
+        h.bold and true or false,
+        o.bold
+    )
+end
