@@ -32,7 +32,7 @@ local notifications = require 'notifications'
 require('config.buffers').setup()
 
 add {
-    { src = "nvim-lua/plenary.nvim" ],
+    { src = 'nvim-lua/plenary.nvim' },
     {
         src = 'folke/snacks.nvim',
         opts = {
