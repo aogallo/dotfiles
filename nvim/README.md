@@ -128,6 +128,70 @@ or re-running the `:DBObjects` entry that produced it.
 
 Buffer navigation uses `<S-h>` (next) and `<S-l>` (previous). These mappings are muted from which-key. Closing and buffer-list actions stay under the `<leader>b` domain (`<leader>bx`, `<leader>bo`, `<leader>bb`).
 
+### Number column and buffer-row colors
+
+**What decides the appearance of both the number column and the buffer row**: the `on_highlights`
+hook of the `tokyonight` entry in `nvim/plugin/editor.lua`. It is the only place these colors are
+set. The hook owns **14 highlight groups**:
+
+| Region | Groups |
+| --- | --- |
+| number column | `LineNr`, `LineNrAbove`, `LineNrBelow` |
+| buffer row | `BufferLineBufferSelected`, `BufferLineBufferVisible`, `BufferLineBuffer`, `BufferLineIndicatorSelected`, `BufferLineSeparatorSelected` |
+| overlays on the active tab | `BufferLineErrorSelected`, `BufferLineWarningSelected`, `BufferLineInfoSelected`, `BufferLineHintSelected`, `BufferLineModifiedSelected`, `BufferLineCloseButtonSelected` |
+
+Two thresholds are shared by both regions: **4.5** for text that must be read (the active tab's name,
+every diagnostic overlay, `CursorLineNr`) and **3.0** for the rest (`LineNr*`, the inactive tab's
+name). Each value is a literal, never derived from another plugin's tint math, so an intentional
+override is always tellable from an accident.
+
+To change a color, edit the `on_highlights` hook and nothing else. The active tab's background is a
+local named `active_tab_bg`, kept separate from `explorer_row` on purpose: both currently hold
+`#2d3f76`, but `explorer_row` drives the picker's cursor line, and sharing one name would let a
+change to the picker silently repaint the active buffer tab.
+
+Two things must move together: raising the active background raises the bar the inactive row has to
+clear. `BufferLineBuffer` measures **3.47:1** against a 3.0 floor, so it is the invariant that
+**tightens** whenever `active_tab_bg` rises -- re-check it in the same edit. Separately, `bold` marks
+a diagnostic severity, not a row state: only `Error`, `Warning`, `Info` and `Hint` carry it, while
+`Modified` and `CloseButton` do not.
+
+`CursorLineNr` is out of scope and must not be recolored to satisfy the others. It stays `#ff966c`
+at 7.16:1 so the cursor's number remains the strongest in the column (6.07:1 for the relative
+numbers) and keeps its own column position.
+
+The full contract, including the measured ratios behind every value and the change protocol for
+editing them, is
+[`specs/012-line-number-buffer-highlights/contracts/highlight-contract.md`](../specs/012-line-number-buffer-highlights/contracts/highlight-contract.md).
+
+Prerequisites: none. Both plugins ship with this configuration -- there is nothing to install,
+enable or opt into.
+
+Manual activation: none. The hook runs during `:colorscheme`, so the values are present on the first
+draw after a normal start. There is nothing to call by hand.
+
+Installer support: none. The change creates, installs, links or copies no file; it only sets
+highlight values inside an existing hook.
+
+Manual-only operations: none for the change itself. The interactive walkthroughs in
+[`specs/012-line-number-buffer-highlights/quickstart.md`](../specs/012-line-number-buffer-highlights/quickstart.md)
+§5 are validation steps to run once by hand, not operations the configuration requires. Everything
+else here is asserted headlessly.
+
+Reduced-color terminals: the change sets only `fg` and `bg`, never `ctermfg`/`ctermbg` or a truecolor
+escape, so Neovim maps the colors to whatever the terminal supports. A terminal without truecolor
+degrades rather than errors -- `--cmd 'set notermguicolors'` starts clean.
+
+Rollback: an ordinary `git revert`. Nothing to restore, unlink or re-seed, because the change
+creates and replaces no file and adds no dependency, keymap, autocmd or user command. Reverting the
+hook restores tokyonight's and bufferline's own colors, which is the pre-change state.
+
+Troubleshooting -- **my change did not take effect**: confirm the value lives in the `on_highlights`
+hook in `nvim/plugin/editor.lua` and not in some local override layered on top of it, and confirm you
+restarted or re-ran `:colorscheme tokyonight` -- the hook fires on that event, not on every redraw.
+`nvim/nvim-pack-lock.json` is unrelated to appearance; a change there affects plugin versions, never
+colors.
+
 When Neovim starts without a file argument, the Snacks dashboard shows a header, quick keymaps, and recent files.
 
 ### Which database am I querying
@@ -945,11 +1009,21 @@ nvim --headless -u NORC -c 'lua require("tests.formatter_chains_smoke")' -c 'qa!
 nvim --headless -u NORC -c 'lua require("tests.db_context_smoke")' -c 'qa!'
 nvim --headless -u nvim/init.lua -c 'lua require("tests.markdown_whitespace_smoke")' -c 'qa!'
 nvim --headless -u nvim/init.lua -c 'lua require("tests.no_formatter_warning_smoke")' -c 'qa!'
+# active buffer emphasis (spec 012, issue #95): needs the real configuration, because
+# the values under test are defined by the tokyonight on_highlights hook
+nvim --headless -u nvim/init.lua -c 'lua require("tests.highlight_emphasis_smoke")' -c 'qa!'
 ```
 
 The last two skip with exit 0 when the formatting toolchain is not loadable, so the block stays
 green on a machine without it. `no_formatter_warning_smoke` relies on `shfmt` being absent, so it
 says `SKIP`-style information rather than passing quietly if that binary ever appears.
+
+`highlight_emphasis_smoke` is the one suite that must run against `nvim/init.lua`: it measures
+highlight groups that only exist once tokyonight and bufferline are loaded, so under `-u NORC` it
+would read `nil` and pass for the wrong reason. It opens a scratch buffer first, because this
+repository puts its plugin pack on the runtimepath lazily and the groups are absent until one is
+opened. It self-checks its own contrast math against two standard WCAG values before any assertion
+depends on it.
 
 Live-server scenarios (execution, browser, interactive consoles, `:DBObjects` source loading)
 are manual-only; see `specs/archive/2026-09-23-001-sybase-nvim-client/quickstart.md`.
