@@ -31,6 +31,105 @@ local notifications = require 'notifications'
 -- from nvim/plugin/database.lua; nothing below changes bufferline's options.
 require('config.buffers').setup()
 
+-- Single source of truth for the highlight groups this repository overrides.
+--
+-- Load order is what makes this work, and it is why the colorscheme is applied
+-- above in its own batch. bufferline derives its palette from the highlight
+-- groups present when it is set up, and it used to be set up before any
+-- colorscheme existed -- so it fell back to Neovim's built-in defaults (#101).
+--
+-- Applying the colorscheme first is sufficient: bufferline applies its derived
+-- highlights with nvim_set_hl(..., { default = true }) because config.options
+-- .themable defaults to true and this configuration does not disable it, so it
+-- leaves alone any group that is already defined. The overrides below win by
+-- being defined first. Setting themable = false would break that and would then
+-- need an explicit re-apply after bufferline's setup.
+--
+-- Every colour is a tokyonight palette token rather than a hand-picked literal,
+-- so switching tokyonight's style carries them instead of leaving them stranded.
+--
+-- Under any other colorscheme this function does not run at all, bufferline
+-- derives the row natively from that colorscheme, and none of these values leak
+-- into it.
+local palette
+
+local function apply_editor_highlights(hl, c)
+    c = c or palette
+    palette = c
+    if not c then
+        return
+    end
+
+    -- Keep low-priority text readable without flattening Tokyonight moon.
+    local readable_comment = '#9aa7cf'
+    local hidden_path = '#a9b8e8'
+    local explorer_row = '#2d3f76'
+
+    -- Background of the buffer tab being edited. Taken from the palette's own
+    -- bg_highlight, and deliberately not the same value as explorer_row: that one
+    -- drives SnacksPickerListCursorLine, and sharing a literal made the active tab
+    -- and the picker row read as one layer. specs/012's highlight-contract.md is
+    -- the authority for every value below.
+    local active_tab_bg = c.bg_highlight
+
+    hl.Comment = { fg = readable_comment, italic = true }
+    hl['@comment'] = { fg = readable_comment, italic = true }
+    hl.SnacksPickerComment = { fg = readable_comment, italic = true }
+
+    hl.SnacksPickerPathHidden = { fg = hidden_path }
+    hl.SnacksPickerPathIgnored = { fg = c.fg_gutter }
+    hl.SnacksPickerFile = { fg = c.fg }
+    hl.SnacksPickerDirectory = { fg = c.blue, bold = true }
+    hl.SnacksPickerDir = { fg = c.fg_gutter }
+
+    hl.SnacksPickerListCursorLine = { bg = explorer_row }
+    hl.SnacksPickerSelected = { fg = c.orange, bold = true }
+    hl.SnacksPickerGitStatusUntracked = { fg = c.green }
+    hl.SnacksPickerGitStatusIgnored = { fg = c.dark5 }
+
+    -- Relative line numbers. Tokyonight's gutter grey measured 1.56:1 against
+    -- Normal, below the 3.0 floor; dark5 clears it at 3.67:1 while staying a
+    -- desaturated grey-blue rather than a vivid accent. The cursor's own number
+    -- keeps c.orange at 7.16:1 in its own column, so the ordinal order is
+    -- preserved rather than flattened.
+    hl.LineNr = { fg = c.dark5 }
+    hl.LineNrAbove = { fg = c.dark5 }
+    hl.LineNrBelow = { fg = c.dark5 }
+
+    -- Buffer row. The active tab carries the emphasis through two channels: the
+    -- strongest name and a background the inactive row no longer shares.
+    hl.BufferLineBufferSelected = { fg = c.fg, bg = active_tab_bg, bold = true }
+    hl.BufferLineBufferVisible = { fg = c.fg_dark, bg = c.bg_dark1 }
+    hl.BufferLineBuffer = { fg = c.comment, bg = c.bg_dark1 }
+    hl.BufferLineIndicatorSelected = { fg = c.blue }
+    -- fg equals bg so the separator divides segments without drawing an edge
+    -- inside the tab that should read as one solid block.
+    hl.BufferLineSeparatorSelected = { fg = active_tab_bg, bg = active_tab_bg }
+
+    -- Overlays on the active tab. Bold marks a diagnostic severity, so only the
+    -- four severities carry it; Modified and CloseButton are state markers.
+    hl.BufferLineErrorSelected = { fg = c.red, bg = active_tab_bg, bold = true }
+    hl.BufferLineWarningSelected = { fg = c.orange, bg = active_tab_bg, bold = true }
+    hl.BufferLineInfoSelected = { fg = c.blue2, bg = active_tab_bg, bold = true }
+    hl.BufferLineHintSelected = { fg = c.blue5, bg = active_tab_bg, bold = true }
+    hl.BufferLineModifiedSelected = { fg = c.green, bg = active_tab_bg }
+    hl.BufferLineCloseButtonSelected = { fg = c.fg, bg = active_tab_bg }
+end
+
+-- The colorscheme is applied between the two batches on purpose. Anything that
+-- derives its palette from the highlight groups has to see tokyonight first.
+add {
+    {
+        src = 'folke/tokyonight.nvim',
+        opts = {
+            style = 'moon',
+            on_highlights = apply_editor_highlights,
+        },
+    },
+}
+
+vim.cmd [[colorscheme tokyonight]]
+
 add {
     { src = 'nvim-lua/plenary.nvim' },
     {
@@ -145,71 +244,6 @@ add {
         },
     },
     {
-        src = 'folke/tokyonight.nvim',
-        opts = {
-            style = 'moon',
-            on_highlights = function(hl, c)
-                -- Keep low-priority text readable without flattening Tokyonight moon.
-                local readable_comment = '#9aa7cf'
-                local hidden_path = '#a9b8e8'
-                local explorer_row = '#2d3f76'
-
-                -- Background of the buffer tab being edited. Deliberately a separate
-                -- local from explorer_row even though both hold '#2d3f76': that one
-                -- drives SnacksPickerListCursorLine, so sharing the name would let a
-                -- change to the picker's row silently repaint the active buffer tab.
-                -- specs/012-line-number-buffer-highlights/contracts/highlight-contract.md
-                -- is the authority for every value below.
-                local active_tab_bg = '#2d3f76'
-
-                hl.Comment = { fg = readable_comment, italic = true }
-                hl['@comment'] = { fg = readable_comment, italic = true }
-                hl.SnacksPickerComment = { fg = readable_comment, italic = true }
-
-                hl.SnacksPickerPathHidden = { fg = hidden_path }
-                hl.SnacksPickerPathIgnored = { fg = c.fg_gutter }
-                hl.SnacksPickerFile = { fg = c.fg }
-                hl.SnacksPickerDirectory = { fg = c.blue, bold = true }
-                hl.SnacksPickerDir = { fg = c.fg_gutter }
-
-                hl.SnacksPickerListCursorLine = { bg = explorer_row }
-                hl.SnacksPickerSelected = { fg = c.orange, bold = true }
-                hl.SnacksPickerGitStatusUntracked = { fg = c.green }
-                hl.SnacksPickerGitStatusIgnored = { fg = c.dark5 }
-
-                -- Relative line numbers. Tokyonight's gutter grey measured 1.56:1
-                -- against Normal, below the 3.0 floor; the cursor's own number stays
-                -- #ff966c at 7.16:1 and keeps its separate column, so the ordinal order
-                -- is preserved rather than flattened.
-                hl.LineNr = { fg = '#7aa2f7' }
-                hl.LineNrAbove = { fg = '#7aa2f7' }
-                hl.LineNrBelow = { fg = '#7aa2f7' }
-
-                -- Buffer row. The active tab carries the emphasis through two channels:
-                -- the strongest name and a background the inactive row no longer shares.
-                -- akinsho/bufferline.nvim is configured without a theme, so it would
-                -- otherwise paint this row in its own desert greys; BufferLineBuffer is
-                -- set explicitly to keep the three states distinguishable.
-                hl.BufferLineBufferSelected = { fg = '#e0e2ea', bg = active_tab_bg, bold = true }
-                hl.BufferLineBufferVisible = { fg = '#a6adf8', bg = '#1f2131' }
-                hl.BufferLineBuffer = { fg = '#636da6', bg = '#191b28' }
-                hl.BufferLineIndicatorSelected = { fg = '#7aa2f7' }
-                -- fg equals bg so the separator divides segments without drawing an edge
-                -- inside the tab that should read as one solid block.
-                hl.BufferLineSeparatorSelected = { fg = active_tab_bg, bg = active_tab_bg }
-
-                -- Overlays on the active tab. Bold marks a diagnostic severity, so only
-                -- the four severities carry it; Modified and CloseButton are state markers.
-                hl.BufferLineErrorSelected = { fg = '#ffc0b9', bg = active_tab_bg, bold = true }
-                hl.BufferLineWarningSelected = { fg = '#fce094', bg = active_tab_bg, bold = true }
-                hl.BufferLineInfoSelected = { fg = '#8cf8f7', bg = active_tab_bg, bold = true }
-                hl.BufferLineHintSelected = { fg = '#a6dbff', bg = active_tab_bg, bold = true }
-                hl.BufferLineModifiedSelected = { fg = '#b3f6c0', bg = active_tab_bg }
-                hl.BufferLineCloseButtonSelected = { fg = '#e0e2ea', bg = active_tab_bg }
-            end,
-        },
-    },
-    {
         src = 'folke/which-key.nvim',
         on_setup = function()
             local wk = require 'which-key'
@@ -309,5 +343,3 @@ add_on_event('UIEnter', {
         },
     },
 })
-
-vim.cmd [[colorscheme tokyonight]]
