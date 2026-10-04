@@ -130,9 +130,9 @@ Buffer navigation uses `<S-h>` (next) and `<S-l>` (previous). These mappings are
 
 ### Number column and buffer-row colors
 
-**What decides the appearance of both the number column and the buffer row**: the `on_highlights`
-hook of the `tokyonight` entry in `nvim/plugin/editor.lua`. It is the only place these colors are
-set. The hook owns **14 highlight groups**:
+**What decides the appearance of both the number column and the buffer row**: the
+`apply_editor_highlights` function in `nvim/plugin/editor.lua`, passed to tokyonight as
+`on_highlights`. It is the only place these colors are set. It owns **14 highlight groups**:
 
 | Region | Groups |
 | --- | --- |
@@ -142,22 +142,48 @@ set. The hook owns **14 highlight groups**:
 
 Two thresholds are shared by both regions: **4.5** for text that must be read (the active tab's name,
 every diagnostic overlay, `CursorLineNr`) and **3.0** for the rest (`LineNr*`, the inactive tab's
-name). Each value is a literal, never derived from another plugin's tint math, so an intentional
-override is always tellable from an accident.
+name). Colors come from the tokyonight palette as `c.*` tokens rather than hand-picked literals, so
+switching tokyonight's style carries them instead of leaving them stranded in whatever style is
+active. The only remaining literals are `readable_comment`, `hidden_path` and `explorer_row`, all
+Snacks-related and outside this contract.
 
-To change a color, edit the `on_highlights` hook and nothing else. The active tab's background is a
-local named `active_tab_bg`, kept separate from `explorer_row` on purpose: both currently hold
-`#2d3f76`, but `explorer_row` drives the picker's cursor line, and sharing one name would let a
-change to the picker silently repaint the active buffer tab.
+To change a color, edit `apply_editor_highlights` and nothing else.
+
+**Why the colorscheme is applied between two `add` calls.** Anything that derives colors from the
+highlight groups has to see tokyonight first, so the tokyonight entry is loaded and
+`:colorscheme tokyonight` runs before the batch containing bufferline and everything else. Tokyonight
+stays under `vim.pack` management and its `nvim-pack-lock.json` entry is unchanged.
+
+This is the whole of the fix for issue #101, and it is sufficient on its own. `bufferline.nvim`
+derives its palette from the highlight groups that exist when it is set up, and it used to be set up
+while `vim.g.colors_name` was still `<none>`, so it painted the row in Neovim's built-in defaults
+(`#9b9ea4` on `#0f1014`). Because bufferline applies its derived highlights with
+`nvim_set_hl(..., { default = true })` — its `themable` option defaults to true and this
+configuration does not disable it — it leaves alone any group that is already defined. Defining the
+overrides first is therefore enough; no re-apply is needed after bufferline's `setup()`.
+
+One coupling to know about: that reasoning depends on `themable` staying true. Setting
+`themable = false` in the bufferline options would make it clobber the overrides, and an explicit
+re-apply after its `setup()` would then be required.
+
+**Behavior when you switch colorschemes.** `apply_editor_highlights` only runs for tokyonight, so
+under any other colorscheme bufferline derives its row natively from that colorscheme and none of
+these values leak into it. Switching away and back to tokyonight restores the values above exactly.
+
+The active tab's background is a local named `active_tab_bg` set to `c.bg_highlight`, deliberately
+**not** the same value as `explorer_row` (`#2d3f76`, which drives `SnacksPickerListCursorLine`). The
+two used to hold one shared literal, which made the active tab and the picker's cursor line read as a
+single layer.
 
 Two things must move together: raising the active background raises the bar the inactive row has to
 clear. `BufferLineBuffer` measures **3.47:1** against a 3.0 floor, so it is the invariant that
-**tightens** whenever `active_tab_bg` rises -- re-check it in the same edit. Separately, `bold` marks
-a diagnostic severity, not a row state: only `Error`, `Warning`, `Info` and `Hint` carry it, while
-`Modified` and `CloseButton` do not.
+**tightens** whenever `active_tab_bg` rises -- re-check it in the same edit. The active and inactive
+names must also stay **1.5x** apart (currently 2.39x) so the active tab is still the emphatic one.
+Separately, `bold` marks a diagnostic severity, not a row state: only `Error`, `Warning`, `Info` and
+`Hint` carry it, while `Modified` and `CloseButton` do not.
 
 `CursorLineNr` is out of scope and must not be recolored to satisfy the others. It stays `#ff966c`
-at 7.16:1 so the cursor's number remains the strongest in the column (6.07:1 for the relative
+at 7.16:1 so the cursor's number remains the strongest in the column (3.67:1 for the relative
 numbers) and keeps its own column position.
 
 The full contract, including the measured ratios behind every value and the change protocol for

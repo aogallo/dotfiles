@@ -48,6 +48,12 @@ rather than an omission. See [Dependencies](#dependencies--execution-order).
 Phases **1** (Setup), **2** (Foundational) and the final **Polish** phase carry **no** `[US#]`
 label, per the format rules. Only user-story phases are labelled.
 
+**Note on the value table below**: it records the values T014, T015 and T022 were written
+against, and those three tasks are complete, so it is left as written rather than rewritten.
+Phase 8 supersedes it — the current values are in
+[contracts/highlight-contract.md](contracts/highlight-contract.md) §A-§C and in
+[research.md](research.md) R-0009.
+
 **Note on ID order**: T046–T049 were appended by `/speckit.analyze` to close coverage and
 constitution gaps. Because IDs are stable and must not be renumbered, they appear out of numeric
 order inside Phase 5 (T048, T049) and Phase 6 (T046, T047). Nothing depends on the ordering.
@@ -293,6 +299,21 @@ documented validation commands report success.
 - [X] T044 Verify every relative link in `tasks.md` resolves and that each user-story phase's `Story Link` points at its `spec.md` heading (FR-029, constitution XV)
 - [X] T045 [P] Decide whether R-0008's load-order defect gets its own issue, and raise it if so — it is a real bug affecting any plugin deriving colors eagerly, and it was deliberately left unfixed here. **Tracked as issue #101**
 - [X] T050 Prove the coverage's **mutation** property, which FR-027 requires and no other task checks. It carries no `[US#]` label because it spans two stories: it must run after both the US1 buffer-row overrides (T014–T016) and the US2 number-column overrides (T022) have landed. On a scratch copy of the working tree, revert the `LineNr` override and separately the `BufferLineBufferSelected` background in `nvim/plugin/editor.lua`, and confirm `nvim --headless -u nvim/init.lua -c 'lua require("tests.highlight_emphasis_smoke")' -c 'qa!'` exits **1** both times with the offending assertion named, then discard the copy. A suite that still exits 0 after the emphasis is removed satisfies every threshold but none of FR-027's intent, and T013/T021's one-time red phase cannot detect that (FR-027; US1 and US2)
+
+---
+
+## Phase 8: Amendment — issue #101 (load order and toned-down palette)
+
+Added after the original 50 tasks completed, in response to issue #101 and the developer's report
+that the colors were too loud. Reverses R-0008's "out of scope" decision and re-tunes every value
+in the contract. Superseded targets are recorded in [research.md](research.md) R-0009.
+
+- [X] T051 [US1] Split the single eager `add{}` batch in `nvim/plugin/editor.lua` so the tokyonight entry loads and `:colorscheme tokyonight` runs **before** the batch containing bufferline. Tokyonight stays under `vim.pack` management and its `nvim/nvim-pack-lock.json` entry is unchanged — only the batch order moves. Verified by asserting `vim.g.colors_name` is a non-nil tokyonight style at the moment bufferline derives, which was `<none>` before ([research.md](research.md) R-0009)
+- [X] T052 [US1] Check whether the order fix alone suffices, and record the answer. A second re-apply from bufferline's `on_setup` was drafted on the reasoning that bufferline "rewrites" these groups during setup. It does not: `bufferline/highlights.lua` applies each group with `default = config.options.themable`, which defaults to `true`, so it skips groups that are already defined. Proven by mutation — removing the re-apply changed none of the 14 measured values. The re-apply was deleted rather than kept as dead code with a false justification, the closure was renamed to the named local `apply_editor_highlights` so the values stay stated once (FR-005, FR-021), and the residual `themable = false` coupling is documented in the contract instead ([research.md](research.md) R-0009)
+- [X] T053 [US1] Re-tune the palette to tokyonight tokens, lowering the intensity of every loud value: `LineNr*` `#7aa2f7` → `c.dark5` **6.07 → 3.67**, active name `#e0e2ea` → `c.fg` on `c.bg_highlight` **7.79 → 8.28**, visible `#a6adf8`/`#1f2131` → `c.fg_dark`/`c.bg_dark1`, indicator `#7aa2f7` → `c.blue` **4.00 → 5.37**, and all six overlays onto `c.red`/`c.orange`/`c.blue2`/`c.blue5`/`c.green`/`c.fg`, with the worst overlay **6.47 → 4.76**. `CursorLineNr` is untouched at `#ff966c` per the developer's explicit instruction (SC-004, SC-005)
+- [X] T054 [US1] Decouple the active tab's background from `explorer_row`. Both previously held `#2d3f76`, which made the active buffer tab and `SnacksPickerListCursorLine` read as a single layer. `active_tab_bg` is now `c.bg_highlight` (`#2f334d`); `explorer_row` keeps `#2d3f76` for the picker alone. Measured bg separation against the inactive row is **1.38**, above the 1.3 floor
+- [X] T055 [US4] Prove the corrected palette still satisfies every contract clause by re-measuring all 14 groups from a running editor and re-running the mutation matrix against the new code: **5/5** mutations caught (the original 3 plus "active bg == inactive bg" and "LineNr back to the bright blue"), against 601 assertions and 0 failures across 14 suites. While doing this, close a real coverage gap: the `OVERLAYS` table's `fg` field was **never read** by the loop that consumed it, so no overlay color was pinned anywhere and the suite would have passed for any hue that satisfied the contrast floors. Added the pin, plus a block pinning the other eight groups (including the frozen `CursorLineNr`) and asserting the active tab no longer shares a value with `SnacksPickerListCursorLine`
+- [X] T056 [US4] Amend [contracts/highlight-contract.md](contracts/highlight-contract.md), [data-model.md](data-model.md) and [nvim/README.md](../../nvim/README.md) with the new measured values, and record in the contract's Mechanism section that **load order is itself a contract requirement** — the observable check is that `vim.g.colors_name` is a tokyonight style when bufferline derives, and that the groups hold §B/§C afterwards. Correct the stale claim that the inactive row came from a bufferline `desert` theme: it came from Neovim's defaults before any colorscheme loaded
 
 ---
 

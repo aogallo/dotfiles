@@ -28,7 +28,7 @@ plugin pack installed. Run everything from the repository root.
 
 **The number column.** Relative line numbers change from near-invisible to clearly readable. Today
 they measure 1.56:1 against the background — measurably closer to the background than to any
-legibility threshold. After the change they measure 6.07:1. The cursor's own line number stays
+legibility threshold. After the change they measure 3.67:1. The cursor's own line number stays
 orange and stays the strongest number in the column.
 
 **The buffer row.** The active buffer's name stays bright, and its **tab now has a visible
@@ -73,38 +73,39 @@ configuration; "after" was read back after applying the change.
 
 | Group | Before | After | Floor |
 |---|---|---|---|
-| `LineNr` (relative) | **1.56:1** | **6.07:1** | 3.0 |
-| `LineNrAbove` | **1.56:1** | **6.07:1** | 3.0 |
-| `LineNrBelow` | **1.56:1** | **6.07:1** | 3.0 |
+| `LineNr` (relative) | **1.56:1** | **3.67:1** | 3.0 |
+| `LineNrAbove` | **1.56:1** | **3.67:1** | 3.0 |
+| `LineNrBelow` | **1.56:1** | **3.67:1** | 3.0 |
 | `CursorLineNr` | 7.16:1 | 7.16:1 *(unchanged)* | 4.5 |
 
-Ordinal check: the cursor's number (7.16) must stay stronger than the relative ones (6.07). It does.
+Ordinal check: the cursor's number (7.16) must stay stronger than the relative ones (3.67). It does.
 
 ### Buffer row
 
 | Measure | Before | After | Floor |
 |---|---|---|---|
-| active name vs its own background | 13.99:1 | 7.79:1 | 4.5 |
-| active name as a multiple of inactive | 1.98× | 2.24× | 1.5× |
-| **active background vs inactive background** | **1.05** | **1.70** | 1.3 |
+| active name vs its own background | 13.99:1 | 8.28:1 | 4.5 |
+| active name as a multiple of inactive | 1.98× | 3.30× | 1.5× |
+| **active background vs inactive background** | **1.05** | **1.38** | 1.3 |
 | inactive name vs its own background | 3.47:1 | 3.47:1 | 3.0 |
-| non-focused name vs inactive name | **1.00** | **2.33** | 1.25 |
-| non-focused background vs active background | **1.02** | 1.58 | 1.3 |
+| non-focused name vs inactive name | **1.00** | **1.48** | 1.25 |
+| non-focused background vs active background | **1.02** | 1.38 | 1.3 |
 
 Note the two "before" values in bold. Those are the defects. The active name's own contrast and the
-1.98× multiplier were **already passing** — that is why the design changes the background rather than
-the name ([research.md](research.md) R-0002).
+1.98× multiplier were **already passing** — that is why the original design changed the background
+rather than the name ([research.md](research.md) R-0002). Both are now explicit tokyonight tokens
+(`c.fg` on `c.bg_highlight`), tuned down at the developer's request ([research.md](research.md) R-0009).
 
 ### Diagnostic overlays on the active tab
 
 | Group | After | Floor |
 |---|---|---|
-| `BufferLineErrorSelected` | 6.47:1 | 4.5 |
-| `BufferLineWarningSelected` | 7.79:1 | 4.5 |
-| `BufferLineInfoSelected` | 8.10:1 | 4.5 |
-| `BufferLineHintSelected` | 6.81:1 | 4.5 |
-| `BufferLineModifiedSelected` | 8.09:1 | 4.5 |
-| `BufferLineCloseButtonSelected` | 7.79:1 | 4.5 |
+| `BufferLineErrorSelected` | 4.76:1 | 4.5 |
+| `BufferLineWarningSelected` | 5.78:1 | 4.5 |
+| `BufferLineInfoSelected` | 5.25:1 | 4.5 |
+| `BufferLineHintSelected` | 8.14:1 | 4.5 |
+| `BufferLineModifiedSelected` | 8.96:1 | 4.5 |
+| `BufferLineCloseButtonSelected` | 8.28:1 | 4.5 |
 
 ### The one to watch
 
@@ -199,7 +200,7 @@ then at the prompt:
 ```
 
 **Pass**: after switching away and back, both groups hold the configured values
-(`#7aa2f7`, and `#e0e2ea` on `#2d3f76`) — not a default colorscheme's values. This is FR-017 and is
+(`#737aa2`, and `#c8d3f5` on `#2f334d`) — not a default colorscheme's values. This is FR-017 and is
 the check most likely to catch a mechanism mistake, because a startup-only override passes §3 and
 fails here ([research.md](research.md) R-0005).
 
@@ -323,7 +324,7 @@ if ind.fg then
         hex(ind.fg), hex(sel.bg), iv, nv,
         (iv >= 3.0 and iv < nv) and 'PASS' or 'FAIL'))
 else
-    print(string.format('  indicator  fg=%s   FAIL (expected fg #7aa2f7)', hex(ind.fg)))
+    print(string.format('  indicator  fg=%s   FAIL (expected fg #82aaff)', hex(ind.fg)))
 end
 
 print('\n-- frozen by FR-015: these must be untouched --')

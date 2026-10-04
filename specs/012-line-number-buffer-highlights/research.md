@@ -330,6 +330,50 @@ math re-derived. Two changes to one file's ordering in one commit also make the 
 untestable in isolation. **Recommended as its own issue**, since it likely affects other plugins
 added by `add{}` that derive colors at setup time.
 
+**Superseded by R-0009** — tracked as issue #101 and fixed. R-0008's premise was correct and its
+recommendation was followed; only its "out of scope" decision is reversed.
+
+### R-0009 — The load-order defect, confirmed by traceback and fixed
+
+R-0008 predicted the defect but assumed a single cause. A traceback through
+`vim-pack.lua:29` (`configure` → `mod.setup`) into
+`bufferline/config.lua:174` (`derive_colors`) confirmed the mechanism exactly, and corrected the
+diagnosis:
+
+- `vim.pack.add()` is eager: `configure()` calls each module's `setup()` immediately, not lazily.
+- bufferline's `setup()` therefore ran at `editor.lua` `add{...}` — while `vim.g.colors_name` was
+  `<none>` — and read Neovim's built-in defaults: `Comment` `#9b9ea4`, `Normal` `#e0e2ea`/`#14161b`,
+  `String` `#b3f6c0`.
+- **This is not a bufferline `desert` theme**, and not a `packpath` or `termguicolors` problem. Both
+  of those hypotheses were tested and disproved: the plugin is found and loaded, and
+  `termguicolors` was already true with no effect on the result.
+- An isolated tokyonight + bufferline load derives correctly
+  (`#191b28`/`#9aa7cf`), so the plugin's derivation is sound; only its timing was wrong.
+
+**Fix**: split the single `add{}` batch. The tokyonight entry loads and `:colorscheme tokyonight` runs
+first; bufferline and everything else load after. Tokyonight remains under `vim.pack` with its lock
+entry untouched.
+
+**A second half that turned out not to exist.** The first draft of the fix also re-applied
+`apply_editor_highlights` from bufferline's `on_setup`, on the reasoning that bufferline "rewrites"
+these groups during setup and would therefore win. That reasoning was wrong, and the reason is
+`bufferline/highlights.lua`: it applies each group with
+`hl.default = vim.F.if_nil(opts.default, config.options.themable)`, and `themable` defaults to
+`true` (bufferline's own comment: "whether or not bufferline highlights can be overridden
+externally"). This configuration does not set `themable`, so bufferline calls
+`nvim_set_hl(0, name, hl)` with `default = true` and **skips any group that is already defined**.
+
+Confirmed by mutation: removing the `on_setup` re-apply changed no measured value — all 14 groups
+read identically with and without it — and the smoke suite passed either way. The re-apply was
+therefore deleted rather than left in as dead code carrying a false justification. The residual
+coupling is real and is documented instead: setting `themable = false` would reintroduce the
+clobber and make an explicit re-apply necessary.
+
+**Verified**: `vim.g.colors_name` is `tokyonight-moon` at the moment bufferline derives, and
+`BufferLineBuffer` holds the contract's §B values afterwards. Mutation-tested — five mutations of
+the new code were each caught by `highlight_emphasis_smoke` (3/3 in the original matrix, 5/5 after
+adding "active bg == inactive bg" and "LineNr back to the bright blue").
+
 ---
 
 ### R-0009 — Scope and portability are unaffected

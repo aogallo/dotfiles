@@ -13,8 +13,8 @@ any legibility floor) and the active buffer's name in the buffer row.
 
 **Technical approach** — extend the `tokyonight` `on_highlights` hook already present at
 `nvim/plugin/editor.lua:150-171` with two groups of overrides: the three number-column groups
-(`LineNr`, `LineNrAbove`, `LineNrBelow` → `#7aa2f7`) and a small set of buffer-row groups that give
-the active tab a real background (`#2d3f76`) alongside its already-strong name, plus a distinct
+(`LineNr`, `LineNrAbove`, `LineNrBelow` → `#737aa2`) and a small set of buffer-row groups that give
+the active tab a real background (`#2f334d`) alongside its already-strong name, plus a distinct
 treatment for a buffer selected in a non-focused window. No new plugin, no autocmd, no user
 command, no keymap, no option.
 
@@ -31,10 +31,10 @@ ways".
 
 | Requirement | Measured | Floor | |
 |---|---|---|---|
-| relative numbers legible (SC-004) | 6.07:1 | 3.0 | PASS |
+| relative numbers legible (SC-004) | 3.67:1 | 3.0 | PASS |
 | cursor line number (SC-005) | 7.16:1 | 4.5 | PASS |
 | ordinal order preserved (FR-010) | 7.16 > 6.07 | — | PASS |
-| active name (SC-002) | 7.79:1, 2.24× inactive | 4.5, 1.5× | PASS |
+| active name (SC-002) | 8.28:1, 3.30× inactive | 4.5, 1.5× | PASS |
 | inactive floor (SC-003) | 3.47:1 | 3.0 | PASS |
 | selected region reads as selected | 1.70:1 | 1.3 | PASS |
 | non-focused window distinguishable (FR-006) | 2.33:1 vs inactive; 1.58:1 vs selected | 1.25 / 1.3 | PASS |

@@ -41,15 +41,15 @@ ordered by prominence, and the order is a requirement (FR-010), not a coincidenc
 | State | Group | Baseline (today) | Target | Invariant |
 |---|---|---|---|---|
 | cursor's line | `CursorLineNr` | `#ff966c` bold, **7.16:1** | **unchanged** | strongest number in the column |
-| relative number | `LineNr`, `LineNrAbove`, `LineNrBelow` | `#3b4261`, **1.56:1** | `#7aa2f7`, **6.07:1** | ≥ 3.0, and weaker than the cursor's |
+| relative number | `LineNr`, `LineNrAbove`, `LineNrBelow` | `#3b4261`, **1.56:1** | `#737aa2`, **3.67:1** | ≥ 3.0, and weaker than the cursor's |
 | background | `Normal` | `#222436` | **unchanged** | — |
 
 **Fields**: `foreground` (hex), `bold` (bool), `measured_contrast` (float).
 
 **Validation rules**:
 
-- `contrast(cursor) > contrast(relative)` — FR-010. Baseline 7.16 > 6.07 after; **1.56 < 7.16
-  before**, so this ordering already held and must not invert.
+- `contrast(cursor) > contrast(relative)` — FR-010. After: 7.16 > 3.67; before: 1.56 < 7.16. The
+  ordering held throughout and must not invert.
 - `contrast(relative) ≥ 3.0` — SC-004. **Baseline 1.56 FAILS.** This is the defect (R-0001).
 - `contrast(cursor) ≥ 4.5` — SC-005. Baseline 7.16 passes and is frozen by Out of Scope.
 
@@ -69,9 +69,9 @@ wrong outright is the inactive row, which bufferline paints in its own palette (
 
 | State | Group | Baseline (today) | Target | Invariant |
 |---|---|---|---|---|
-| focused buffer | `BufferLineBufferSelected` | name `#e0e2ea` on bg `#14161b`, **13.99:1**, bg-vs-inactive **1.05** | name `#e0e2ea` on bg `#2d3f76`, **7.79:1**, bg-vs-inactive **1.70** | name ≥ 4.5; ordinal ≥ 1.5× inactive; **bg separation ≥ 1.3** |
-| selected in a non-focused window | `BufferLineBufferVisible` | name `#9b9ea4` on bg `#121418` | name `#a6adf8` on bg `#1f2131` | ordinal vs inactive ≥ 1.25 **and** bg vs selected ≥ 1.3 |
-| inactive | `BufferLineBuffer` | name `#9b9ea4` on bg `#0f1014`, **7.08:1** — bufferline's built-in `desert` theme, not tokyonight | name `#636da6` on bg `#191b28`, **3.47:1** | name ≥ 3.0 |
+| focused buffer | `BufferLineBufferSelected` | name `#e0e2ea` on bg `#14161b`, **13.99:1**, bg-vs-inactive **1.05** | name `#c8d3f5` on bg `#2f334d`, **8.28:1**, bg-vs-inactive **1.38** | name ≥ 4.5; ordinal ≥ 1.5× inactive; **bg separation ≥ 1.3** |
+| selected in a non-focused window | `BufferLineBufferVisible` | name `#9b9ea4` on bg `#121418` | name `#828bb8` on bg `#191b29`, **5.15:1**, ordinal **1.48** | ordinal vs inactive ≥ 1.25 **and** bg vs selected ≥ 1.3 |
+| inactive | `BufferLineBuffer` | name `#9b9ea4` on bg `#0f1014`, **7.08:1** — bufferline's built-in `desert` theme, not tokyonight | name `#636da6` on bg `#191b29`, **3.47:1** | name ≥ 3.0 |
 
 **The inactive row is a correction, not a side effect.** `akinsho/bufferline.nvim` is configured with
 no `theme`, so it paints the row in its own hardcoded greys. The original baseline column of this
@@ -86,8 +86,8 @@ and recorded here so this document, the contract, [quickstart.md](quickstart.md)
 
 | Element | Group | Baseline | Target | Invariant |
 |---|---|---|---|---|
-| segment divider inside the active tab | `BufferLineSeparatorSelected` | not overridden | fg `#2d3f76`, bg `#2d3f76` | `fg == bg == selected bg`, contrast exactly **1.00** — it must vanish |
-| left indicator on the active tab | `BufferLineIndicatorSelected` | not overridden | fg `#7aa2f7` | `≥ 3.0` (measured **4.00**) **and** `< contrast(BufferLineBufferSelected)` (7.79) |
+| segment divider inside the active tab | `BufferLineSeparatorSelected` | not overridden | fg `#2f334d`, bg `#2f334d` | `fg == bg == selected bg`, contrast exactly **1.00** — it must vanish |
+| left indicator on the active tab | `BufferLineIndicatorSelected` | not overridden | fg `#82aaff`, **5.37:1** | `≥ 3.0` **and** `< contrast(BufferLineBufferSelected)` (8.28) |
 
 **Fields**: `name_foreground`, `background`, `bold`, `visible_width` (for truncation — Edge Case,
 "very long buffer names"), `ordinal_against(state)`.
@@ -132,12 +132,12 @@ because a tint can weaken the very emphasis the active tab is supposed to have.
 
 | Overlay | Group | Baseline on selected bg | Target | Invariant |
 |---|---|---|---|---|
-| error | `BufferLineErrorSelected` | `#ffc0b9`, 11.63:1 on `#14161b` | `#ffc0b9` on `#2d3f76`, **6.47:1** | ≥ 4.5 |
-| warning | `BufferLineWarningSelected` | `#fce094`, 13.99:1 | **7.79:1** | ≥ 4.5 |
-| info | `BufferLineInfoSelected` | `#8cf8f7`, 14.55:1 | **8.10:1** | ≥ 4.5 |
-| hint | `BufferLineHintSelected` | `#a6dbff`, 12.24:1 | **6.81:1** | ≥ 4.5 |
-| modified | `BufferLineModifiedSelected` | `#b3f6c0`, 14.53:1 | **8.09:1**, **not bold** | ≥ 4.5 |
-| close icon | `BufferLineCloseButtonSelected` | `#e0e2ea`, 13.99:1 | `#e0e2ea` on `#2d3f76`, **not bold** | ≥ 4.5 |
+| error | `BufferLineErrorSelected` | `#ffc0b9`, 11.63:1 on `#14161b` | `#ff757f` on `#2f334d`, **4.76:1** | ≥ 4.5 |
+| warning | `BufferLineWarningSelected` | `#fce094`, 13.99:1 | `#ff966c`, **5.78:1** | ≥ 4.5 |
+| info | `BufferLineInfoSelected` | `#8cf8f7`, 14.55:1 | `#0db9d7`, **5.25:1** | ≥ 4.5 |
+| hint | `BufferLineHintSelected` | `#a6dbff`, 12.24:1 | `#89ddff`, **8.14:1** | ≥ 4.5 |
+| modified | `BufferLineModifiedSelected` | `#b3f6c0`, 14.53:1 | `#c3e88d`, **8.96:1**, **not bold** | ≥ 4.5 |
+| close icon | `BufferLineCloseButtonSelected` | `#e0e2ea`, 13.99:1 | `#c8d3f5` on `#2f334d`, **8.28:1**, **not bold** | ≥ 4.5 |
 
 **Bold is a severity marker, not a row marker**: only the four diagnostic overlays are bold. The
 R-0003 probe set `bold = true` on `Modified`, which contradicted
@@ -205,16 +205,18 @@ independently configurable; changing a value means changing Entity 5.
 
 | Invariant | Baseline | Target | Status |
 |---|---|---|---|
-| relative number ≥ 3.0 | **1.56** | 6.07 | **fixed** |
+| relative number ≥ 3.0 | **1.56** | 3.67 | **fixed** |
 | cursor number ≥ 4.5 | 7.16 | 7.16 | holds, frozen |
 | cursor stronger than relative | holds | holds | preserved |
-| active name ≥ 4.5 | 13.99 | 7.79 | holds |
-| active name ≥ 1.5× inactive | 1.98× | 2.24× | holds |
+| active name ≥ 4.5 | 13.99 | 8.28 | holds |
+| active name ≥ 1.5× inactive | 1.98× | 3.30× | holds |
 | inactive name ≥ 3.0 | 3.47 | 3.47 | holds |
-| active region vs inactive region ≥ 1.3 | **1.05** | 1.70 | **fixed** |
-| non-focused name vs inactive ≥ 1.25 | **1.00** | 2.33 | **fixed** |
-| non-focused bg vs active bg ≥ 1.3 | 1.02 | 1.58 | **fixed** |
-| worst diagnostic on active ≥ 4.5 | **11.63** (but 3 below plain name) | 6.47 | holds, now uniformly |
+| active region vs inactive region ≥ 1.3 | **1.05** | 1.38 | **fixed** |
+| non-focused name vs inactive ≥ 1.25 | **1.00** | 1.48 | **fixed** |
+| non-focused bg vs active bg ≥ 1.3 | 1.02 | 1.38 | **fixed** |
+| worst diagnostic on active ≥ 4.5 | **11.63** (but 3 below plain name) | 4.76 | holds, now uniformly |
+| separator vanishes (fg == bg) | not overridden | 1.00 | **fixed** |
+| indicator below the active name | not overridden | 5.37 < 8.28 | holds |
 
 Three of the ten invariants are genuinely broken at baseline — the two the developer reported, plus
 the non-focused-window case R-0004 found while measuring. Two more already hold and are **frozen**:
