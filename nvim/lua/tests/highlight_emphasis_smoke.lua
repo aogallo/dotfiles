@@ -185,17 +185,20 @@ check(
 -- bold marks a severity, not a row state: only the four diagnostic overlays
 -- carry it. Modified and CloseButton are state markers (contract section C).
 local OVERLAYS = {
-    { name = 'Error', fg = '#ffc0b9', bold = true },
-    { name = 'Warning', fg = '#fce094', bold = true },
-    { name = 'Info', fg = '#8cf8f7', bold = true },
-    { name = 'Hint', fg = '#a6dbff', bold = true },
-    { name = 'Modified', fg = '#b3f6c0', bold = false },
-    { name = 'CloseButton', fg = '#e0e2ea', bold = false },
+    { name = 'Error', fg = '#ff757f', bold = true },
+    { name = 'Warning', fg = '#ff966c', bold = true },
+    { name = 'Info', fg = '#0db9d7', bold = true },
+    { name = 'Hint', fg = '#89ddff', bold = true },
+    { name = 'Modified', fg = '#c3e88d', bold = false },
+    { name = 'CloseButton', fg = '#c8d3f5', bold = false },
 }
 
 for _, o in ipairs(OVERLAYS) do
     local h = g('BufferLine' .. o.name .. 'Selected')
     local measured = cr(h.fg, h.bg)
+    -- The contrast floors below would still pass for the wrong hue, so pin the
+    -- palette token too. `fg` sat unused in this table until the #101 amendment.
+    check(hex(h.fg) == o.fg, 'US1 overlay ' .. o.name .. ' uses its palette token', hex(h.fg), o.fg)
     check(
         meets(measured, PRIMARY),
         'US1 overlay ' .. o.name .. ' clears PRIMARY on the active background',
@@ -320,6 +323,38 @@ for _, n in ipairs { 'Normal', 'Comment', 'String', 'SignColumn', 'StatusLine' }
         { fg = hex(w.fg), bg = hex(w.bg) }
     )
 end
+
+-- #101: the palette is tokyonight tokens, and every relation above would still
+-- pass for the wrong hue. Pin the actual values so a palette regression is
+-- caught here rather than by eye. CursorLineNr is frozen by contract section A
+-- and is pinned deliberately: it is the one value that must never drift.
+local PALETTE = {
+    { group = 'LineNr', fg = '#737aa2' },
+    { group = 'LineNrAbove', fg = '#737aa2' },
+    { group = 'LineNrBelow', fg = '#737aa2' },
+    { group = 'CursorLineNr', fg = '#ff966c' },
+    { group = 'BufferLineBufferSelected', fg = '#c8d3f5', bg = '#2f334d' },
+    { group = 'BufferLineBufferVisible', fg = '#828bb8', bg = '#191b29' },
+    { group = 'BufferLineBuffer', fg = '#636da6', bg = '#191b29' },
+    { group = 'BufferLineIndicatorSelected', fg = '#82aaff' },
+}
+
+for _, p in ipairs(PALETTE) do
+    local h = g(p.group)
+    check(hex(h.fg) == p.fg, 'palette ' .. p.group .. ' keeps its foreground', hex(h.fg), p.fg)
+    if p.bg then
+        check(hex(h.bg) == p.bg, 'palette ' .. p.group .. ' keeps its background', hex(h.bg), p.bg)
+    end
+end
+
+-- The active tab must not share a value with the picker's cursor line any more:
+-- they used to both be #2d3f76 and read as one layer.
+check(
+    g('BufferLineBufferSelected').bg ~= g('SnacksPickerListCursorLine').bg,
+    'palette the active tab is decoupled from SnacksPickerListCursorLine',
+    hex(g('BufferLineBufferSelected').bg),
+    hex(g('SnacksPickerListCursorLine').bg)
+)
 
 -- FR-013 / FR-016: layout options must not have moved.
 check(vim.o.relativenumber == true, 'US3 relativenumber is still on', vim.o.relativenumber, true)
