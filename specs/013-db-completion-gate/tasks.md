@@ -325,11 +325,12 @@ prefix, a bare prefix, and a reserved word prefix.
   surface here: record in `nvim/README.md` that no installer step, managed file, or generated output
   was added, so clean-install, repeated-install, and conflict-handling checks are not applicable to
   this change
-- [ ] T045 Commit on the feature branch `013-db-completion-gate` with a conventional message; never
-  commit directly to `main`
-- [ ] T046 Before opening the PR, verify the change's scope fit against `spec.md`, confirm the PR
+- [X] T045 Commit on the feature branch `013-db-completion-gate` with a conventional message; never
+  commit directly to `main` (done: `05492ff`, pushed to `origin/013-db-completion-gate`)
+- [X] T046 Before opening the PR, verify the change's scope fit against `spec.md`, confirm the PR
   links the originating issue, and ask the developer whether this spec should be closed as the
-  completed solution (FR-034, FR-035)
+  completed solution (FR-034, FR-035) (done: scope verified; no originating issue exists — the
+  spec's Input is the source; PR body states this and poses the closure question)
 
 ---
 
@@ -521,5 +522,7 @@ With multiple developers:
   the literal "table lookups only" wording, but the fast-event guard runs first, so blink never
   consults it outside a typing context where the current buffer is the intended one. Considered
   safe; recorded here rather than changing the contract mid-flight.
-- **T045/T046**: open — commit on `013-db-completion-gate` and PR/scope check await the
-  developer's go-ahead (never commit directly on `main`).
+- **T045/T046**: commit `05492ff` on `013-db-completion-gate`, PR
+  [#105](https://github.com/aogallo/dotfiles/pull/105) against `main`. No originating issue exists
+  (searched the repo); the spec's Input is the source, and the PR says so. Spec closure is the
+  developer's call.
