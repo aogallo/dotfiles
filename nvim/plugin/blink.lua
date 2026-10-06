@@ -110,6 +110,25 @@ add {
                     vim_dadbod_completion = {
                         module = 'vim_dadbod_completion.blink',
                         name = 'vim_dadbod_completion',
+                        -- Schema completion must never connect while the
+                        -- developer types (specs/013-db-completion-gate,
+                        -- FR-001): the gate is consulted on every request, so
+                        -- toggling it takes effect immediately. The gate reads
+                        -- the per-connection usability verdict maintained in
+                        -- nvim/lua/config/db_completion.lua. Configured in place
+                        -- rather than removed from per_filetype, so the provider
+                        -- options and the trigger-character composition are
+                        -- unchanged (research.md D-0001, R-0012).
+                        enabled = function()
+                            return require('config.db_completion').enabled()
+                        end,
+                        -- NOTE (specs/013-db-completion-gate, research.md
+                        -- R-0040): this option is inert. The upstream module's
+                        -- M.new() takes no parameters and discards opts, so the
+                        -- effective trigger characters are the plugin's own
+                        -- { '"', '`', '[', ']', '.'' }. Left as-is deliberately:
+                        -- correcting it would change suggestion behavior, which
+                        -- SC-010 forbids in this feature.
                         opts = { trigger_characters = { '.', '_' } },
                     },
                     snippets = {

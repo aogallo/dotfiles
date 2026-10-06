@@ -723,7 +723,52 @@ query progress float are upstream vim-dadbod behavior and are not configurable f
 Schema completion inside `*.sql` buffers comes from the dadbod blink provider
 (`nvim/plugin/blink.lua`, enabled for the `sql` filetype). Table names complete after `.` or `_`.
 Column completion is provided natively for SQL Server but not for Sybase or MongoDB; those
-schemes degrade gracefully to tables only.
+schemes degrade gracefully to tables only. The completion path itself is gated — see
+[Database completion gate](#database-completion-gate).
+
+### Database completion gate
+
+Spec: `specs/013-db-completion-gate/`. Schema completion used to reach the database on every
+suggestion request, so an unreachable connection froze the editor as you typed SQL. The gate
+(`nvim/lua/config/db_completion.lua`) decides once per connection whether suggestions may be
+generated, and the typing path then has nothing left to do.
+
+- **Starting state**: the switch is **on**, and no connection is usable until its first
+  determination succeeds.
+- **`<leader>qc`** (also `:DBCompletionToggle`) — flip database completion globally. Exactly one
+  notice names the new state; the which-key label tracks it live as
+  `database: DB completion (on)` / `(off)`. Only database completion is affected: `lsp`, `path`,
+  `snippets`, and `buffer` sources keep working.
+- **Automatic per-connection disabling** — if the first attempt on a connection fails, that
+  connection disables itself once and never retries on its own. One warning per connection per
+  session:
+
+  ```
+  Could not reach <database> — the database is unavailable. Schema completion stays off.
+  ```
+
+  (`<database>` is the database name derived from the connection URL, never the raw URL.) A
+  healthy connection produces no notices at all.
+- **`:DBCompletionRefresh`** — recovery route: re-attempts the connection and restores completion
+  inside the same session if the database is back. A connection that is still down stays off and
+  reports its failure once; running it with no bound connection makes zero attempts and says so.
+- **Automatic recovery on query** — running a query against an off connection re-runs one
+  determination, so completion comes back without pressing anything.
+
+**Troubleshooting: "the editor freezes when I type SQL"**
+
+1. Press `<leader>qc` to toggle database completion off — editing continues, other completion
+   sources are untouched.
+2. Press `<leader>qc` again to turn it back on.
+3. Run a query (or `:DBCompletionRefresh` in the buffer) once the database is reachable; the
+   connection reopens by itself.
+4. `:DBCompletionRefresh` on a buffer whose database is still down is safe: one attempt, one
+   message, no repeated retries.
+
+If completion is off and you did not toggle it, look for the automatic-disabling warning in the
+notification history. Nothing in this gate writes to disk: no installer step, managed file, or
+generated output is added by this feature, so clean-install / repeated-install / conflict-handling
+checks are not applicable.
 
 ### `:DBObjects`
 
@@ -846,6 +891,7 @@ header (see [Documenting a function](#documenting-a-function)):
 | `nvim/lua/config/db_jump.lua` | `<leader>qj` — toggle between the code buffer and the DB workspace |
 | `nvim/lua/config/buffers.lua` | the buffer-visibility guard: gives an unlisted buffer its tab back when you return to it, and decides what is generated output that takes none |
 | `nvim/lua/config/db_query_buffer.lua` | the query draft registry: display name, connection binding and in-memory text of a query buffer, so a closed query can be explicitly reopened |
+| `nvim/lua/config/db_completion.lua` | the database completion gate: switch state (`M.enabled()`), one determination per connection (`M.determine()`), automatic disabling + notices, `M.refresh()` and the `DBExecutePre` recovery trigger (`:DBCompletionToggle`, `:DBCompletionRefresh`) — see [Database completion gate](#database-completion-gate) |
 | `nvim/autoload/db/adapter/sybase.vim` | the Sybase ASE adapter: client argv, batch handling, catalog queries, object source extraction |
 | `nvim/lua/tests/*_smoke.lua` | offline smoke tests (temp `sqsh`/`isql` stubs, no server needed) |
 
@@ -893,6 +939,11 @@ DB-module behavior → the function that implements it → where it is specified
 | Pre-execution cross-database warning | `M.setup()` → `User */DBExecutePre` | `specs/009-trim-trailing-whitespace/` (FR-019, FR-020, FR-022), `db_context_smoke.lua` |
 | Formatter chain per file type, with the whitespace fallback | `M.markdown()`, `has_signal()`, `M.markdown_project_markers` | `specs/009-trim-trailing-whitespace/` (FR-001–FR-008), `formatter_chains_smoke.lua` |
 | One warning when no formatter is available, no duplicate notice | `save_will_format()`, `format_on_save`, `M.no_formatter_message()` | `specs/009-trim-trailing-whitespace/` (FR-009, FR-010), `no_formatter_warning_smoke.lua` |
+| Schema completion never blocks editing; one determination per connection | `M.enabled()`, `M.determine()`, `M.toggle()`, `M.refresh()`, `setup()` | `specs/013-db-completion-gate/` (FR-001–FR-014), `db_completion_smoke.lua` |
+| Global switch `<leader>qc` with a live which-key label | `M.toggle()`, `state_label()` | `specs/013-db-completion-gate/` (FR-008, FR-009, FR-011), `db_completion_toggle_smoke.lua` |
+| Failed connection disables itself once; others untouched | `notice_shown`/`attempted` guards, notice helper | `specs/013-db-completion-gate/` (FR-012, FR-013), `db_completion_smoke.lua` |
+| Recovery without a restart (`:DBCompletionRefresh`, `DBExecutePre`) | `M.refresh()`, `query_pre` trigger | `specs/013-db-completion-gate/` (FR-017–FR-019), `db_completion_toggle_smoke.lua` |
+| Healthy connection: suggestions identical with and without the gate | `M.enabled()` consulted before the provider | `specs/013-db-completion-gate/` (SC-010, US5), `db_completion_gate_healthy_smoke.lua` |
 
 ### Client prerequisites
 
