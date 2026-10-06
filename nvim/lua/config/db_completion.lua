@@ -1,4 +1,4 @@
--- Database completion gate (specs/013-db-completion-gate).
+-- Database completion gate (specs/archive/2026-10-06-001-db-completion-gate).
 --
 -- The provider contributed by kristijanhusak/vim-dadbod-completion runs
 -- synchronously on every keystroke in a SQL buffer and, when the connection

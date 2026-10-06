@@ -1,4 +1,4 @@
--- Toggle and recovery smoke test (specs/013-db-completion-gate,
+-- Toggle and recovery smoke test (specs/archive/2026-10-06-001-db-completion-gate,
 -- quickstart.md §3).
 --
 -- Covers User Story 2 (the switch and its visible state) and User Story 4 (both

@@ -111,7 +111,7 @@ add {
                         module = 'vim_dadbod_completion.blink',
                         name = 'vim_dadbod_completion',
                         -- Schema completion must never connect while the
-                        -- developer types (specs/013-db-completion-gate,
+                        -- developer types (specs/archive/2026-10-06-001-db-completion-gate,
                         -- FR-001): the gate is consulted on every request, so
                         -- toggling it takes effect immediately. The gate reads
                         -- the per-connection usability verdict maintained in
@@ -122,7 +122,7 @@ add {
                         enabled = function()
                             return require('config.db_completion').enabled()
                         end,
-                        -- NOTE (specs/013-db-completion-gate, research.md
+                        -- NOTE (specs/archive/2026-10-06-001-db-completion-gate, research.md
                         -- R-0040): this option is inert. The upstream module's
                         -- M.new() takes no parameters and discards opts, so the
                         -- effective trigger characters are the plugin's own

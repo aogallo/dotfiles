@@ -4,7 +4,13 @@
 
 **Created**: 2026-10-05
 
-**Status**: Draft
+**Status**: Closed (archived 2026-10-06; see [verify-report.md](./verify-report.md))
+
+> **Closed** (2026-10-06): delivered. 46/46 tasks in [tasks.md](./tasks.md) are `[X]`; the gate
+> ships in `nvim/lua/config/db_completion.lua` (wired from `nvim/plugin/blink.lua` and
+> `nvim/plugin/database.lua`), is covered by `db_completion_smoke.lua`,
+> `db_completion_toggle_smoke.lua`, and `db_completion_gate_healthy_smoke.lua`, and is documented
+> in `nvim/README.md`. Evidence in [verify-report.md](./verify-report.md).
 
 **Input**: User description: "Verifica como esta la conexion a la base de datos de sybase, creo saber de porque pasa esto, porque el completion se conecta cada vez que uno escribe para obtener la informacion de completion entiendo que es un proceso. pero esto esta ocasionando que no pueda ejecutar el script, tengo problemas de conexion pero esto no me deberia de impedir hacer el query y ejectuarlo aunque la conexion este mal entonces se me ocurre tener un keymap toggle para desahbilitar el completion para base de datos, que opciones propones?"
 

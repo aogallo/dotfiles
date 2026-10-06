@@ -5,7 +5,7 @@ description: "Task list for 013-db-completion-gate"
 
 # Tasks: Database Completion Never Blocks Editing
 
-**Input**: Design documents from `/specs/013-db-completion-gate/`
+**Input**: Design documents from `/specs/archive/2026-10-06-001-db-completion-gate/`
 
 **Prerequisites**: [plan.md](plan.md), [spec.md](spec.md), [research.md](research.md),
 [data-model.md](data-model.md), [contracts/db-completion-gate.md](contracts/db-completion-gate.md),

@@ -59,7 +59,7 @@ db_context.setup()
 -- no draft is ever written to disk.
 db_query_buffer.setup()
 
--- Database completion gate (specs/013-db-completion-gate): keeps schema
+-- Database completion gate (specs/archive/2026-10-06-001-db-completion-gate): keeps schema
 -- suggestion from ever connecting while the developer types, and gives the
 -- developer a switch plus an explicit way to retry a connection that failed.
 -- The gate is consulted by the provider's `enabled` option in

@@ -1,4 +1,4 @@
--- Gate smoke test (specs/013-db-completion-gate, quickstart.md §1).
+-- Gate smoke test (specs/archive/2026-10-06-001-db-completion-gate, quickstart.md §1).
 --
 -- The guarantee under test is that suggestion generation cannot reach the
 -- database. The most direct way to measure that is to count how often the

@@ -728,7 +728,7 @@ schemes degrade gracefully to tables only. The completion path itself is gated �
 
 ### Database completion gate
 
-Spec: `specs/013-db-completion-gate/`. Schema completion used to reach the database on every
+Spec: `specs/archive/2026-10-06-001-db-completion-gate/`. Schema completion used to reach the database on every
 suggestion request, so an unreachable connection froze the editor as you typed SQL. The gate
 (`nvim/lua/config/db_completion.lua`) decides once per connection whether suggestions may be
 generated, and the typing path then has nothing left to do.
@@ -939,11 +939,11 @@ DB-module behavior → the function that implements it → where it is specified
 | Pre-execution cross-database warning | `M.setup()` → `User */DBExecutePre` | `specs/009-trim-trailing-whitespace/` (FR-019, FR-020, FR-022), `db_context_smoke.lua` |
 | Formatter chain per file type, with the whitespace fallback | `M.markdown()`, `has_signal()`, `M.markdown_project_markers` | `specs/009-trim-trailing-whitespace/` (FR-001–FR-008), `formatter_chains_smoke.lua` |
 | One warning when no formatter is available, no duplicate notice | `save_will_format()`, `format_on_save`, `M.no_formatter_message()` | `specs/009-trim-trailing-whitespace/` (FR-009, FR-010), `no_formatter_warning_smoke.lua` |
-| Schema completion never blocks editing; one determination per connection | `M.enabled()`, `M.determine()`, `M.toggle()`, `M.refresh()`, `setup()` | `specs/013-db-completion-gate/` (FR-001–FR-014), `db_completion_smoke.lua` |
-| Global switch `<leader>qc` with a live which-key label | `M.toggle()`, `state_label()` | `specs/013-db-completion-gate/` (FR-008, FR-009, FR-011), `db_completion_toggle_smoke.lua` |
-| Failed connection disables itself once; others untouched | `notice_shown`/`attempted` guards, notice helper | `specs/013-db-completion-gate/` (FR-012, FR-013), `db_completion_smoke.lua` |
-| Recovery without a restart (`:DBCompletionRefresh`, `DBExecutePre`) | `M.refresh()`, `query_pre` trigger | `specs/013-db-completion-gate/` (FR-017–FR-019), `db_completion_toggle_smoke.lua` |
-| Healthy connection: suggestions identical with and without the gate | `M.enabled()` consulted before the provider | `specs/013-db-completion-gate/` (SC-010, US5), `db_completion_gate_healthy_smoke.lua` |
+| Schema completion never blocks editing; one determination per connection | `M.enabled()`, `M.determine()`, `M.toggle()`, `M.refresh()`, `setup()` | `specs/archive/2026-10-06-001-db-completion-gate/` (FR-001–FR-014), `db_completion_smoke.lua` |
+| Global switch `<leader>qc` with a live which-key label | `M.toggle()`, `state_label()` | `specs/archive/2026-10-06-001-db-completion-gate/` (FR-008, FR-009, FR-011), `db_completion_toggle_smoke.lua` |
+| Failed connection disables itself once; others untouched | `notice_shown`/`attempted` guards, notice helper | `specs/archive/2026-10-06-001-db-completion-gate/` (FR-012, FR-013), `db_completion_smoke.lua` |
+| Recovery without a restart (`:DBCompletionRefresh`, `DBExecutePre`) | `M.refresh()`, `query_pre` trigger | `specs/archive/2026-10-06-001-db-completion-gate/` (FR-017–FR-019), `db_completion_toggle_smoke.lua` |
+| Healthy connection: suggestions identical with and without the gate | `M.enabled()` consulted before the provider | `specs/archive/2026-10-06-001-db-completion-gate/` (SC-010, US5), `db_completion_gate_healthy_smoke.lua` |
 
 ### Client prerequisites
 

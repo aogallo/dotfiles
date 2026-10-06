@@ -37,7 +37,7 @@ if not ok_modules then
 end
 
 -- Notices raised while a case runs, so "emits no message" is assertable.
--- The database completion gate (specs/013-db-completion-gate) notices a
+-- The database completion gate (specs/archive/2026-10-06-001-db-completion-gate) notices a
 -- connection it cannot reach when a fixture first binds one; that is its
 -- FR-012 notice, not this suite's, so it is filtered rather than counted.
 local original_notify = vim.notify

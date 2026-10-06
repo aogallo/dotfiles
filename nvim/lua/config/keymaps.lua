@@ -39,7 +39,7 @@ vim.keymap.set('n', '<leader>qu', '<cmd>DBUIToggle<cr>', { desc = 'Database UI',
 vim.keymap.set('n', '<leader>qo', '<cmd>DBObjects<cr>', { desc = 'Database objects', silent = true })
 vim.keymap.set('n', '<leader>qr', require('config.db_results').show, { desc = 'Database results', silent = true })
 -- Schema completion is gated so it can never connect while the developer types
--- (specs/013-db-completion-gate, FR-001). The description here is the initial
+-- (specs/archive/2026-10-06-001-db-completion-gate, FR-001). The description here is the initial
 -- one; config/db_completion.lua re-registers it on every toggle so the label
 -- always shows the live state.
 vim.keymap.set(

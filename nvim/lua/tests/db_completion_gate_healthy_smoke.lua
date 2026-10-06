@@ -1,4 +1,4 @@
--- Smoke test: db_completion_gate_healthy_smoke (specs/013-db-completion-gate)
+-- Smoke test: db_completion_gate_healthy_smoke (specs/archive/2026-10-06-001-db-completion-gate)
 -- User Story 5: with a healthy connection, the gated provider offers exactly
 -- what the ungated provider offers. The gate is consulted before suggestions
 -- are requested; it must never mutate the provider's own cache or notice.

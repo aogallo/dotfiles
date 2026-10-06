@@ -2,7 +2,7 @@
 
 **Branch**: `013-db-completion-gate` | **Date**: 2026-10-05 | **Spec**: [spec.md](spec.md)
 
-**Input**: Feature specification from `specs/013-db-completion-gate/spec.md`
+**Input**: Feature specification from `specs/archive/2026-10-06-001-db-completion-gate/spec.md`
 
 ## Summary
 
@@ -92,7 +92,7 @@ covers the "no connection during suggestion generation" invariant with an instru
 ### Documentation (this feature)
 
 ```text
-specs/013-db-completion-gate/
+specs/archive/2026-10-06-001-db-completion-gate/
 ├── plan.md                       # This file
 ├── spec.md                       # /speckit.specify output
 ├── research.md                   # Phase 0 — mechanism evidence and decisions
