@@ -1,5 +1,6 @@
 require 'config.db_connections'
 
+local db_completion = require 'config.db_completion'
 local db_context = require 'config.db_context'
 local db_objects = require 'config.db_objects'
 local db_query_buffer = require 'config.db_query_buffer'
@@ -57,6 +58,21 @@ db_context.setup()
 -- from nvim/plugin/editor.lua. Everything this session holds is in memory only:
 -- no draft is ever written to disk.
 db_query_buffer.setup()
+
+-- Database completion gate (specs/archive/2026-10-06-001-db-completion-gate): keeps schema
+-- suggestion from ever connecting while the developer types, and gives the
+-- developer a switch plus an explicit way to retry a connection that failed.
+-- The gate is consulted by the provider's `enabled` option in
+-- nvim/plugin/blink.lua; the key is <leader>qc (nvim/lua/config/keymaps.lua).
+db_completion.setup()
+
+vim.api.nvim_create_user_command('DBCompletionToggle', function()
+    db_completion.toggle()
+end, { desc = 'Database completion: toggle on/off' })
+
+vim.api.nvim_create_user_command('DBCompletionRefresh', function()
+    db_completion.refresh()
+end, { desc = 'Database completion: retry this connection once' })
 
 vim.api.nvim_create_user_command('DBObjects', function(args)
     db_objects.open(args.fargs[1])

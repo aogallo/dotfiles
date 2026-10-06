@@ -38,6 +38,16 @@ vim.keymap.set('n', '<leader>qj', require('config.db_jump').jump, { desc = 'Data
 vim.keymap.set('n', '<leader>qu', '<cmd>DBUIToggle<cr>', { desc = 'Database UI', silent = true })
 vim.keymap.set('n', '<leader>qo', '<cmd>DBObjects<cr>', { desc = 'Database objects', silent = true })
 vim.keymap.set('n', '<leader>qr', require('config.db_results').show, { desc = 'Database results', silent = true })
+-- Schema completion is gated so it can never connect while the developer types
+-- (specs/archive/2026-10-06-001-db-completion-gate, FR-001). The description here is the initial
+-- one; config/db_completion.lua re-registers it on every toggle so the label
+-- always shows the live state.
+vim.keymap.set(
+    'n',
+    '<leader>qc',
+    require('config.db_completion').toggle,
+    { desc = 'database: DB completion (on)', silent = true }
+)
 
 -- Formatting.
 vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })
