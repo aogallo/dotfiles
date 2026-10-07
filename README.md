@@ -6,7 +6,9 @@ Implementation commits must not go directly to `main`. Create a feature branch, 
 work there with conventional commit messages, and submit it through a pull request linked to
 the approved issue for the change. Before creating a pull request, verify whether the active
 specification is related to the PR and ask whether that specification should be closed when
-the PR completes the solution.
+the PR completes the solution. The contributor — including any AI agent — must not merge
+their own pull request or push to `main`; the workflow stops at PR creation and the developer
+reviews and merges.
 
 ## Module README Standard
 

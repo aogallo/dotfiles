@@ -42,4 +42,6 @@
   idempotency, non-destructive behavior, modularity, dependencies, security,
   validation, installer experience, recovery, maintainability, module README coverage,
   documentation, task-to-story navigation in Spec Kit artifacts, and feature-branch/PR workflow
-  compliance, including active spec relationship and closure review before PR creation.
+  compliance, including active spec relationship and closure review before PR creation, and
+  that the PR is left open for the developer to review and merge (the contributor must not
+  merge its own PR or push to `main`).

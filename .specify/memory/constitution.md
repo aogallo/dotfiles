@@ -1,22 +1,27 @@
 <!--
 Sync Impact Report
-Version change: 1.3.0 -> 1.4.0
+Version change: 1.4.0 -> 1.5.0
 Modified principles:
-- XII. Documentation and Governance: clarified module README and Spec Kit navigation obligations
+- XIII. Feature Branch and PR Discipline: contributors (including AI agents and automated
+  tools) MUST NOT merge their own pull requests or push to `main`; the workflow stops at
+  PR creation and the developer reviews and merges
+- Governance: code review MUST block a contributor merging their own PR before developer review
+- Quality Gates: Branch/PR gate now includes the no-self-merge/no-push-to-main obligation
 Added sections:
-- XV. Spec Artifact Navigation
+- None
 Removed sections:
 - None
 Templates requiring updates:
-- ✅ updated: .specify/templates/plan-template.md
-- ✅ updated: .specify/templates/spec-template.md
-- ✅ updated: .specify/templates/tasks-template.md
-- ✅ updated: .specify/templates/checklist-template.md
+- ✅ updated: .specify/templates/plan-template.md (Branch/PR discipline bullet)
+- ✅ updated: .specify/templates/tasks-template.md (notes: never merge your own PR)
+- ✅ updated: .specify/templates/checklist-template.md (PR workflow compliance wording)
+- ✅ updated: .specify/templates/spec-template.md (no merge guidance present; unchanged)
 - ⚠ pending: .specify/templates/commands/*.md does not exist in this checkout
-- ⚠ pending: .opencode/commands/*.md does not exist in this checkout
-- ✅ updated: README.md
+  (command files live in .opencode/commands/; none instruct an agent to merge)
+- ✅ updated: README.md (Contribution Workflow)
 Follow-up TODOs:
-- None
+- None. PR #105 was merged by the agent on 2026-10-06 before this amendment; the change
+  content was user-approved, so no revert is proposed. The rule applies from now on.
 -->
 # macOS Dotfiles Constitution
 
@@ -133,12 +138,16 @@ submitted through a pull request before merge. Pull requests MUST link an approv
 when the repository workflow requires issue approval. Before a pull request is created, the
 active specification MUST be checked, the PR scope MUST be verified as related or unrelated
 to that specification, and the contributor MUST be asked whether the related specification
-should be closed when the PR represents the completed solution. Direct commits to `main` are
-permitted only for emergency recovery explicitly documented after the fact.
+should be closed when the PR represents the completed solution. The contributor — including
+any AI agent or automated tool — MUST NOT merge their own pull request, push to `main`, or
+otherwise integrate the change; the workflow stops at PR creation. The developer reviews the
+pull request, requests changes when needed, and performs the merge. Direct commits to `main`
+are permitted only for emergency recovery explicitly documented after the fact.
 
-Rationale: `main` is the integration branch. Keeping work on feature branches preserves
-reviewability, rollback boundaries, CI visibility, and a clean history of why changes were
-accepted.
+Rationale: `main` is the integration branch and its gatekeeper is the developer. Feature
+branches preserve reviewability, rollback boundaries, CI visibility, and a clean history of
+why changes were accepted; letting the author merge their own work — or letting an agent do
+it — removes the independent review that gives a pull request its meaning.
 
 ### XIV. Module README Contract
 
@@ -202,8 +211,10 @@ tool behavior MUST pass these gates before completion:
   its matching `spec.md` heading; non-story phases stay unlinked unless they have a clear story
   owner.
 - Branch/PR gate: implementation work happens on a feature branch, commits do not target
-  `main` directly, the pull request links the required approved issue before review, and PR
-  creation verifies whether the active specification is related and should be closed.
+  `main` directly, the pull request links the required approved issue before review, PR
+  creation verifies whether the active specification is related and should be closed, and
+  the contributor (including any AI agent) does not merge the PR or push to `main` — the
+  developer reviews and merges.
 
 ## Repository Scope
 
@@ -234,7 +245,8 @@ Implementation plans MUST evaluate every applicable quality gate before design a
 after design. Task lists MUST include concrete validation, documentation, module README, spec
 navigation, and rollback tasks whenever the change creates those obligations. Code review MUST
 block changes that violate MUST-level principles, commit implementation work directly to `main`,
-skip affected module README updates, skip task-to-story navigation, skip active specification
-linkage review during PR creation, or leave required validation failing.
+merge a contributor-authored pull request before the developer's review, skip affected module
+README updates, skip task-to-story navigation, skip active specification linkage review during
+PR creation, or leave required validation failing.
 
-**Version**: 1.4.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-27
+**Version**: 1.5.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-10-06
