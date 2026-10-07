@@ -261,6 +261,7 @@ With multiple developers:
 - Verify tests fail before implementing
 - Commit after each task or logical group on a feature branch, never directly on `main`
 - Before creating a PR, verify whether the active spec is related to the PR and ask whether a related completed spec should be closed
+- Never merge your own PR or push to `main` — the developer reviews and merges (constitution XIII)
 - Every affected maintained module must have a README with purpose, source-of-truth files,
   prerequisites, manual install/activation, installer support, validation, customization
   boundaries, rollback/recovery, and manual-only operations.

@@ -69,9 +69,10 @@ Document how the plan satisfies each applicable dotfiles constitution gate:
   phase to the matching `spec.md` heading; non-story phases remain unlinked unless they
   have a clear story owner.
 - **Branch/PR discipline**: implementation commits are planned for a feature branch, not
-  direct `main` commits, the pull request will link the required approved issue, and PR
+  direct `main` commits, the pull request will link the required approved issue, PR
   creation will verify the active spec relationship and ask whether a related completed
-  spec should be closed.
+  spec should be closed, and the contributor (including any AI agent) will not merge the
+  PR or push to `main` — the developer reviews and merges.
 
 Plans with unresolved MUST-level violations cannot proceed unless the violation is
 explicitly documented as a constitutional exception with rationale and risk.
