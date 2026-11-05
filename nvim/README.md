@@ -554,64 +554,55 @@ That repair is machine-local setup. Do not commit the copied `.node` file or any
 
 ## Notifications and Message History
 
-Snacks owns visible notifications and `lua/notifications.lua` keeps the repository-local
-notification history. Noice was evaluated twice, including a LazyVim-like `UIEnter` experiment,
-and was rejected because it still duplicated the native bottom command line in the real UI.
+Neovim 0.12's experimental **UI2** owns editor messages and the command line.
+**Snacks** owns `vim.notify` and notification history. These are intentionally
+separate histories: no custom message capture, parallel history, or notification
+wrapper re-installs itself over a plugin's handler. Noice is not enabled.
 
-Provider ownership:
+| Surface / key (normal mode) | Owner | Behavior |
+|----------------------------|-------|----------|
+| Editor messages | UI2 `msg` | Temporary window, up to 30% height, four-second timeout. Ordinary errors do not enter the pager. |
+| Lua/RPC errors, listings, shell output | UI2 `pager` | Navigable output, up to 60% height. Opens for detailed output and may take focus. |
+| Search and command completion | UI2 `cmd` | Remain in the command area. |
+| `<leader>um` / `:messages` | UI2 pager | Native editor-message history; `g<` recalls recent output. Use `/` to search and `q` to close the pager. |
+| `<leader>un` | Snacks notifier | Notification history, including full multiline messages. It is not a copy of `:messages`. |
+| LSP progress | Snacks notifier | Existing client updates reuse their notification ID; native UI2 progress uses `msg`, never the pager. |
 
-| Surface | Owner | Notes |
-|---------|-------|-------|
-| Command entry | Native Neovim | Floating command-line UI is deferred until a provider can avoid duplicate cmdline rendering. |
-| Command options | Native Neovim | Keep native completion behavior until a replacement passes manual validation. |
-| Editor messages and `:messages` | Native Neovim + custom capture | `CmdlineLeave` captures recent status/warning/error messages into notification history. |
-| Visible notifications | Snacks notifier | `lua/notifications.lua` sends visible helper notifications through `vim.notify`, which Snacks displays. |
-| Notification/message history | `<leader>un` | Opens Snacks/custom floating history from `lua/notifications.lua`; it must not fall back to quickfix. |
-| LSP progress | Existing LSP/client behavior | Do not add another progress provider without disabling overlapping output. |
+Existing Ctrl-h/j/k/l window navigation is unchanged. `<leader>` is Space.
 
-Use `<leader>un` to inspect recent notification and message history. For manual validation,
-trigger notifications with:
+`lua/notifications.lua` is only an adapter for existing LSP, formatter, database,
+and package-cleanup callers. It preserves severity, titles, IDs, icons, and full
+text through `vim.notify`; it owns no history. Snacks displays INFO and above;
+DEBUG/TRACE notifications remain available in its history. Wrapped command
+failures include their traceback in the notification rather than losing it in a
+separate store.
+
+### Validate the two histories
 
 ```vim
-:lua require('notifications').notify('UI validation info', 'info', { title = 'Validation' })
-:lua require('notifications').notify('UI validation warning', 'warn', { title = 'Validation' })
-:lua require('notifications').notify('UI validation error', 'error', { title = 'Validation' })
+:echomsg 'Native editor message'
+:messages
+:lua vim.notify('Notification first line\nSecond line', vim.log.levels.WARN)
+:lua require('notifications').notify('Adapter first line\nFull details', 'error', { title = 'Validation' })
 ```
 
-Expected result: notifications appear outside the bottom command-line area, are not duplicated,
-warnings/errors remain noticeable, and `<leader>un` shows recent history in a floating window.
-Command-line behavior remains native until a replacement passes manual validation at 80, 120,
-and 160 columns.
-
-Troubleshooting:
-
-- If command entry uses the bottom command line, that is expected for the current native fallback.
-- If notifications duplicate, check that only Snacks is wrapping visible `vim.notify` output.
-- If `<leader>un` opens no history, trigger a helper notification first, for example by running a
-  command that uses `lua/notifications.lua`. The fallback should still use a floating window, not
-  quickfix.
-- If LSP progress is noisy or stale, fix the active LSP/progress source before adding another
-  provider such as Fidget.
-
-Validate command-line UI changes with:
+Native messages should appear only through UI2. Notifications should appear once
+through Snacks, and `<leader>un` should retain both lines. For tracebacks, search, copying, focus, and resizing, also check in a
+real TUI at 80, 120, and 160 columns; headless startup alone cannot prove rendering.
 
 ```sh
-stylua --check nvim
+nvim --headless -u NONE -i NONE --cmd 'set rtp^=./nvim' -l nvim/lua/tests/ui2_snacks_smoke.lua
+nvim --headless -u NONE -i NONE -l nvim/lua/tests/ui2_attached_smoke.lua
 nvim --headless -u nvim/init.lua '+quitall'
-setup/validate-nvim-deps.sh
 ```
 
-Rollback:
+The focused smoke test requires the already installed Snacks package; it does not
+install or update plugins. UI2 options are configured in `lua/config/ui.lua` for
+Neovim 0.12. Recheck them when upgrading: UI2 remains experimental.
 
-1. Restore the previous notification block from version control if this custom history is broken.
-2. Refresh `nvim/nvim-pack-lock.json` through normal `vim-pack` sync/startup behavior if plugin
-   ownership changes.
-3. Re-run `stylua --check nvim`, `nvim --headless -u nvim/init.lua '+quitall'`, and any relevant
-   interactive notification/history checks.
-
-Manual validation for the older notification helper remains documented in
-`specs/archive/2026-07-17-002-unify-notifications/quickstart.md`. Diagnostics UI is intentionally out of scope
-for the notification flow and should only be checked for no-regression behavior.
+If something is missing, check the correct history first. Do not restore the old
+`CmdlineLeave` capture or add another `vim.notify` wrapper: that reintroduces
+partial histories and duplicate messages. Diagnostics are separate from this flow.
 
 ## Linking
 

@@ -52,6 +52,9 @@ vim.keymap.set(
 -- Formatting.
 vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })
 
+-- Native editor-message history, separate from Snacks notifications.
+vim.keymap.set('n', '<leader>um', '<cmd>messages<cr>', { desc = 'Editor message history', silent = true })
+
 -- Switch between windows.
 vim.keymap.set('n', '<C-h>', '<C-w>h', { desc = 'Move to the left window', remap = true })
 vim.keymap.set('n', '<C-j>', '<C-w>j', { desc = 'Move to the bottom window', remap = true })
