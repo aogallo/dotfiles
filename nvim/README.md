@@ -567,8 +567,11 @@ wrapper re-installs itself over a plugin's handler. Noice is not enabled.
 | `<leader>um` / `:messages` | UI2 pager | Native editor-message history; `g<` recalls recent output. Use `/` to search and `q` to close the pager. |
 | `<leader>un` | Snacks notifier | Notification history, including full multiline messages. It is not a copy of `:messages`. |
 | LSP progress | Snacks notifier | Existing client updates reuse their notification ID; native UI2 progress uses `msg`, never the pager. |
+| `ss` | Native `:split` | Open the current buffer below. |
+| `sv` | Native `:vsplit` | Open the current buffer to the right. |
 
-Existing Ctrl-h/j/k/l window navigation is unchanged. `<leader>` is Space.
+`ss` and `sv` replace the normal-mode `s` prefix behavior; existing Ctrl-h/j/k/l
+window navigation is unchanged. `<leader>` is Space.
 
 `lua/notifications.lua` is only an adapter for existing LSP, formatter, database,
 and package-cleanup callers. It preserves severity, titles, IDs, icons, and full
@@ -587,7 +590,8 @@ separate store.
 ```
 
 Native messages should appear only through UI2. Notifications should appear once
-through Snacks, and `<leader>un` should retain both lines. For tracebacks, search, copying, focus, and resizing, also check in a
+through Snacks, and `<leader>un` should retain both lines. Check `ss` and `sv` in
+normal mode. For tracebacks, search, copying, focus, and resizing, also check in a
 real TUI at 80, 120, and 160 columns; headless startup alone cannot prove rendering.
 
 ```sh

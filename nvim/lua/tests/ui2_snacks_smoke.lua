@@ -101,6 +101,18 @@ check(#captures == 0, 'native editor messages are not recaptured into notificati
 
 require 'config.options'
 require 'config.keymaps'
+for key, layout in pairs { ss = 'col', sv = 'row' } do
+    vim.cmd 'silent! only'
+    local buf = vim.api.nvim_get_current_buf()
+    local mapping = vim.fn.maparg(key, 'n', false, true)
+    if mapping.rhs then
+        vim.api.nvim_feedkeys(vim.keycode(mapping.rhs), 'nx', false)
+    end
+    local tree = vim.fn.winlayout()
+    check(tree[1] == layout and #vim.api.nvim_tabpage_list_wins(0) == 2, key .. ' creates the requested split')
+    check(vim.api.nvim_get_current_buf() == buf, key .. ' preserves the current buffer')
+end
+vim.cmd 'silent! only'
 local messages_map = vim.fn.maparg(vim.g.mapleader .. 'um', 'n', false, true)
 check(
     messages_map.rhs and messages_map.rhs:lower() == '<cmd>messages<cr>',
