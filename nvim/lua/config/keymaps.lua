@@ -52,7 +52,9 @@ vim.keymap.set(
 -- Formatting.
 vim.keymap.set('n', '<leader>cf', 'mzgggqG`z<cmd>delmarks z<cr>zz', { desc = 'Format buffer' })
 
--- Native editor-message history, separate from Snacks notifications.
+-- Split the current buffer below or to the right.
+vim.keymap.set('n', 'ss', '<cmd>split<cr>', { desc = 'Split below', silent = true })
+vim.keymap.set('n', 'sv', '<cmd>vsplit<cr>', { desc = 'Split right', silent = true })
 vim.keymap.set('n', '<leader>um', '<cmd>messages<cr>', { desc = 'Editor message history', silent = true })
 
 -- Switch between windows.

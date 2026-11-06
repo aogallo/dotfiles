@@ -99,6 +99,15 @@ local ok, err = xpcall(function()
         settle()
         check(request 'nvim_get_current_win' == original, 'q returns to editor at ' .. width .. ' columns')
     end
+
+    for _, keys in ipairs { 'ss', 'sv' } do
+        request('nvim_input', keys)
+        settle()
+        check(lua 'return #vim.api.nvim_tabpage_list_wins(0)' >= 2, keys .. ' executes through typed input')
+        local layout = lua 'return vim.fn.winlayout()[1]'
+        check(layout == (keys == 'ss' and 'col' or 'row'), keys .. ' has the intended orientation')
+        request('nvim_command', 'silent! only')
+    end
 end, function(error)
     return vim.inspect(error) .. '\n' .. debug.traceback()
 end)
