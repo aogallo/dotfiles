@@ -21,4 +21,4 @@ vim.lsp.config('*', {
     root_markers = { '.git' },
 })
 
-require('vim._core.ui2').enable {}
+require 'config.ui'
