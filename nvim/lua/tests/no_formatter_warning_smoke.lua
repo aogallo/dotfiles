@@ -36,26 +36,9 @@ local function fail(ok_, name, got, want)
     vim.cmd 'cquit'
 end
 
--- Two channels, because the failure this guards against is a message arriving
--- from somewhere other than our own path:
---   * the notification module's history counts OUR warnings, and
---   * a vim.notify capture, armed for exactly one write at a time, catches
---     anything at all — including a notice the toolchain emits on its own.
---
--- The capture is not a permanent stub on purpose. This configuration re-wraps
--- vim.notify shortly after startup (nvim/plugin/editor.lua) and discards
--- whatever a check installed, and nesting one capture inside another multiplies
--- every message. Armed once per measurement point, it is exact.
---
--- The capture does NOT call through to the notify it replaced, and that is load
--- bearing rather than lazy: the wrapper re-points its own base at whatever has
--- replaced it, so a call-through capture parked in that slot is a function whose
--- sink is the wrapper itself, and the next notification recurses until the stack
--- runs out. The message is already recorded either way, which is all this check
--- measures.
-local notifications = require 'notifications'
-local history_length = #notifications.history()
-
+-- Observe the public notification path once per save. There is no parallel
+-- repository-local history or self-healing vim.notify wrapper anymore.
+local original_notify = vim.notify
 local function capture_next_write()
     local raw = {}
     vim.notify = function(msg)
@@ -65,21 +48,6 @@ local function capture_next_write()
 end
 
 local WARNING_PREFIX = 'No formatter available for '
-
--- Filtered by our own wording on purpose. The history is shared, and other
--- components announce themselves into it while this check runs (a language
--- server attaching, for one), so an unfiltered count would measure the timing
--- of the check rather than the behavior under test.
-local function our_warnings(ft)
-    local out = {}
-    for i = history_length + 1, #notifications.history() do
-        local entry = notifications.history()[i]
-        if entry.summary:sub(1, #WARNING_PREFIX + #ft) == WARNING_PREFIX .. ft then
-            out[#out + 1] = entry
-        end
-    end
-    return out
-end
 
 -- Our own wording inside a raw capture, which also catches a warning that
 -- bypassed the notification module. Unrelated messages are ignored: other
@@ -118,60 +86,27 @@ fail(#list == 0, 'the shell file type really resolves to no formatter here', #li
 
 local raw_first = capture_next_write()
 vim.cmd 'write'
-local after_first = our_warnings 'sh'
-
-raw_first = capture_next_write()
+local raw_second = capture_next_write()
 vim.cmd 'write'
-local after_second = our_warnings 'sh'
-
-fail(#after_first == 1, 'the first failing save reports exactly one message', #after_first, 1)
-
--- Two saves in quick succession are shown by the notification module as one
--- entry with a repeat count, which is the user-visible "it happened again".
--- What FR-008 rules out is that count staying at 1 for the rest of the session,
--- which is exactly what the toolchain's once-per-filetype notice did.
-fail(
-    after_second[1] and after_second[1].count == 2,
-    'the second failing save is reported, not swallowed (SC-003)',
-    after_second[1] and { count = after_second[1].count },
-    { count = 2 }
-)
-
--- Past the module's aggregation window it is a separate entry, so the failure
--- is not one quiet line for the whole session either.
-vim.wait(1600)
-capture_next_write()
+local raw_third = capture_next_write()
 vim.cmd 'write'
-local after_third = our_warnings 'sh'
-fail(#after_third == 2, 'a later failing save is its own message again (FR-008)', #after_third, 2)
 
-fail(
-    #toolchain_notices(raw_first) == 0,
-    "the toolchain's own notice does not duplicate ours (contract §3 rule 1)",
-    toolchain_notices(raw_first),
-    0
-)
-
-fail(
-    vim.iter(after_third):all(function(entry)
-        return entry.summary:find('sh', 1, true) ~= nil
-    end),
-    'every message names the file type',
-    vim.tbl_map(function(e)
-        return e.summary
-    end, after_third),
-    'each mentions sh'
-)
-fail(
-    vim.iter(after_third):all(function(entry)
-        return not entry.summary:find('/', 1, true)
-    end),
-    'no message says anything about the file',
-    vim.tbl_map(function(e)
-        return e.summary
-    end, after_third),
-    'no path'
-)
+for index, raw in ipairs { raw_first, raw_second, raw_third } do
+    local warnings = our_warnings_in(raw, 'sh')
+    fail(#warnings == 1, 'failing save ' .. index .. ' reports exactly once (SC-003, FR-008)', warnings, 1)
+    fail(
+        #toolchain_notices(raw) == 0,
+        "the toolchain's own notice does not duplicate ours (contract §3 rule 1)",
+        toolchain_notices(raw),
+        0
+    )
+    fail(
+        not warnings[1]:find('/', 1, true),
+        'the warning names the file type, not the file path',
+        warnings[1],
+        'file type only'
+    )
+end
 
 --- a save that would have been formatted stays silent (contract §4 rule 3) ---
 
@@ -182,10 +117,10 @@ local md_list = conform.list_formatters_to_run(md)
 local raw_markdown = capture_next_write()
 vim.cmd 'write'
 fail(
-    #md_list > 0 and #our_warnings 'markdown' == 0 and #our_warnings_in(raw_markdown, 'markdown') == 0,
+    #md_list > 0 and #our_warnings_in(raw_markdown, 'markdown') == 0,
     'a save with an available formatter reports nothing',
-    { list = #md_list, warnings = #our_warnings 'markdown', raw_warnings = #our_warnings_in(raw_markdown, 'markdown') },
-    { list = '> 0', warnings = 0, raw_warnings = 0 }
+    { list = #md_list, raw_warnings = #our_warnings_in(raw_markdown, 'markdown') },
+    { list = '> 0', raw_warnings = 0 }
 )
 
 --- a save the user excluded stays silent (contract §3 rule 3) ---------------
@@ -193,15 +128,14 @@ fail(
 vim.cmd('edit ' .. vim.fn.fnameescape(path))
 local skipped = vim.api.nvim_get_current_buf()
 vim.bo[skipped].filetype = 'sh'
-local warnings_before_skip = #our_warnings 'sh'
 vim.g.skip_formatting = true
 local raw_skipped = capture_next_write()
 vim.cmd 'write'
 fail(
-    #our_warnings_in(raw_skipped, 'sh') == 0 and #our_warnings 'sh' == warnings_before_skip,
+    #our_warnings_in(raw_skipped, 'sh') == 0,
     'a save excluded by the skip guard reports nothing',
-    { raw_warnings = #our_warnings_in(raw_skipped, 'sh'), warnings = #our_warnings 'sh' - warnings_before_skip },
-    { raw_warnings = 0, warnings = 0 }
+    { raw_warnings = #our_warnings_in(raw_skipped, 'sh') },
+    { raw_warnings = 0 }
 )
 fail(
     vim.g.skip_formatting == false,
@@ -209,5 +143,9 @@ fail(
     vim.g.skip_formatting,
     false
 )
+
+vim.notify = original_notify
+vim.fn.delete(boot)
+vim.fn.delete(dir, 'rf')
 
 vim.print 'All no-formatter reporting smoke assertions passed'

@@ -20,7 +20,6 @@ local function db_context_component()
 end
 
 local notification_icons = require('icons').notifications
-local notifications = require 'notifications'
 
 -- Buffer-visibility guard (specs/011-query-buffer-tab-visibility, issue #96).
 -- Restores the tab of a buffer the developer opened and then closed, so it is
@@ -55,7 +54,7 @@ add {
                 height = { min = 1, max = 0.6 },
                 margin = { top = 0, right = 1, bottom = 0 },
                 padding = true,
-                level = vim.log.levels.TRACE,
+                level = vim.log.levels.INFO,
                 icons = {
                     error = notification_icons.error .. ' ',
                     warn = notification_icons.warn .. ' ',
@@ -72,58 +71,9 @@ add {
             },
         },
         on_setup = function()
-            local titles = {
-                trace = 'Trace',
-                debug = 'Debug',
-                info = 'Info',
-                progress = 'Progress',
-                warn = 'Warning',
-                error = 'Error',
-            }
-
-            local function install_notify_wrapper()
-                _G.__aogallo_notify = _G.__aogallo_notify or {}
-                local state = _G.__aogallo_notify
-
-                if vim.notify == state.wrapped then
-                    return
-                end
-
-                state.base = vim.notify
-                state.wrapped = state.wrapped
-                    or function(message, level, opts)
-                        opts = vim.tbl_deep_extend('force', {}, opts or {})
-
-                        local severity = select(1, notifications.normalize_severity(level or opts.level))
-                        opts.title = opts.title or titles[severity]
-                        opts.icon = opts.icon or (notification_icons[severity] or notification_icons.info) .. ' '
-
-                        local result = state.base(message, level, opts)
-                        if vim.notify ~= state.wrapped then
-                            state.base = vim.notify
-                            vim.notify = state.wrapped
-                        end
-                        return result
-                    end
-
-                vim.notify = state.wrapped
-            end
-
-            install_notify_wrapper()
-            vim.schedule(install_notify_wrapper)
-
-            if not Snacks.notifier then
-                notifications.notify(
-                    'Snacks notifier is unavailable; using the default notification handler.',
-                    'warn',
-                    { title = 'Notifications' }
-                )
-            end
-
-            vim.keymap.set('n', '<leader>un', notifications.open_history, {
-                desc = 'Notification history',
-                silent = true,
-            })
+            vim.keymap.set('n', '<leader>un', function()
+                Snacks.notifier.show_history()
+            end, { desc = 'Notification history', silent = true })
 
             vim.keymap.set('n', '<leader>fe', Snacks.explorer.open, { desc = 'Explorer', silent = true })
             vim.keymap.set('n', '<leader>bo', Snacks.bufdelete.other, { desc = 'Delete other buffers', silent = true })
