@@ -80,7 +80,7 @@ vim.opt.shortmess:append {
 
 -- Status line
 vim.o.laststatus = 3
-vim.o.cmdheight = 1
+vim.o.cmdheight = 0
 
 vim.o.guicursor = 'n-v-c-sm:block,i-ci-ve:ver25,r-cr-o:hor20,t:block-TermCursor'
 
