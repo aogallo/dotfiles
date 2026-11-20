@@ -1,6 +1,9 @@
 # Neovim dependency inventory.
 # Format: name|executable|required|source|install_hint|used_by
 # required: yes/no. source: mason/homebrew/npm/pnpm/go/curl/external/plugin.
+Java language server|jdtls|no|mason|MasonInstall jdtls; configure the server JDK per nvim/docs/ace-windows.md|nvim/lsp/jdtls.lua
+IBM ESQL language server|esql-lsp|no|external|Build the pinned community server per nvim/docs/ace-windows.md|nvim/lsp/esql.lua
+XML language server|lemminx|no|mason|MasonInstall lemminx|nvim/lsp/lemminx.lua
 Go language server|gopls|no|go|go install golang.org/x/tools/gopls@latest|nvim/lsp/gopls.lua
 Go test runner|go|no|homebrew|brew install go|nvim/plugin/testing.lua
 Neotest Go results runner|gotestsum|no|go|go install gotest.tools/gotestsum@latest|nvim/lua/config/testing.lua

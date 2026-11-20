@@ -37,6 +37,14 @@ environment or ignored local overrides, not from committed Lua files.
    setup/link-nvim-config.sh --dry-run
    ```
 
+## IBM ACE 12 on Windows
+
+JavaCompute (JDT LS), IBM ESQL (community LSP and Tree-sitter), and XML/WSDL/XSD
+editing are configured without machine-specific paths. Follow the
+[Windows ACE setup guide](docs/ace-windows.md) for explicit server installation,
+local JDK/classpath variables, verification, and the limits around IBM containers
+and NodeSpy tests. The Toolkit remains responsible for IBM builds and execution.
+
 ## Go Formatting
 
 Saving Go files runs Conform's `goimports` → `golines` chain in order, with
