@@ -37,6 +37,109 @@ environment or ignored local overrides, not from committed Lua files.
    setup/link-nvim-config.sh --dry-run
    ```
 
+## IBM ACE 12 on Windows
+
+JavaCompute (JDT LS), IBM ESQL (community LSP and Tree-sitter), and XML/WSDL/XSD
+editing are configured without machine-specific paths. Follow the
+[Windows ACE setup guide](docs/ace-windows.md) for explicit server installation,
+local JDK/classpath variables, verification, and the limits around IBM containers
+and NodeSpy tests. The Toolkit remains responsible for IBM builds and execution.
+
+## Go Formatting
+
+Saving Go files runs Conform's `goimports` → `golines` chain in order, with
+`golines --max-len 80`. `goimports` handles imports and includes `gofmt` formatting,
+so a separate `gofmt` stage is unnecessary. The LSP is only a fallback, not preferred
+over the CLI chain. Existing autoformat and one-save skip controls still apply.
+
+Mason automatically installs missing `goimports` and `golines` during interactive
+startup, alongside the existing `gopls` entry; headless startup does not install them.
+Restart Neovim and use `:Mason` to check installation and `:ConformInfo` to check
+formatter availability. The 80-column setting is a wrapping target, not a guarantee
+that every line (for example, an indivisible string literal) can be shortened.
+
+Validate the configuration offline without installing plugins or tools:
+
+```sh
+nvim --headless -u NONE -i NONE -l nvim/lua/tests/go_formatting_smoke.lua
+```
+
+## Running Go Tests
+
+[Neotest](https://github.com/nvim-neotest/neotest) with
+[neotest-golang](https://github.com/fredrikaverpil/neotest-golang) provides test status
+signs beside the code, a navigable summary, individual output, and failure diagnostics.
+It runs Go through [gotestsum](https://github.com/gotestyourself/gotestsum), with
+`-v -count=1`, collecting JSON results from a file instead of potentially truncated
+stdout. Vitest, a terminal plugin, and a debugger are not required.
+
+1. Restart Neovim so `vim.pack` installs the pinned Neotest, nvim-nio, and Go adapter.
+2. Check `:echo executable('go')` and `:echo executable('gotestsum')` both return `1`.
+   Install gotestsum explicitly with `go install gotest.tools/gotestsum@latest`, and
+   make sure your Go binary directory (`go env GOBIN`, or `$(go env GOPATH)/bin` when
+   GOBIN is empty) is on Neovim's PATH. This configuration does not install it globally.
+   The Go Treesitter parser must also be installed; use the existing
+   `:TSInstallConfigured` command if it is missing.
+3. Open and save a `*_test.go` file. Put the cursor inside a test and press `<leader>tn`.
+4. Press `<leader>tt` to see individual results in the summary.
+
+| Mapping | Action |
+| --- | --- |
+| `<leader>tn` | Run the test nearest the cursor |
+| `<leader>tf` | Run tests declared in the current file |
+| `<leader>ts` | Run tests in the current buffer's Go module, including child packages |
+| `<leader>tl` | Repeat the last test run, including from application code |
+| `<leader>tt` | Toggle the test summary |
+| `<leader>to` | Open the nearest test's output |
+| `<leader>tO` | Toggle the combined output panel |
+| `<leader>tx` | Select and stop a running test |
+
+A discovered test is **not** a passed test. Signs distinguish unexecuted tests from
+running, passed, failed, and skipped results. In the summary, use `<CR>` to expand a
+node, `r` to run it, `o` for output, `i` to jump to its source, and `u` to stop it.
+The former `<leader>tv` / `:TestVisit` mapping is removed; use the summary to navigate.
+The old `:TestNearest`, `:TestFile`, `:TestSuite`, and `:TestLast` commands are replaced
+by the mappings above.
+
+Save changes before running: discovery and execution use files on disk. File runs
+filter test names while compiling the whole package; suite runs select the nearest
+`go.mod` above the current buffer rather than just its current package. Without a
+`go.mod`, the suite mapping warns instead of executing an unrelated directory.
+
+Plenary and Treesitter are reused from the existing configuration. Setup waits until
+`VimEnter` so Treesitter's runtime paths are ready. FixCursorHold is an upstream
+recommendation rather than a required dependency; no extra timing plugin is added.
+After restarting, you may use `:PackClean` to review the old vim-test installation;
+this migration does not delete installed plugin directories automatically.
+
+Validate configuration and mappings without installing plugins:
+
+```sh
+nvim --headless -u NONE -i NONE -l nvim/lua/tests/go_testing_smoke.lua
+```
+
+The optional integration test uses real plugins and Go tests. Set `NEOTEST_RUNTIME`
+to an isolated writable directory containing checkouts named `neotest/`, `nvim-nio/`,
+`neotest-golang/`, `plenary.nvim/`, and `nvim-treesitter/`, plus a compatible compiled
+Go parser at `parser/go.so` (use the parser revision tracked by the pinned Treesitter).
+Install gotestsum into that runtime's `bin/` and prepend it to PATH for the test.
+Keep `HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME`,
+`TMPDIR`, `GOCACHE`, and `GOPATH` inside that runtime to avoid personal editor state.
+
+```sh
+NEOTEST_RUNTIME=/absolute/path/to/isolated-runtime \
+  nvim -u NONE -i NONE -c 'lua dofile("nvim/lua/tests/go_testing_integration.lua")'
+```
+
+This test requires a normal attached Neovim UI. Do not use `--headless` or `-l`:
+Neotest's terminal consumers explicitly redraw, and forcing screen dimensions without
+an attached UI crashed this Neovim build. It can also run in a pseudo-terminal.
+
+It creates a fresh `fixture-*` module and checks discovery, running/passed/failed/skipped
+signs, file/module scopes, repeat, summary, and per-test output. An intentionally failing
+Go test is expected; the smoke process exits successfully only if its failure is reported
+correctly. Fixture directories are retained for inspection, not written into real projects.
+
 ## Plugin Cleanup
 
 Use `:PackClean` to review stale Neovim plugin state before deleting anything. The command opens
