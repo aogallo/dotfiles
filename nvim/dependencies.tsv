@@ -2,6 +2,8 @@
 # Format: name|executable|required|source|install_hint|used_by
 # required: yes/no. source: mason/homebrew/npm/pnpm/go/curl/external/plugin.
 Go language server|gopls|no|go|go install golang.org/x/tools/gopls@latest|nvim/lsp/gopls.lua
+Go test runner|go|no|homebrew|brew install go|nvim/plugin/testing.lua
+Neotest Go results runner|gotestsum|no|go|go install gotest.tools/gotestsum@latest|nvim/lua/config/testing.lua
 SQL language server|sqls|no|go|go install github.com/sqls-server/sqls@latest|nvim/lsp/sqls.lua
 Dockerfile language server|docker-langserver|no|mason/npm|Mason dockerfile-language-server or pnpm add -g dockerfile-language-server-nodejs|nvim/lsp/dockerls.lua
 TypeScript native preview|tsgo|yes|pnpm|pnpm install -g @typescript/native-preview|nvim/lsp/tsgo.lua
