@@ -5,6 +5,8 @@ local ensure_installed = {
     'dockerfile-language-server',
     'dprint',
     'eslint-lsp',
+    'goimports',
+    'golines',
     'gopls',
     'html-lsp',
     'json-lsp',

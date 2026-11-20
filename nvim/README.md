@@ -37,6 +37,25 @@ environment or ignored local overrides, not from committed Lua files.
    setup/link-nvim-config.sh --dry-run
    ```
 
+## Go Formatting
+
+Saving Go files runs Conform's `goimports` → `golines` chain in order, with
+`golines --max-len 80`. `goimports` handles imports and includes `gofmt` formatting,
+so a separate `gofmt` stage is unnecessary. The LSP is only a fallback, not preferred
+over the CLI chain. Existing autoformat and one-save skip controls still apply.
+
+Mason automatically installs missing `goimports` and `golines` during interactive
+startup, alongside the existing `gopls` entry; headless startup does not install them.
+Restart Neovim and use `:Mason` to check installation and `:ConformInfo` to check
+formatter availability. The 80-column setting is a wrapping target, not a guarantee
+that every line (for example, an indivisible string literal) can be shortened.
+
+Validate the configuration offline without installing plugins or tools:
+
+```sh
+nvim --headless -u NONE -i NONE -l nvim/lua/tests/go_formatting_smoke.lua
+```
+
 ## Plugin Cleanup
 
 Use `:PackClean` to review stale Neovim plugin state before deleting anything. The command opens

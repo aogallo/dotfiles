@@ -82,7 +82,8 @@ local conform_plugins = {
             notify_no_formatters = false,
             formatters_by_ft = {
                 c = { timeout_ms = 500, lsp_format = 'prefer' },
-                go = { timeout_ms = 500, lsp_format = 'prefer' },
+                -- goimports includes gofmt; run golines last to wrap long lines.
+                go = { 'goimports', 'golines', timeout_ms = 500, lsp_format = 'fallback' },
                 java = { 'palantir-java-format' },
                 javascript = {
                     'prettier',
@@ -146,6 +147,7 @@ local conform_plugins = {
                 return {}
             end,
             formatters = {
+                golines = { prepend_args = { '--max-len', '80' } },
                 markdown_prettier = { inherit = 'prettier', require_cwd = false },
                 prettier = { require_cwd = false },
             },
