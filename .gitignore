@@ -25,3 +25,6 @@ zsh/.zshenv.local
 
 # User-owned database connection registry (credential-bearing). The .example template stays committed.
 nvim/db-connections.lua
+
+.pi
+.specify
