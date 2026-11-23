@@ -13,7 +13,8 @@ end
 local function check()
     local repo = vim.fn.getcwd()
     local runtime = assert(vim.env.NEOTEST_RUNTIME, 'set NEOTEST_RUNTIME to an isolated plugin/runtime directory')
-    assert(runtime:sub(1, 1) == '/', 'NEOTEST_RUNTIME must be absolute')
+    local absolute = runtime:sub(1, 1) == '/' or runtime:match '^%a:[/\\]' or runtime:match '^\\\\[^\\]+\\[^\\]+'
+    assert(absolute, 'NEOTEST_RUNTIME must be absolute')
     vim.opt.rtp:prepend(repo .. '/nvim')
     for _, name in ipairs { 'plenary.nvim', 'nvim-nio', 'neotest-golang', 'neotest', 'nvim-treesitter' } do
         vim.opt.rtp:append(runtime .. '/' .. name)

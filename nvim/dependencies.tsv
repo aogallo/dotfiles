@@ -5,6 +5,8 @@ Java language server|jdtls|no|mason|MasonInstall jdtls; configure the server JDK
 IBM ESQL language server|esql-lsp|no|external|Build the pinned community server per nvim/docs/ace-windows.md|nvim/lsp/esql.lua
 XML language server|lemminx|no|mason|MasonInstall lemminx|nvim/lsp/lemminx.lua
 Go language server|gopls|no|go|go install golang.org/x/tools/gopls@latest|nvim/lsp/gopls.lua
+Go imports formatter|goimports|no|mason|MasonInstall goimports|nvim/plugin/conform.lua
+Go line formatter|golines|no|mason|MasonInstall golines|nvim/plugin/conform.lua
 Go test runner|go|no|homebrew|brew install go|nvim/plugin/testing.lua
 Neotest Go results runner|gotestsum|no|go|go install gotest.tools/gotestsum@latest|nvim/lua/config/testing.lua
 SQL language server|sqls|no|go|go install github.com/sqls-server/sqls@latest|nvim/lsp/sqls.lua

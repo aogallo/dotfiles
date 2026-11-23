@@ -116,10 +116,12 @@ Validate configuration and mappings without installing plugins:
 
 ```sh
 nvim --headless -u NONE -i NONE -l nvim/lua/tests/go_testing_smoke.lua
+nvim --headless -u NONE -i NONE -l nvim/lua/tests/go_runtime_paths_smoke.lua
 ```
 
 The optional integration test uses real plugins and Go tests. Set `NEOTEST_RUNTIME`
-to an isolated writable directory containing checkouts named `neotest/`, `nvim-nio/`,
+to an absolute isolated writable directory (POSIX, Windows drive paths such as
+`C:/runtime` or `C:\runtime`, and UNC paths are accepted) containing checkouts named `neotest/`, `nvim-nio/`,
 `neotest-golang/`, `plenary.nvim/`, and `nvim-treesitter/`, plus a compatible compiled
 Go parser at `parser/go.so` (use the parser revision tracked by the pinned Treesitter).
 Install gotestsum into that runtime's `bin/` and prepend it to PATH for the test.
