@@ -8,7 +8,6 @@ local parses = {
     'dart',
     'dockerfile',
     'dot',
-    'esql',
     'fish',
     'gitcommit',
     'go',
@@ -34,7 +33,6 @@ local parses = {
     'typescript',
     'vim',
     'vimdoc',
-    'xml',
     'yaml',
     'terraform',
     'hcl',
@@ -175,7 +173,6 @@ add {
         src = 'nvim-treesitter/nvim-treesitter',
         on_setup = function()
             add_treesitter_runtimepath()
-            require('config.ace').register_parser()
 
             vim.api.nvim_create_user_command('TSInstallConfigured', install_parsers, {
                 desc = 'Install configured Treesitter parsers',
